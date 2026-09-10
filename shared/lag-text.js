@@ -102,11 +102,12 @@
       const { lag, offsetX, offsetY } = this.options;
       const ease = clamp(lag, 0.01, 1);
 
-      const rebound = clamp(this.options.rebound, 0, 1);
+      const rebound = clamp(this.options.rebound, 0, 2);
 
       if (rebound > 0) {
-        const stiffness = ease * (0.08 + rebound * 0.22);
-        const damping = 0.65 + rebound * 0.28;
+        const spring = Math.sqrt(rebound / 2);
+        const stiffness = ease * (0.12 + spring * 0.35);
+        const damping = 0.76 + spring * 0.2;
 
         this._vx += (this._targetX - this._x) * stiffness;
         this._vy += (this._targetY - this._y) * stiffness;
