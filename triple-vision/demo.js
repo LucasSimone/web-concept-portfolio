@@ -1,8 +1,30 @@
+const PROFILES = {
+  default: {
+    offsetX: 100,
+    offsetY: 40,
+    lag: 0.15,
+    rebound: 0,
+    speed: 1,
+    opacity: 0.75,
+    blur: 0,
+  },
+  rebound: {
+    offsetX: 100,
+    offsetY: 40,
+    lag: 0.15,
+    rebound: 1.25,
+    speed: 1,
+    opacity: 0.75,
+    blur: 0,
+  },
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const instances = TripleVisionText.initAll();
   const textEls = Array.from(document.querySelectorAll('.triple-vision'));
 
   const controls = {
+    profile: document.getElementById('profileSelect'),
     font: document.getElementById('fontSelect'),
     text: document.getElementById('textInput'),
     size: document.getElementById('sizeRange'),
@@ -43,6 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
     labels.opacity.textContent = controls.opacity.value;
     labels.blur.textContent = `${controls.blur.value}px`;
   }
+
+  function applyProfile(name) {
+    const profile = PROFILES[name] || PROFILES.default;
+
+    controls.offsetX.value = profile.offsetX;
+    controls.offsetY.value = profile.offsetY;
+    controls.lag.value = profile.lag;
+    controls.rebound.value = profile.rebound;
+    controls.speed.value = profile.speed;
+    controls.opacity.value = profile.opacity;
+    controls.blur.value = profile.blur;
+
+    updateAll({ ...profile });
+    syncLabels();
+  }
+
+  controls.profile.addEventListener('change', () => {
+    applyProfile(controls.profile.value);
+  });
 
   controls.font.addEventListener('input', () => {
     textEls.forEach((el) => {
@@ -85,4 +126,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   syncLabels();
+  applyProfile('default');
 });

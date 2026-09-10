@@ -25,6 +25,14 @@
     <h2>Controls</h2>
 
     <div class="control-row">
+      <label>Profile</label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="rebound">Rebound</option>
+      </select>
+    </div>
+
+    <div class="control-row">
       <label>Font <span id="fontLabel" class="value"></span></label>
       <select id="fontSelect">
         <option value="'Bebas Neue', sans-serif" selected>Bebas Neue</option>
@@ -49,7 +57,7 @@
 
     <div class="control-row">
       <label>Max offset X <span id="offsetXVal" class="value"></span></label>
-      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="30" />
+      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="100" />
     </div>
 
     <div class="control-row">
