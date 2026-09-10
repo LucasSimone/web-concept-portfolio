@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Double Speak — Text Effects Lab</title>
+  <title>Triple Vision — Text Effects Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Caveat:wght@400..700&family=Pacifico&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Archivo+Black&family=Space+Grotesk:wght@700&family=Playfair+Display:wght@700&family=IBM+Plex+Mono:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/shared/site.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -14,10 +14,10 @@
     <a class="brand" href="/index.html">Text Effects Lab</a>
     <div class="links">
       <a href="/index.html">Home</a>
-      <a href="/double-speak/index.html" aria-current="page">Double Speak</a>
+      <a href="/double-speak/index.html">Double Speak</a>
       <a href="/letter-wave/index.html">Wave Form</a>
       <a href="/scroll-smear-text/index.html">Paint Drag</a>
-      <a href="/triple-vision/index.html">Triple Vision</a>
+      <a href="/triple-vision/index.html" aria-current="page">Triple Vision</a>
     </div>
   </nav>
 
@@ -27,46 +27,46 @@
     <div class="control-row">
       <label>Font <span id="fontLabel" class="value"></span></label>
       <select id="fontSelect">
-        <option value="'Dancing Script', cursive" selected>Dancing Script (cursive)</option>
-        <option value="'Caveat', cursive">Caveat (cursive)</option>
-        <option value="'Pacifico', cursive">Pacifico (cursive)</option>
+        <option value="'Bebas Neue', sans-serif" selected>Bebas Neue</option>
+        <option value="'Archivo Black', sans-serif">Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
         <option value="'Playfair Display', serif">Playfair Display (serif)</option>
-        <option value="Georgia, serif">Georgia (serif)</option>
-        <option value="system-ui, sans-serif">System (sans-serif)</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="Georgia, serif">Georgia</option>
         <option value="'Courier New', monospace">Courier New (monospace)</option>
       </select>
     </div>
 
     <div class="control-row">
       <label>Text</label>
-      <input id="textInput" type="text" value="Double Speak" />
+      <input id="textInput" type="text" value="Triple Vision" />
     </div>
 
     <div class="control-row">
       <label>Font size <span id="sizeVal" class="value"></span></label>
-      <input id="sizeRange" type="range" min="4" max="25" step="0.5" value="15" />
+      <input id="sizeRange" type="range" min="4" max="25" step="0.5" value="14" />
     </div>
 
     <div class="control-row">
       <label>Max offset X <span id="offsetXVal" class="value"></span></label>
-      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="0" />
+      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="30" />
     </div>
 
     <div class="control-row">
       <label>Max offset Y <span id="offsetYVal" class="value"></span></label>
-      <input id="offsetYRange" type="range" min="0" max="120" step="1" value="60" />
+      <input id="offsetYRange" type="range" min="0" max="120" step="1" value="40" />
     </div>
 
     <div class="control-row">
       <label>Lag (return speed) <span id="lagVal" class="value"></span></label>
       <input id="lagRange" type="range" min="0.01" max="0.3" step="0.005" value="0.15" />
-      <div class="hint">How quickly the ghost follows the scroll trail. Lower = softer, higher = snappier.</div>
+      <div class="hint">How quickly the red/cyan channels snap back together after scrolling stops.</div>
     </div>
 
     <div class="control-row">
       <label>Rebound <span id="reboundVal" class="value"></span></label>
       <input id="reboundRange" type="range" min="0" max="2" step="0.05" value="0" />
-      <div class="hint">Adds springy overshoot as the lagging layer returns to the main text.</div>
+      <div class="hint">Adds springy overshoot as the channels converge back to center.</div>
     </div>
 
     <div class="control-row">
@@ -75,21 +75,31 @@
     </div>
 
     <div class="control-row">
-      <label>Ghost opacity <span id="opacityVal" class="value"></span></label>
-      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.5" />
+      <label>Channel opacity <span id="opacityVal" class="value"></span></label>
+      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.75" />
     </div>
 
     <div class="control-row">
-      <label>Ghost blur <span id="blurVal" class="value"></span></label>
+      <label>Channel blur <span id="blurVal" class="value"></span></label>
       <input id="blurRange" type="range" min="0" max="10" step="0.5" value="0" />
     </div>
 
     <div class="control-row">
-      <label>Layer motion</label>
+      <label>Red channel color</label>
+      <input id="redColorInput" type="color" value="#ff2b3d" />
+    </div>
+
+    <div class="control-row">
+      <label>Cyan channel color</label>
+      <input id="cyanColorInput" type="color" value="#00c2ff" />
+    </div>
+
+    <div class="control-row">
+      <label>Channel direction</label>
       <button id="invertButton" class="toggle-button" type="button" aria-pressed="false">
-        Ghost lags behind
+        Red leads
       </button>
-      <div class="hint">Invert makes the main text trail while the ghost holds the leading position.</div>
+      <div class="hint">Swaps which channel leads the scroll direction, like flipping a pair of 3D glasses.</div>
     </div>
   </aside>
 
@@ -97,22 +107,22 @@
     <div class="scroll-spacer"></div>
 
     <section class="hero">
-      <p class="eyebrow">Scroll to see the effect</p>
-      <div id="demoText" class="lag-text">Double Speak</div>
+      <p class="eyebrow">Scroll to split the channels</p>
+      <div id="demoText" class="triple-vision">Triple Vision</div>
     </section>
 
     <div class="scroll-spacer"></div>
 
-    <section class="stacked-echoes" aria-label="Stacked double speak examples">
-      <div class="lag-text lag-text--stacked">Double Speak</div>
-      <div class="lag-text lag-text--stacked">Double Speak</div>
-      <div class="lag-text lag-text--stacked">Double Speak</div>
+    <section class="stacked-echoes" aria-label="Stacked triple vision examples">
+      <div class="triple-vision triple-vision--stacked">Triple Vision</div>
+      <div class="triple-vision triple-vision--stacked">Triple Vision</div>
+      <div class="triple-vision triple-vision--stacked">Triple Vision</div>
     </section>
 
     <div class="scroll-spacer"></div>
   </main>
 
-  <script src="/shared/lag-text.js"></script>
+  <script src="/shared/triple-vision-text.js"></script>
   <script src="demo.js"></script>
 </body>
 </html>
