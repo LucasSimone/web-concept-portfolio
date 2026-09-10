@@ -1,7 +1,7 @@
 /**
  * TripleVisionText
  * ----------------
- * Old-school red/cyan 3D-glasses print effect. Like LagText, it clones the
+ * Old-school red/cyan 3D-glasses print effect. Like DoubleSpeak, it clones the
  * element's text into extra layers that trail behind during scroll — but
  * instead of one grey ghost, it's two tinted ghosts (red + cyan) that split
  * apart in opposite directions as you scroll and snap back together when

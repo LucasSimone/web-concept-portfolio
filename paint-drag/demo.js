@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-  SmearText.initAll();
-  const primary = document.getElementById('demoText').__smearTextInstance;
+  PaintDrag.initAll();
+  const primary = document.getElementById('demoText').__paintDragInstance;
 
   // Presets for the sliders/toggles below. "size" is in vw, matching the
-  // font-size range input; everything else maps straight onto SmearText
+  // font-size range input; everything else maps straight onto PaintDrag
   // options.
   const PROFILES = {
     default: {

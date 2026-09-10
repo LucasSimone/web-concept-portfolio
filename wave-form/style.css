@@ -1,12 +1,7 @@
-/* Page-specific styles for the Scroll Lag Text variation.
-   Base layout/nav comes from /shared/site.css */
+/* Page-specific styles for the Letter Drift variation. */
 
 :root {
-  --font-size: 15vw;
-}
-
-.scroll-spacer {
-  height: 60vh;
+  --wave-size: clamp(48px, 9vw, 150px);
 }
 
 main {
@@ -19,68 +14,61 @@ main {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1.5rem;
+  padding: 6vh 5vw;
   text-align: center;
-  padding: 4vh 4vw;
 }
 
-.hero p.eyebrow {
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+.hero .eyebrow {
+  margin: 0;
   font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
   opacity: 0.6;
-  margin-bottom: 2rem;
 }
 
-/* --- The reusable double-speak effect --- */
-.double-speak {
+.word-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 45vh;
+}
+
+.wave-form {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.01em;
+  font-size: var(--wave-size);
+  line-height: 0.8;
+  letter-spacing: -0.08em;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  user-select: none;
+  cursor: pointer;
+}
+
+.wave-form__char {
   position: relative;
   display: inline-block;
-  max-width: 100%;
-  line-height: 1.1;
-  font-family: 'Dancing Script', cursive;
-  font-size: var(--font-size);
-  white-space: pre-wrap;
-  user-select: none;
+  will-change: transform, opacity;
+  transition: transform 60ms linear;
+  text-shadow: 0 0 0 rgba(0, 0, 0, 0.2);
 }
 
-.double-speak__front,
-.double-speak__ghost {
-  display: block;
-  color: var(--fg);
-}
-
-.double-speak__ghost {
+.wave-form__char::after {
+  content: attr(data-char);
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 0;
-  will-change: transform;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+  transform: translate(-0.08em, 0.1em);
+  z-index: -1;
   pointer-events: none;
 }
 
-.double-speak__front {
-  position: relative;
-  z-index: 1;
-  will-change: transform;
-}
-
-.stacked-echoes {
-  min-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  padding: 6vh 4vw;
-  text-align: center;
-}
-
-.double-speak--stacked {
-  font-size: clamp(48px, 8vw, 120px);
-  line-height: 0.95;
-}
-
-/* --- Control panel --- */
 .controls {
   position: fixed;
   top: 57px;
@@ -156,11 +144,12 @@ main {
   main {
     margin-right: 0;
   }
+
   .controls {
-    width: 100%;
     position: static;
+    width: 100%;
+    max-height: none;
     border-left: none;
     border-top: 1px solid #000;
   }
-  :root { --font-size: 12vw; }
 }

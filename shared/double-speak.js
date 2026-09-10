@@ -1,5 +1,5 @@
 /**
- * LagText
+ * DoubleSpeak
  * -------
  * Clones an element's text into a ghost layer that trails behind during scroll.
  */
@@ -21,9 +21,9 @@
   const SCALE_Y = 2.3;
   const TARGET_DECAY = 0.88;
 
-  class LagText {
+  class DoubleSpeak {
     constructor(el, options = {}) {
-      if (!el) throw new Error('LagText: element is required');
+      if (!el) throw new Error('DoubleSpeak: element is required');
 
       this.el = el;
       this.options = { ...DEFAULTS, ...options };
@@ -54,7 +54,7 @@
 
     _buildDOM() {
       const el = this.el;
-      el.classList.add('lag-text');
+      el.classList.add('double-speak');
 
       if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
 
@@ -64,11 +64,11 @@
       }
 
       const front = document.createElement('span');
-      front.className = 'lag-text__front';
+      front.className = 'double-speak__front';
       front.innerHTML = el.innerHTML;
 
       const ghost = document.createElement('span');
-      ghost.className = 'lag-text__ghost';
+      ghost.className = 'double-speak__ghost';
       ghost.innerHTML = el.innerHTML;
       ghost.setAttribute('aria-hidden', 'true');
 
@@ -163,15 +163,15 @@
     return Math.max(min, Math.min(max, v));
   }
 
-  LagText.initAll = function (selector = '.lag-text', options = {}) {
+  DoubleSpeak.initAll = function (selector = '.double-speak', options = {}) {
     return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__lagTextInstance)
+      .filter((el) => !el.__doubleSpeakInstance)
       .map((el) => {
-        const instance = new LagText(el, options);
-        el.__lagTextInstance = instance;
+        const instance = new DoubleSpeak(el, options);
+        el.__doubleSpeakInstance = instance;
         return instance;
       });
   };
 
-  global.LagText = LagText;
+  global.DoubleSpeak = DoubleSpeak;
 })(window);

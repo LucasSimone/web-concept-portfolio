@@ -7,9 +7,9 @@
     fade: true,
   };
 
-  class WaveText {
+  class WaveForm {
     constructor(el, options = {}) {
-      if (!el) throw new Error('WaveText: element is required');
+      if (!el) throw new Error('WaveForm: element is required');
 
       this.el = el;
       this.options = { ...DEFAULTS, ...options };
@@ -35,7 +35,7 @@
 
       this._chars = Array.from(value).map((char, index) => {
         const span = document.createElement('span');
-        span.className = 'wave-text__char';
+        span.className = 'wave-form__char';
         const visible = char === ' ' ? '\u00A0' : char;
         span.textContent = visible;
         span.setAttribute('data-char', visible);
@@ -97,15 +97,15 @@
     }
   }
 
-  WaveText.initAll = function (selector = '.wave-text', options = {}) {
+  WaveForm.initAll = function (selector = '.wave-form', options = {}) {
     return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__waveTextInstance)
+      .filter((el) => !el.__waveFormInstance)
       .map((el) => {
-        const instance = new WaveText(el, options);
-        el.__waveTextInstance = instance;
+        const instance = new WaveForm(el, options);
+        el.__waveFormInstance = instance;
         return instance;
       });
   };
 
-  global.WaveText = WaveText;
+  global.WaveForm = WaveForm;
 })(window);

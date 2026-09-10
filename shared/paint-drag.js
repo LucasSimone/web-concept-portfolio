@@ -1,5 +1,5 @@
 /**
- * SmearText
+ * PaintDrag
  * ---------
  * The real DOM text scrolls normally with the page. A single canvas is
  * pinned to the viewport (position: fixed, full screen) and never moves.
@@ -22,7 +22,7 @@
   const MAX_DT = 1 / 20; // clamp huge dt spikes (tab throttling, etc.)
   const CAP_SPEED = 2200; // px/sec considered "fast" for stamp scaling
 
-  // One shared, viewport-fixed canvas is enough for every SmearText instance
+  // One shared, viewport-fixed canvas is enough for every PaintDrag instance
   // on the page — they all paint onto the same screen-space surface. Track
   // the most recent paint across all instances so the idle-clear logic below
   // never wipes one instance's active trail just because another went quiet.
@@ -37,7 +37,7 @@
     if (sharedCanvas) return sharedCanvas;
 
     const canvas = document.createElement('canvas');
-    canvas.className = 'smear-text__overlay';
+    canvas.className = 'paint-drag__overlay';
     canvas.setAttribute('aria-hidden', 'true');
     document.body.appendChild(canvas);
 
@@ -58,9 +58,9 @@
     return sharedCanvas;
   }
 
-  class SmearText {
+  class PaintDrag {
     constructor(el, options = {}) {
-      if (!el) throw new Error('SmearText: element is required');
+      if (!el) throw new Error('PaintDrag: element is required');
 
       this.el = el;
       this.options = { ...DEFAULTS, ...options };
@@ -81,7 +81,7 @@
 
     _prepEl() {
       const el = this.el;
-      el.classList.add('smear-text');
+      el.classList.add('paint-drag');
       const style = getComputedStyle(el);
       if (style.position === 'static') el.style.position = 'relative';
       if (style.zIndex === 'auto') el.style.zIndex = '2';
@@ -145,7 +145,7 @@
       }
       cleared = false;
 
-      // Multiple SmearText instances share this one canvas, so only decay it
+      // Multiple PaintDrag instances share this one canvas, so only decay it
       // once per real animation frame (guard against a second instance's
       // _tick firing an instant later and decaying it twice as fast).
       const realDt = (now - lastFadeTime) / 1000;
@@ -247,15 +247,15 @@
     }
   }
 
-  SmearText.initAll = function (selector = '.smear-text', options = {}) {
+  PaintDrag.initAll = function (selector = '.paint-drag', options = {}) {
     return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__smearTextInstance)
+      .filter((el) => !el.__paintDragInstance)
       .map((el) => {
-        const instance = new SmearText(el, options);
-        el.__smearTextInstance = instance;
+        const instance = new PaintDrag(el, options);
+        el.__paintDragInstance = instance;
         return instance;
       });
   };
 
-  global.SmearText = SmearText;
+  global.PaintDrag = PaintDrag;
 })(window);

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const waveText = WaveText.initAll('.wave-text')[0];
+  const waveForm = WaveForm.initAll('.wave-form')[0];
 
   const controls = {
     font: document.getElementById('fontSelect'),
@@ -26,17 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   controls.font.addEventListener('input', () => {
-    const textEl = document.querySelector('.wave-text');
+    const textEl = document.querySelector('.wave-form');
     textEl.style.fontFamily = controls.font.value;
   });
 
   controls.text.addEventListener('input', () => {
-    waveText.setText(controls.text.value);
+    waveForm.setText(controls.text.value);
   });
 
   ['amplitude', 'frequency', 'spread', 'drift'].forEach((key) => {
     controls[key].addEventListener('input', () => {
-      waveText.update({ [key]: Number(controls[key].value) });
+      waveForm.update({ [key]: Number(controls[key].value) });
       syncLabels();
     });
   });
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     controls.fade.setAttribute('aria-pressed', String(fade));
     controls.fade.textContent = fade ? 'Fading on' : 'Fading off';
-    waveText.update({ fade });
+    waveForm.update({ fade });
   });
 
   syncLabels();

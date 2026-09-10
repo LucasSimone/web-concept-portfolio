@@ -20,9 +20,9 @@ const PROFILES = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  const lagTexts = LagText.initAll();
+  const doubleSpeaks = DoubleSpeak.initAll();
 
-  const textEls = Array.from(document.querySelectorAll('.lag-text'));
+  const textEls = Array.from(document.querySelectorAll('.double-speak'));
 
   const controls = {
     profile: document.getElementById('profileSelect'),
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function updateAll(options) {
-    lagTexts.forEach((lagText) => lagText.update(options));
+    doubleSpeaks.forEach((doubleSpeak) => doubleSpeak.update(options));
   }
 
   function syncLabels() {
@@ -91,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   controls.text.addEventListener('input', () => {
-    lagTexts.forEach((lagText) => {
-      lagText.setText(controls.text.value);
+    doubleSpeaks.forEach((doubleSpeak) => {
+      doubleSpeak.setText(controls.text.value);
     });
   });
 

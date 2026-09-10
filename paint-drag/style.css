@@ -31,10 +31,10 @@ main {
   margin-bottom: 2rem;
 }
 
-/* --- The reusable smear-text effect --- */
-/* The text itself just sits in normal document flow — SmearText lifts it
+/* --- The reusable paint-drag effect --- */
+/* The text itself just sits in normal document flow — PaintDrag lifts it
    above the fixed overlay canvas so it stays crisp while it scrolls. */
-.smear-text {
+.paint-drag {
   display: inline-block;
   max-width: 100%;
   line-height: 1.1;
@@ -54,7 +54,7 @@ main {
 
 /* Fixed, full-viewport canvas that never scrolls — this is what the text
    "paints" onto as it moves past, leaving a fading mark on the screen. */
-.smear-text__overlay {
+.paint-drag__overlay {
   position: fixed;
   inset: 0;
   z-index: 1;
