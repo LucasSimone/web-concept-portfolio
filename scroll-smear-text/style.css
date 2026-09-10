@@ -1,0 +1,140 @@
+/* Page-specific styles for the Scroll Smear Text (Paint Drag) variation.
+   Base layout/nav comes from /shared/site.css */
+
+:root {
+  --font-size: 10vw;
+}
+
+.scroll-spacer {
+  height: 60vh;
+}
+
+main {
+  margin-right: 300px;
+}
+
+.hero {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4vh 4vw;
+}
+
+.hero p.eyebrow {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 2rem;
+}
+
+/* --- The reusable smear-text effect --- */
+/* The text itself just sits in normal document flow — SmearText lifts it
+   above the fixed overlay canvas so it stays crisp while it scrolls. */
+.smear-text {
+  display: inline-block;
+  max-width: 100%;
+  line-height: 1.1;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: var(--font-size);
+  white-space: pre-wrap;
+  user-select: none;
+  color: var(--fg);
+}
+
+/* Fixed, full-viewport canvas that never scrolls — this is what the text
+   "paints" onto as it moves past, leaving a fading mark on the screen. */
+.smear-text__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select,
+.control-row input[type="text"],
+.toggle-button {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.toggle-button {
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle-button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+  .controls {
+    width: 100%;
+    position: static;
+    border-left: none;
+    border-top: 1px solid #000;
+  }
+  :root { --font-size: 12vw; }
+}

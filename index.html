@@ -66,6 +66,27 @@
       cursor: default;
     }
     .placeholder-card:hover { background: #fff; }
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 6vw 3vh;
+      font-size: 13px;
+    }
+    .filter-bar label {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    .filter-bar select {
+      padding: 6px 10px;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      font-size: 13px;
+    }
+    .variation-card[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -73,8 +94,9 @@
     <a class="brand" href="/index.html">Text Effects Lab</a>
     <div class="links">
       <a href="/index.html" aria-current="page">Home</a>
-      <a href="/scroll-lag-text/index.html">Double Speak</a>
+      <a href="/double-speak/index.html">Double Speak</a>
       <a href="/letter-wave/index.html">Wave Form</a>
+      <a href="/scroll-smear-text/index.html">Paint Drag</a>
     </div>
   </nav>
 
@@ -87,30 +109,59 @@
     </p>
   </section>
 
-  <div class="variation-grid">
-    <a class="variation-card" href="/scroll-lag-text/index.html">
+  <div class="filter-bar">
+    <label for="typeFilter">Filter by type</label>
+    <select id="typeFilter">
+      <option value="all" selected>All effects</option>
+      <option value="scroll">Scroll-driven</option>
+      <option value="pointer">Pointer-driven</option>
+    </select>
+  </div>
+
+  <div class="variation-grid" id="variationGrid">
+    <a class="variation-card" href="/double-speak/index.html" data-type="scroll">
       <div>
-        <div class="tag">01 — Double Speak</div>
+        <div class="tag">01 — Double Speak — Scroll</div>
         <h2>Double Speak</h2>
         <p>A ghost copy of the text trails behind as you scroll, like a pen stroke drawn twice.</p>
       </div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/letter-wave/index.html">
+    <a class="variation-card" href="/letter-wave/index.html" data-type="pointer">
       <div>
-        <div class="tag">02 — Wave Form</div>
+        <div class="tag">02 — Wave Form — Pointer</div>
         <h2>Wave Form</h2>
         <p>Each character wriggles in a slow wave, pushing the text into a fluid, drifting rhythm.</p>
       </div>
       <div class="go">View →</div>
     </a>
+    <a class="variation-card" href="/scroll-smear-text/index.html" data-type="scroll">
+      <div>
+        <div class="tag">03 — Paint Drag — Scroll</div>
+        <h2>Paint Drag</h2>
+        <p>Text smears like wet paint dragged by a brush, streaking and fading as you scroll.</p>
+      </div>
+      <div class="go">View →</div>
+    </a>
     <div class="variation-card placeholder-card">
       <div>
-        <div class="tag">03 — Coming soon</div>
+        <div class="tag">04 — Coming soon</div>
         <h2>Next variation</h2>
         <p>More effects will appear here as they're added.</p>
       </div>
     </div>
   </div>
+
+  <script>
+    const typeFilter = document.getElementById('typeFilter');
+    const cards = Array.from(document.querySelectorAll('#variationGrid .variation-card[data-type]'));
+
+    typeFilter.addEventListener('change', () => {
+      const value = typeFilter.value;
+      cards.forEach((card) => {
+        card.hidden = value !== 'all' && card.dataset.type !== value;
+      });
+    });
+  </script>
 </body>
 </html>
