@@ -15,9 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     pain: {
       size: 12, smearLength: 0, spread: 80, fadeTime: 0, density: 0, blur: 10, skew: true,
     },
-    'smoke-fly': {
-      size: 12, smearLength: 320, spread: 0, fadeTime: 0, density: 24, blur: 10, skew: true,
-    },
   };
 
   const controls = {
