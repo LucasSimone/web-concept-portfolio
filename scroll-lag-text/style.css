@@ -61,6 +61,23 @@ main {
 .lag-text__front {
   position: relative;
   z-index: 1;
+  will-change: transform;
+}
+
+.stacked-echoes {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 6vh 4vw;
+  text-align: center;
+}
+
+.lag-text--stacked {
+  font-size: clamp(48px, 8vw, 120px);
+  line-height: 0.95;
 }
 
 /* --- Control panel --- */
@@ -103,13 +120,24 @@ main {
 }
 
 .control-row select,
-.control-row input[type="text"] {
+.control-row input[type="text"],
+.toggle-button {
   width: 100%;
   padding: 6px;
   border: 1px solid #000;
   background: #fff;
   color: #000;
   font-size: 13px;
+}
+
+.toggle-button {
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle-button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
 }
 
 .controls .value {

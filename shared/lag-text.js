@@ -12,6 +12,8 @@
     opacity: 0.5,
     blur: 0,
     color: null,
+    inverted: false,
+    rebound: 0,
     scrollSource: null,
   };
 
@@ -29,6 +31,8 @@
       this._scrollY = this._getScrollPos();
       this._x = 0;
       this._y = 0;
+      this._vx = 0;
+      this._vy = 0;
       this._targetX = 0;
       this._targetY = 0;
 
@@ -98,15 +102,43 @@
       const { lag, offsetX, offsetY } = this.options;
       const ease = clamp(lag, 0.01, 1);
 
-      this._x += (this._targetX - this._x) * ease;
-      this._y += (this._targetY - this._y) * ease;
+      const rebound = clamp(this.options.rebound, 0, 1);
+
+      if (rebound > 0) {
+        const stiffness = ease * (0.08 + rebound * 0.22);
+        const damping = 0.65 + rebound * 0.28;
+
+        this._vx += (this._targetX - this._x) * stiffness;
+        this._vy += (this._targetY - this._y) * stiffness;
+        this._vx *= damping;
+        this._vy *= damping;
+        this._x += this._vx;
+        this._y += this._vy;
+      } else {
+        this._x += (this._targetX - this._x) * ease;
+        this._y += (this._targetY - this._y) * ease;
+        this._vx = 0;
+        this._vy = 0;
+      }
+
       this._targetX *= TARGET_DECAY;
       this._targetY *= TARGET_DECAY;
 
-      if (offsetX <= 0) this._x = 0;
-      if (offsetY <= 0) this._y = 0;
+      if (offsetX <= 0) {
+        this._x = 0;
+        this._vx = 0;
+      }
+      if (offsetY <= 0) {
+        this._y = 0;
+        this._vy = 0;
+      }
 
-      this.ghostEl.style.transform = `translate(${this._x.toFixed(2)}px, ${this._y.toFixed(2)}px)`;
+      const transform = `translate(${this._x.toFixed(2)}px, ${this._y.toFixed(2)}px)`;
+      const movingEl = this.options.inverted ? this.frontEl : this.ghostEl;
+      const fixedEl = this.options.inverted ? this.ghostEl : this.frontEl;
+
+      movingEl.style.transform = transform;
+      fixedEl.style.transform = '';
       this._raf = requestAnimationFrame(this._tick);
     }
 
