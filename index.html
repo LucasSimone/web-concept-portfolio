@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Text Effects Lab</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <style>
+    .home-hero {
+      padding: 8vh 6vw 4vh;
+      max-width: 720px;
+    }
+    .home-hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      margin: 0 0 12px;
+    }
+    .home-hero p {
+      font-size: 15px;
+      line-height: 1.6;
+      opacity: 0.75;
+      max-width: 60ch;
+    }
+    .variation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      background: #000;
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+    }
+    .variation-card {
+      background: #fff;
+      padding: 28px;
+      text-decoration: none;
+      color: #000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 160px;
+      justify-content: space-between;
+      transition: background 0.15s ease;
+    }
+    .variation-card:hover { background: #f5f5f5; }
+    .variation-card .tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.55;
+    }
+    .variation-card h2 {
+      font-size: 20px;
+      margin: 0;
+    }
+    .variation-card p {
+      font-size: 13px;
+      opacity: 0.7;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .variation-card .go {
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    .placeholder-card {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .placeholder-card:hover { background: #fff; }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Text Effects Lab</a>
+    <div class="links">
+      <a href="/index.html" aria-current="page">Home</a>
+      <a href="/scroll-lag-text/index.html">Scroll Lag Text</a>
+    </div>
+  </nav>
+
+  <section class="home-hero">
+    <h1>Text Effects Lab</h1>
+    <p>
+      A collection of black &amp; white text animation experiments. Pick a
+      variation below to see it live and tune its parameters with the
+      on-page controls.
+    </p>
+  </section>
+
+  <div class="variation-grid">
+    <a class="variation-card" href="/scroll-lag-text/index.html">
+      <div>
+        <div class="tag">01 — Scroll</div>
+        <h2>Scroll Lag Text</h2>
+        <p>A ghost copy of the text trails behind as you scroll, like a pen stroke drawn twice.</p>
+      </div>
+      <div class="go">View →</div>
+    </a>
+    <div class="variation-card placeholder-card">
+      <div>
+        <div class="tag">02 — Coming soon</div>
+        <h2>Next variation</h2>
+        <p>More effects will appear here as they're added.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

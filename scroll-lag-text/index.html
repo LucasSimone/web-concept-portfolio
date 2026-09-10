@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scroll Lag Text — Text Effects Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Caveat:wght@400..700&family=Pacifico&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared/site.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Text Effects Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+      <a href="/scroll-lag-text/index.html" aria-current="page">Scroll Lag Text</a>
+    </div>
+  </nav>
+
+  <aside class="controls">
+    <h2>Controls</h2>
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Dancing Script', cursive" selected>Dancing Script (cursive)</option>
+        <option value="'Caveat', cursive">Caveat (cursive)</option>
+        <option value="'Pacifico', cursive">Pacifico (cursive)</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="Georgia, serif">Georgia (serif)</option>
+        <option value="system-ui, sans-serif">System (sans-serif)</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Double Speak" />
+    </div>
+
+    <div class="control-row">
+      <label>Font size <span id="sizeVal" class="value"></span></label>
+      <input id="sizeRange" type="range" min="4" max="25" step="0.5" value="15" />
+    </div>
+
+    <div class="control-row">
+      <label>Max offset X <span id="offsetXVal" class="value"></span></label>
+      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Max offset Y <span id="offsetYVal" class="value"></span></label>
+      <input id="offsetYRange" type="range" min="0" max="120" step="1" value="60" />
+    </div>
+
+    <div class="control-row">
+      <label>Lag (return speed) <span id="lagVal" class="value"></span></label>
+      <input id="lagRange" type="range" min="0.01" max="0.3" step="0.005" value="0.15" />
+      <div class="hint">How quickly the ghost follows the scroll trail. Lower = softer, higher = snappier.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Scroll speed sensitivity <span id="speedVal" class="value"></span></label>
+      <input id="speedRange" type="range" min="0.1" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label>Ghost opacity <span id="opacityVal" class="value"></span></label>
+      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label>Ghost blur <span id="blurVal" class="value"></span></label>
+      <input id="blurRange" type="range" min="0" max="10" step="0.5" value="0" />
+    </div>
+  </aside>
+
+  <main>
+    <div class="scroll-spacer"></div>
+
+    <section class="hero">
+      <p class="eyebrow">Scroll to see the effect</p>
+      <div id="demoText" class="lag-text">Double Speak</div>
+    </section>
+
+    <div class="scroll-spacer"></div>
+    <div class="scroll-spacer"></div>
+  </main>
+
+  <script src="/shared/lag-text.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

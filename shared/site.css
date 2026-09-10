@@ -1,0 +1,57 @@
+/* Shared base styles + top nav used across every page in the app. */
+
+:root {
+  --bg: #ffffff;
+  --fg: #000000;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  font-family: system-ui, sans-serif;
+}
+
+a { color: inherit; }
+
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #000;
+}
+
+.site-nav .brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.site-nav .links {
+  display: flex;
+  gap: 18px;
+  font-size: 13px;
+}
+
+.site-nav .links a {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.site-nav .links a:hover,
+.site-nav .links a[aria-current="page"] {
+  border-bottom-color: #000;
+}
