@@ -43,6 +43,13 @@ main {
   white-space: pre-wrap;
   user-select: none;
   color: var(--fg);
+  position: relative;
+  z-index: 2;
+  /* Minimal white halo so the live text stays legible over its own
+     black smear trail underneath, without looking like a hard outline. */
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.85),
+    0 0 2px rgba(255, 255, 255, 0.9);
 }
 
 /* Fixed, full-viewport canvas that never scrolls — this is what the text
