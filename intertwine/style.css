@@ -1,0 +1,151 @@
+main {
+  overflow: clip;
+}
+
+.intertwine-intro,
+.intertwine-outro {
+  min-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10vh 10vw;
+}
+
+.intertwine-intro {
+  max-width: 720px;
+}
+
+.eyebrow,
+.stage-label,
+.scroll-cue,
+.progress-readout {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  opacity: 0.55;
+}
+
+.intertwine-intro h1 {
+  margin: 0;
+  font-size: clamp(64px, 16vw, 190px);
+  line-height: 0.82;
+  letter-spacing: -0.08em;
+  font-weight: 700;
+}
+
+.intro {
+  max-width: 34rem;
+  margin: 38px 0 0;
+  font-size: clamp(18px, 2.5vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.scroll-cue {
+  margin-top: 70px;
+  opacity: 0.55;
+}
+
+.intertwine-stage {
+  position: relative;
+  height: 300vh;
+  background: #f2f2f0;
+}
+
+.stage-label {
+  position: absolute;
+  top: 28px;
+  left: 5vw;
+  z-index: 1;
+  opacity: 0.5;
+}
+
+.intertwine-art {
+  display: block;
+  width: min(72vw, 800px);
+  height: 100vh;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.intertwine-path {
+  fill: none;
+  stroke: #000;
+  stroke-width: 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.intertwine-path--two {
+  stroke: #555;
+  stroke-width: 3;
+}
+
+.progress-readout {
+  position: absolute;
+  right: 5vw;
+  bottom: 28px;
+  display: flex;
+  gap: 12px;
+  opacity: 0.5;
+}
+
+.progress-readout span:last-child {
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.intertwine-outro {
+  min-height: 80vh;
+  max-width: 680px;
+}
+
+.intertwine-outro h2 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(42px, 8vw, 96px);
+  line-height: 0.9;
+  letter-spacing: -0.07em;
+}
+
+.intertwine-outro p:last-child {
+  max-width: 34rem;
+  margin-top: 32px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .intertwine-intro,
+  .intertwine-outro {
+    padding-right: 7vw;
+    padding-left: 7vw;
+  }
+
+  .intertwine-stage {
+    height: 250vh;
+  }
+
+  .intertwine-art {
+    width: 96vw;
+  }
+
+  .progress-readout {
+    right: 7vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intertwine-stage {
+    height: auto;
+    padding: 12vh 0;
+  }
+
+  .intertwine-art {
+    height: auto;
+  }
+}
