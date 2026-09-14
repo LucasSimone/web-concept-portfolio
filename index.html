@@ -260,6 +260,29 @@
   </div>
   </div>
 
+  <section class="home-hero lab-section">
+    <h1>Background Lab</h1>
+    <p>
+      Living backgrounds you can drop onto a whole page or a single element
+      with one class — black &amp; white, always moving.
+    </p>
+  </section>
+
+  <div class="carousel" id="backgroundCarousel">
+  <div class="carousel-line" data-carousel-line="top"></div>
+  <div class="carousel-line" data-carousel-line="bottom"></div>
+  <div class="carousel-track" id="backgroundGrid">
+    <a class="variation-card" href="/circuit-board/index.html" data-type="continuous">
+      <div>
+        <div class="tag">01 — Circuit Board — Continuous</div>
+        <h2>Circuit Board</h2>
+        <p>A black &amp; white PCB pattern that breathes and pulses on its own — apply it to a page or any element with one class.</p>
+      </div>
+      <div class="go">View →</div>
+    </a>
+  </div>
+  </div>
+
   <script src="/shared/carousel.js"></script>
   <script>
     function setupFilter(filterId, gridId, onChange) {
@@ -278,6 +301,7 @@
     const variationCarousel = new Carousel(document.getElementById('variationCarousel'));
     const conceptCarousel = new Carousel(document.getElementById('conceptCarousel'));
     new Carousel(document.getElementById('animationCarousel'));
+    new Carousel(document.getElementById('backgroundCarousel'));
 
     setupFilter('typeFilter', 'variationGrid', () => variationCarousel.refresh());
     setupFilter('conceptTypeFilter', 'conceptGrid', () => conceptCarousel.refresh());
