@@ -15,11 +15,11 @@
  * cards in stacking order, so the focused card visibly overflows past them
  * instead of being boxed in by them.
  *
- * Cards are packed edge-to-edge — each card's width shrinks with distance
- * from the focused one (same exponential falloff as its opacity), and
- * every card's screen position is the cumulative sum of its neighbors'
- * half-widths, so there's never a gap between them even as the strip
- * compresses toward the background.
+ * Cards are packed edge-to-edge — each card's width shrinks (exponential
+ * falloff, staying fully opaque throughout) with distance from the focused
+ * one, and every card's screen position is the cumulative sum of its
+ * neighbors' half-widths, so there's never a gap between them even as the
+ * strip compresses toward the background.
  *
  * Input has two distinct phases. While wheel/drag input is actively
  * arriving, position tracks it directly, 1:1, with zero resistance. Once
@@ -231,10 +231,8 @@
       this._cards.forEach((card, i) => {
         const ad = Math.abs(i - this._pos);
         const x = centers[i] + shift;
-        const opacity = clamp(1 - ad * 0.32, 0.05, 1);
 
         card.style.transform = `translate(calc(${x.toFixed(2)}px - 50%), -50%) scale(${scales[i].toFixed(3)})`;
-        card.style.opacity = opacity.toFixed(3);
         card.style.zIndex = Math.round(1000 - ad * 10);
       });
     }
