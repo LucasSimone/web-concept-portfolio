@@ -3,8 +3,17 @@
  * --------
  * Drives a set of absolutely-positioned cards with wheel/drag input. Unlike
  * a normal slider, the "enlarged" (focused) card's on-screen anchor point
- * itself sweeps across the viewport as you move through the list: left edge
- * at the first card, center at the midpoint, right edge at the last card.
+ * itself sweeps across the viewport as you move through the list: its left
+ * edge flush with the viewport's left edge at the first card, centered at
+ * the midpoint, its right edge flush with the viewport's right edge at the
+ * last card.
+ *
+ * The outer track box is sized to fit the tallest (focused) card exactly,
+ * so it never has to clip anything vertically. The top/bottom guide lines
+ * are separate elements positioned inside it at the next-door neighbor's
+ * height instead — one step down the same scale curve — and sit behind the
+ * cards in stacking order, so the focused card visibly overflows past them
+ * instead of being boxed in by them.
  *
  * Cards are packed edge-to-edge — each card's width shrinks with distance
  * from the focused one (same exponential falloff as its opacity), and
@@ -26,8 +35,6 @@
  */
 (function (global) {
   const DEFAULTS = {
-    leftAnchor: 0.2,
-    rightAnchor: 0.8,
     cardStep: 200,
     minScale: 0.42,
     scaleDecay: 0.75,
@@ -43,7 +50,9 @@
     constructor(root, options = {}) {
       if (!root) throw new Error('Carousel: root element is required');
       this.root = root;
-      this.track = root.firstElementChild;
+      this.track = root.querySelector('.carousel-track');
+      this.topLine = root.querySelector('[data-carousel-line="top"]');
+      this.bottomLine = root.querySelector('[data-carousel-line="bottom"]');
       this.options = { ...DEFAULTS, ...options };
 
       this._pos = 0;
@@ -82,16 +91,30 @@
     refresh() {
       this._cards = Array.from(this.track.children).filter((el) => !el.hidden);
       this._maxIndex = Math.max(0, this._cards.length - 1);
-      this._width = this.root.clientWidth;
-      this._cardWidth = this._cards[0] ? this._cards[0].getBoundingClientRect().width : 0;
+      this._measure();
       this._pos = 0;
       this._velocity = 0;
       this._render();
     }
 
     _onResize() {
+      this._measure();
+    }
+
+    // Reads the natural (unscaled) card box — transforms don't affect
+    // layout size, so any one visible card gives the shared base size —
+    // and places the guide lines at a distance-1 neighbor's height so they
+    // land exactly on its top/bottom edge.
+    _measure() {
       this._width = this.root.clientWidth;
-      if (this._cards[0]) this._cardWidth = this._cards[0].getBoundingClientRect().width;
+      const card = this._cards[0];
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      this._cardWidth = rect.width;
+      const neighborScale = this.options.minScale + (1 - this.options.minScale) * Math.exp(-this.options.scaleDecay);
+      const halfNeighborHeight = (rect.height * neighborScale) / 2;
+      if (this.topLine) this.topLine.style.top = `calc(50% - ${halfNeighborHeight.toFixed(2)}px)`;
+      if (this.bottomLine) this.bottomLine.style.top = `calc(50% + ${halfNeighborHeight.toFixed(2)}px)`;
     }
 
     _onWheel(event) {
@@ -169,12 +192,16 @@
     }
 
     _render() {
-      const { leftAnchor, rightAnchor, minScale, scaleDecay } = this.options;
+      const { minScale, scaleDecay } = this.options;
       const n = this._cards.length;
       if (n === 0) return;
 
+      // Anchor sweeps between the two positions where the focused (full
+      // width) card sits flush against the left/right edge of the track —
+      // not a fixed fraction of it — so there's never a gap at either end.
       const p = this._maxIndex > 0 ? this._pos / this._maxIndex : 0.5;
-      const anchorPx = (leftAnchor + p * (rightAnchor - leftAnchor)) * this._width;
+      const halfCard = this._cardWidth / 2;
+      const anchorPx = halfCard + p * (this._width - this._cardWidth);
 
       // Scale every card off its distance from the focus point, then pack
       // them edge-to-edge (cumulative half-widths) so nothing gaps.
