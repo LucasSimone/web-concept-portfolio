@@ -115,11 +115,5 @@ main {
   main {
     margin-right: 0;
   }
-  .controls {
-    width: 100%;
-    position: static;
-    border-left: none;
-    border-top: 1px solid #000;
-  }
   :root { --font-size: 12vw; }
 }

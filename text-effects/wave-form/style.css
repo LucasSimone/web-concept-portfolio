@@ -115,12 +115,4 @@ main {
   main {
     margin-right: 0;
   }
-
-  .controls {
-    position: static;
-    width: 100%;
-    max-height: none;
-    border-left: none;
-    border-top: 1px solid #000;
-  }
 }

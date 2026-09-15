@@ -38,6 +38,8 @@ a { color: inherit; }
   text-decoration: none;
   font-size: 14px;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .site-nav .links {
@@ -65,6 +67,7 @@ a { color: inherit; }
 .btn {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 6px 12px;
   border: 1px solid #000;
   font-size: 12px;
@@ -79,6 +82,21 @@ a { color: inherit; }
 .btn:hover {
   background: #000;
   color: #fff;
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .site-nav .btn {
+    padding: 8px;
+  }
+  .site-nav .btn .btn-label {
+    display: none;
+  }
 }
 
 /* --- Docs --- */
@@ -273,5 +291,98 @@ a { color: inherit; }
     height: auto;
     border-right: none;
     border-bottom: 1px solid #000;
+  }
+}
+
+/* --- Slide-out controls panel ---
+   Each demo page defines its own `.controls` sidebar (position, width,
+   etc.) in its local style.css. This block owns the generic open/close
+   mechanics shared by all of them, driven by a `.controls-open` /
+   `.controls-closed` class on <body> that /shared/controls-toggle.js
+   applies. Open by default on desktop, closed by default on mobile. */
+
+.controls {
+  transform: translateX(0);
+  transition: transform 0.25s ease;
+}
+
+main {
+  transition: margin-right 0.25s ease;
+}
+
+body.controls-closed .controls {
+  transform: translateX(100%);
+}
+
+body.controls-closed main {
+  margin-right: 0 !important;
+}
+
+.controls-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #000;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.controls-close:hover {
+  opacity: 0.6;
+}
+
+.controls-open-tab,
+.controls-close-tab {
+  position: fixed;
+  top: 73px;
+  z-index: 16;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.controls-open-tab {
+  right: 0;
+  border-right: none;
+}
+
+.controls-close-tab {
+  right: 300px;
+  border-right: none;
+  transform: translateX(0);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+body.controls-open .controls-open-tab {
+  display: none;
+}
+
+body.controls-closed .controls-close-tab {
+  transform: translateX(300px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0 !important;
   }
 }

@@ -130,11 +130,5 @@ main {
   main {
     margin-right: 0;
   }
-  .controls {
-    width: 100%;
-    position: static;
-    border-left: none;
-    border-top: 1px solid #000;
-  }
   :root { --type-pan-size: 36px; }
 }
