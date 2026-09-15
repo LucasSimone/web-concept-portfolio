@@ -670,8 +670,12 @@
     WaveForm.initAll('.variation-card h2.wave-form', {
       amplitude: 6, frequency: 0.8, spread: 1.1, drift: 0.6,
     });
+    // Mirrors the Minimal preset's crisp, no-smear character (see the Paint
+    // Drag demo page) - blur is kept scaled down for this card's 28px title
+    // rather than the preset's blur:10, since blur is an absolute pixel
+    // value tuned for the demo's much larger headline text.
     PaintDrag.initAll('.variation-card h2.paint-drag', {
-      smearLength: 40, spread: 6, blur: 3, fadeTime: 0.5,
+      smearLength: 0, spread: 0, blur: 2, fadeTime: 0.1, density: 0,
     });
     const [inFlightOutCard] = InFlightOut.initAll('.variation-card h2.in-flight-out', {
       scatter: 0.45, maxDistance: 60, rotation: 0.4, maxAngle: 40,

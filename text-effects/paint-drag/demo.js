@@ -14,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     pain: {
       size: 12, smearLength: 0, spread: 80, fadeTime: 0, density: 0, blur: 10, skew: true,
     },
+    // Matches the tuned options passed to PaintDrag on the home page's
+    // small carousel-card preview (h2.paint-drag, 28px) - smearLength and
+    // spread are absolute pixel values, not proportional to font size, so
+    // the "Default" profile's numbers (meant for large headline text)
+    // balloon far past the letters themselves at card scale. Keep this in
+    // sync with index.html's PaintDrag.initAll('.variation-card h2.paint-drag', ...) call.
+    small: {
+      size: 2, smearLength: 8, spread: 1, fadeTime: 0.4, density: 3, blur: 2, skew: true,
+    },
   };
 
   const controls = {

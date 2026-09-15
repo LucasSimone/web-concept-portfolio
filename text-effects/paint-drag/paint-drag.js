@@ -23,7 +23,9 @@
   user-select: none;
   color: var(--fg, #000);
   position: relative;
-  z-index: 2;
+  /* Sits one above the overlay's own max z-index below, so the live text
+     always stays crisp on top of its own trail (see the overlay rule). */
+  z-index: 2147483647;
   text-shadow:
     0 0 6px rgba(255, 255, 255, 0.85),
     0 0 2px rgba(255, 255, 255, 0.9);
@@ -32,7 +34,14 @@
 .paint-drag__overlay {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  /* Near-max z-index: this overlay must win against arbitrary host-page
+     content wherever it's dropped in, including elements with their own
+     aggressively high z-index (e.g. this repo's own home page carousel,
+     whose absolutely-positioned cards reach into the 900s for their own
+     wheel-layering) - a drop-in effect can't assume it knows every
+     z-index scheme on every page that might use it. One below max so the
+     .paint-drag text rule above can still out-rank it. */
+  z-index: 2147483646;
   pointer-events: none;
 }
 `;
@@ -128,6 +137,17 @@
     _getCenter() {
       const rect = this.el.getBoundingClientRect();
       return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+
+    // Ratio of the element's actual rendered box to its unscaled layout box
+    // — 1 normally, but < 1 when a CSS transform (e.g. the home page
+    // carousel shrinking off-focus cards) scales the element down. Without
+    // this, the canvas stamp is drawn at the element's raw font-size and
+    // ends up larger than the text actually is on screen.
+    _getScale() {
+      const width = this.el.offsetWidth;
+      if (!width) return 1;
+      return this.el.getBoundingClientRect().width / width;
     }
 
     _tick() {
@@ -230,7 +250,8 @@
       const trailColor = color || getComputedStyle(this.el).color || '#000';
       const angle = Math.atan2(to.y - from.y, to.x - from.x);
       const style = getComputedStyle(this.el);
-      const font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const fontSize = parseFloat(style.fontSize) * this._getScale();
+      const font = `${style.fontStyle} ${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
       const text = this.el.dataset.text;
 
       ctx.save();
