@@ -3,10 +3,11 @@
  * -------------------
  * Every page includes the same static `.site-nav` markup (brand + Home
  * link) and then this script, which adds the parts that depend on where
- * you are: a site-wide Docs link, and — only on a page whose URL matches
- * an entry in EFFECTS_MANIFEST — "Download JS" / "View Docs" buttons on
- * the right. Matching is by URL rather than per-page data attributes so
- * adding a new effect only ever means adding one manifest entry.
+ * you are: site-wide Docs and Contact links, and — only on a page whose
+ * URL matches an entry in EFFECTS_MANIFEST — "Download JS" / "View Docs"
+ * buttons on the right. Matching is by URL rather than per-page data
+ * attributes so adding a new effect only ever means adding one manifest
+ * entry.
  */
 (function () {
   var DOWNLOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
@@ -45,20 +46,26 @@
     }) || null;
   }
 
+  function addNavLink(links, href, label, dataAttr, activePrefix) {
+    if (links.querySelector('[' + dataAttr + ']')) return;
+    var link = document.createElement('a');
+    link.href = href;
+    link.textContent = label;
+    link.setAttribute(dataAttr, '');
+    if (window.location.pathname.indexOf(activePrefix) === 0) {
+      link.setAttribute('aria-current', 'page');
+    }
+    links.appendChild(link);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var nav = document.querySelector('.site-nav');
     if (!nav) return;
 
     var links = nav.querySelector('.links');
-    if (links && !links.querySelector('[data-docs-link]')) {
-      var docsLink = document.createElement('a');
-      docsLink.href = '/docs/index.html';
-      docsLink.textContent = 'Docs';
-      docsLink.setAttribute('data-docs-link', '');
-      if (window.location.pathname.indexOf('/docs/') === 0) {
-        docsLink.setAttribute('aria-current', 'page');
-      }
-      links.appendChild(docsLink);
+    if (links) {
+      addNavLink(links, '/docs/index.html', 'Docs', 'data-docs-link', '/docs/');
+      addNavLink(links, '/contact/index.html', 'Contact', 'data-contact-link', '/contact/');
     }
 
     var entry = currentEntry();

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <style>
+    .contact-hero {
+      padding: 8vh 6vw 4vh;
+      max-width: 560px;
+    }
+    .contact-hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      margin: 0 0 12px;
+    }
+    .contact-hero p {
+      font-size: 15px;
+      line-height: 1.6;
+      opacity: 0.75;
+    }
+    .contact-form {
+      padding: 0 6vw 8vh;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .contact-form label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #000;
+      background: #fff;
+      color: #000;
+      font: inherit;
+      font-size: 14px;
+    }
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+      outline: 2px solid #000;
+      outline-offset: 2px;
+    }
+    .contact-form textarea {
+      resize: vertical;
+      min-height: 140px;
+    }
+    .contact-form button {
+      align-self: flex-start;
+    }
+    /* Honeypot: hidden from sighted users and off the tab order, but still
+       present in the DOM for bots that fill every field indiscriminately. */
+    .contact-form .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    .contact-status {
+      font-size: 13px;
+      min-height: 1.4em;
+    }
+    .contact-status[data-state="ok"] { opacity: 0.75; }
+    .contact-status[data-state="error"] { color: #b00000; }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links"></div>
+  </nav>
+
+  <section class="contact-hero">
+    <h1>Get in touch</h1>
+    <p>
+      Have a project in mind, a question about one of these effects, or an
+      inquiry about custom work? Send a message below.
+    </p>
+  </section>
+
+  <form class="contact-form" id="contactForm" novalidate>
+    <div>
+      <label for="name">Name</label>
+      <input id="name" name="name" type="text" autocomplete="name" required />
+    </div>
+    <div>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required />
+    </div>
+    <div>
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required></textarea>
+    </div>
+    <div class="hp-field" aria-hidden="true">
+      <label for="hpField">Leave this field blank</label>
+      <input id="hpField" name="hpField" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+    <button class="btn" type="submit">Send</button>
+    <p class="contact-status" id="contactStatus" role="status"></p>
+  </form>
+
+  <script>
+    (function () {
+      var form = document.getElementById('contactForm');
+      var status = document.getElementById('contactStatus');
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        status.textContent = 'Sending…';
+        status.removeAttribute('data-state');
+
+        var payload = {
+          name: form.name.value,
+          email: form.email.value,
+          message: form.message.value,
+          hp_field: form.hpField.value,
+        };
+
+        fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+          .then(function (res) {
+            return res.json().then(function (body) {
+              return { ok: res.ok, body: body };
+            });
+          })
+          .then(function (result) {
+            if (result.ok) {
+              status.textContent = "Thanks — I'll get back to you soon.";
+              status.setAttribute('data-state', 'ok');
+              form.reset();
+            } else {
+              status.textContent = result.body.error || 'Something went wrong.';
+              status.setAttribute('data-state', 'error');
+            }
+          })
+          .catch(function () {
+            status.textContent = 'Something went wrong. Please try again.';
+            status.setAttribute('data-state', 'error');
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
