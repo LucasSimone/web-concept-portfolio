@@ -1,0 +1,76 @@
+
+    <div class="control-row">
+      <label>Profile</label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="rebound">Rebound</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Dancing Script', cursive" selected>Dancing Script (cursive)</option>
+        <option value="'Caveat', cursive">Caveat (cursive)</option>
+        <option value="'Pacifico', cursive">Pacifico (cursive)</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="Georgia, serif">Georgia (serif)</option>
+        <option value="system-ui, sans-serif">System (sans-serif)</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Double Speak" />
+    </div>
+
+    <div class="control-row">
+      <label>Font size <span id="sizeVal" class="value"></span></label>
+      <input id="sizeRange" type="range" min="4" max="25" step="0.5" value="15" />
+    </div>
+
+    <div class="control-row">
+      <label>Max offset X <span id="offsetXVal" class="value"></span></label>
+      <input id="offsetXRange" type="range" min="0" max="120" step="1" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Max offset Y <span id="offsetYVal" class="value"></span></label>
+      <input id="offsetYRange" type="range" min="0" max="120" step="1" value="60" />
+    </div>
+
+    <div class="control-row">
+      <label>Lag (return speed) <span id="lagVal" class="value"></span></label>
+      <input id="lagRange" type="range" min="0.01" max="0.3" step="0.005" value="0.15" />
+      <div class="hint">How quickly the ghost follows the scroll trail. Lower = softer, higher = snappier.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Rebound <span id="reboundVal" class="value"></span></label>
+      <input id="reboundRange" type="range" min="0" max="2" step="0.05" value="0" />
+      <div class="hint">Adds springy overshoot as the lagging layer returns to the main text.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Scroll speed sensitivity <span id="speedVal" class="value"></span></label>
+      <input id="speedRange" type="range" min="0.1" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label>Ghost opacity <span id="opacityVal" class="value"></span></label>
+      <input id="opacityRange" type="range" min="0" max="1" step="0.05" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label>Ghost blur <span id="blurVal" class="value"></span></label>
+      <input id="blurRange" type="range" min="0" max="10" step="0.5" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Layer motion</label>
+      <button id="invertButton" class="toggle-button" type="button" aria-pressed="false">
+        Ghost lags behind
+      </button>
+      <div class="hint">Invert makes the main text trail while the ghost holds the leading position.</div>
+    </div>

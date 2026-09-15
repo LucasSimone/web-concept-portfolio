@@ -1,0 +1,75 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll + Continuous</p>
+      <h1>Triple Vision</h1>
+      <p>
+        An old-school red/cyan 3D-glasses anaglyph print effect. Clones the
+        text into a red-tinted and cyan-tinted layer, blended with
+        <code>mix-blend-mode: multiply</code>, that split apart in opposite
+        directions and snap back together — like a misregistered print
+        separation.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/triple-vision/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/triple-vision/triple-vision.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="triple-vision.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
+        first use, so no companion CSS file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="triple-vision"&gt;Triple Vision&lt;/div&gt;
+&lt;script src="triple-vision.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.triple-vision</code> element,
+        reading its existing <code>innerHTML</code>. Switch drive mode and
+        configure options with:
+      </p>
+      <pre><code>TripleVisionText.initAll('.triple-vision', {
+  mode: 'continuous',
+  continuousProfile: 'rotate',
+  offsetX: 100,
+  offsetY: 0,
+  lag: 0.15,
+  opacity: 0.6,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>mode</code></td><td><code>'scroll'</code></td><td><code>'scroll'</code> or <code>'continuous'</code> drive mode</td></tr>
+          <tr><td><code>continuousProfile</code></td><td><code>'vibrate'</code></td><td>In continuous mode: <code>'vibrate'</code> (periodic X-axis kicks) or <code>'rotate'</code> (both channels orbit at a constant rate)</td></tr>
+          <tr><td><code>interval</code></td><td><code>3000</code></td><td>ms between vibrate pulses (continuous + vibrate only)</td></tr>
+          <tr><td><code>offsetX</code></td><td><code>0</code></td><td>Max horizontal channel displacement in px (also orbit radius in rotate mode)</td></tr>
+          <tr><td><code>offsetY</code></td><td><code>60</code></td><td>Max vertical channel displacement in px</td></tr>
+          <tr><td><code>lag</code></td><td><code>0.15</code></td><td>Easing factor (0.01–1) for how quickly channels settle toward target</td></tr>
+          <tr><td><code>speed</code></td><td><code>1</code></td><td>Multiplier on scroll-delta input (scroll mode) or orbit rate (rotate mode)</td></tr>
+          <tr><td><code>opacity</code></td><td><code>0.75</code></td><td>Opacity of each red/cyan channel</td></tr>
+          <tr><td><code>blur</code></td><td><code>0</code></td><td>CSS blur (px) applied to each channel</td></tr>
+          <tr><td><code>redColor</code></td><td><code>'#ff2b3d'</code></td><td>Color of the red channel</td></tr>
+          <tr><td><code>cyanColor</code></td><td><code>'#00c2ff'</code></td><td>Color of the cyan channel</td></tr>
+          <tr><td><code>inverted</code></td><td><code>false</code></td><td>Swaps which channel leads (like flipping 3D glasses)</td></tr>
+          <tr><td><code>rebound</code></td><td><code>0</code></td><td>0–2, adds spring/bounce physics when above 0</td></tr>
+          <tr><td><code>scrollSource</code></td><td><code>null</code></td><td>Element to listen for scroll on instead of <code>window</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        One of three effects in the lab with a scroll/continuous toggle —
+        here it's the <code>mode</code> option (Rolodex and Type Pan
+        Horizontal call the same idea <code>driveMode</code>).
+      </p>
+    </div>
+  </div>

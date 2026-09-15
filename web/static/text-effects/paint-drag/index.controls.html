@@ -1,0 +1,71 @@
+
+    <div class="control-row">
+      <label>Profile</label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="minimal">Minimal</option>
+        <option value="pain">Pain</option>
+        <option value="small">Small Text (Card)</option>
+      </select>
+      <div class="hint">Quick presets for the sliders below. Adjusting any slider afterward just tweaks that preset.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Archivo Black', sans-serif" selected>Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Paint Drag" />
+    </div>
+
+    <div class="control-row">
+      <label>Font size <span id="sizeVal" class="value"></span></label>
+      <input id="sizeRange" type="range" min="1" max="20" step="0.5" value="12" />
+    </div>
+
+    <div class="control-row">
+      <label>Smear length <span id="smearLengthVal" class="value"></span></label>
+      <input id="smearLengthRange" type="range" min="0" max="400" step="10" value="0" />
+      <div class="hint">Exaggerates the stroke beyond the text's real scroll distance — higher values drag the paint further past where the text actually is.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Spread <span id="spreadVal" class="value"></span></label>
+      <input id="spreadRange" type="range" min="0" max="80" step="1" value="0" />
+      <div class="hint">Random scatter perpendicular to the drag, like bristles fanning out.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Cleanup time <span id="fadeTimeVal" class="value"></span></label>
+      <input id="fadeTimeRange" type="range" min="0" max="3" step="0.05" value="0" />
+      <div class="hint">How long a stroke lingers before fading away completely.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Brush density <span id="densityVal" class="value"></span></label>
+      <input id="densityRange" type="range" min="0" max="24" step="1" value="0" />
+      <div class="hint">Max number of stamps drawn per frame at top speed — more stamps read as a thicker, wetter stroke.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Brush blur <span id="blurVal" class="value"></span></label>
+      <input id="blurRange" type="range" min="0" max="24" step="1" value="10" />
+    </div>
+
+    <div class="control-row">
+      <label>Skew with drag</label>
+      <button id="skewButton" class="toggle-button" type="button" aria-pressed="true">
+        Skew on
+      </button>
+      <div class="hint">Slants each stamp along the drag direction for a smeared-ink look.</div>
+    </div>

@@ -1,0 +1,100 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Documentation</p>
+      <h1>Web Lab Docs</h1>
+      <p>
+        Every effect below is a single self-contained JavaScript file — no
+        build step, no dependencies. It injects its own CSS, auto-initializes
+        on <code>DOMContentLoaded</code> against a default class selector, and
+        exposes an <code>initAll(selector, options)</code> helper for
+        configuring it yourself. Drop the file on a page, add the class to an
+        element, and it runs.
+      </p>
+      <p>
+        Pick an effect from the sidebar for its options, usage snippet, and a
+        link back to its live demo. Each demo page also has a "Download JS"
+        button in the top-right of the nav that grabs that exact file.
+      </p>
+
+      <h2>Multiple Instances</h2>
+      <p>
+        Running two of the same effect with different settings on one page
+        is simple — each instance merges its own options in its constructor
+        (<code>{...DEFAULTS, ...options}</code>) and keeps them on
+        <code>this.options</code>, so there's no shared/global config to
+        collide. Either call <code>initAll</code> against two different
+        selectors, or construct instances directly:
+      </p>
+      <pre><code>// two different selectors, each with its own options
+Rolodex.initAll('#header-rolodex', { driveMode: 'continuous', interval: 800 });
+Rolodex.initAll('#footer-rolodex', { driveMode: 'scroll', flipWidth: 30 });
+
+// or instantiate directly
+new Rolodex(document.getElementById('a'), { mode: 'single-card' });
+new Rolodex(document.getElementById('b'), { mode: 'split-flap' });</code></pre>
+      <p>
+        The one exception is <a href="/docs/text-effects/paint-drag.html">Paint Drag</a>:
+        every instance on a page draws onto one shared, viewport-fixed canvas
+        for performance. Each instance still resets the canvas state (blur,
+        color) from its own options right before drawing, so differing
+        settings per instance render correctly — but calling
+        <code>.destroy()</code> on one instance clears the entire shared
+        canvas, wiping every instance's trail, not just its own.
+      </p>
+
+      <h2>Text Effects</h2>
+      <div class="docs-index-list">
+        <a href="/docs/text-effects/double-speak.html">
+          <span class="name">Double Speak</span>
+          <span class="desc">A translucent ghost copy of the text lags behind the real text as you scroll, like a double exposure.</span>
+        </a>
+        <a href="/docs/text-effects/wave-form.html">
+          <span class="name">Wave Form</span>
+          <span class="desc">Characters drift on layered sine waves, continuously, with pointer position steering the motion.</span>
+        </a>
+        <a href="/docs/text-effects/paint-drag.html">
+          <span class="name">Paint Drag</span>
+          <span class="desc">Text scrolling past leaves a fading brush-like smear stamped onto a fixed canvas overlay.</span>
+        </a>
+        <a href="/docs/text-effects/in-flight-out.html">
+          <span class="name">In Flight Out</span>
+          <span class="desc">Letters fly in from scattered points, assemble while in view, then scatter apart again on scroll.</span>
+        </a>
+        <a href="/docs/text-effects/triple-vision.html">
+          <span class="name">Triple Vision</span>
+          <span class="desc">A red/cyan anaglyph print misregistration effect, split apart by scroll or a continuous vibrate/rotate loop.</span>
+        </a>
+        <a href="/docs/text-effects/type-pan-vertical.html">
+          <span class="name">Type Pan Vertical</span>
+          <span class="desc">A clipped window types out a line as the page scrolls, panning horizontally once the line overflows.</span>
+        </a>
+        <a href="/docs/text-effects/type-pan-horizontal.html">
+          <span class="name">Type Pan Horizontal</span>
+          <span class="desc">The same typewriter-pan effect, driven by wheel input captured directly on the element instead of page scroll.</span>
+        </a>
+        <a href="/docs/text-effects/rolodex.html">
+          <span class="name">Rolodex</span>
+          <span class="desc">Words flip through one at a time on a 3D split-flap or single-card display, by scroll or on a timed loop.</span>
+        </a>
+      </div>
+
+      <h2>Background</h2>
+      <div class="docs-index-list">
+        <a href="/docs/background/circuit-board.html">
+          <span class="name">Circuit Board</span>
+          <span class="desc">A canvas PCB background where traces light up and travel along a random grid, fading in and out forever.</span>
+        </a>
+        <a href="/docs/background/gravity-well.html">
+          <span class="name">Gravity Well</span>
+          <span class="desc">A wireframe grid that bends toward the cursor like a sheet being pulled, easing back to flat as it leaves.</span>
+        </a>
+        <a href="/docs/background/vacuum.html">
+          <span class="name">Vacuum</span>
+          <span class="desc">Text, images, and borders shed colored dust toward the cursor when it gets close, sampled from their own actual colors.</span>
+        </a>
+      </div>
+    </div>
+  </div>

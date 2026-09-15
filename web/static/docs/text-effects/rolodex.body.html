@@ -1,0 +1,73 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll + Continuous</p>
+      <h1>Rolodex</h1>
+      <p>
+        Splits a sentence into words and shows them one at a time on a
+        fixed-size 3D card that flips to the next word — either a two-flap
+        "split-flap" display or a single-card front/back flip — as the user
+        scrolls, or on a timed loop in continuous mode.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/rolodex/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/rolodex/rolodex.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag
+        covering the 3D card/flap/panel structure on first use, so no
+        companion CSS file is required. Note the injected CSS hardcodes a
+        white background on card faces.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="rolodex" data-text="Rolodex flips through words one by one"&gt;
+  Rolodex flips through words one by one
+&lt;/div&gt;
+&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Reads <code>data-text</code> or trimmed <code>textContent</code>,
+        splitting on whitespace into words. Auto-initializes against every
+        <code>.rolodex</code> element — card size is measured via an
+        offscreen canvas based on the widest word and computed font. To
+        switch drive mode and configure options:
+      </p>
+      <pre><code>Rolodex.initAll('.rolodex', {
+  mode: 'split-flap',
+  driveMode: 'continuous',
+  flipWidth: 55,
+  perspective: 900,
+  shading: 0.05,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>mode</code></td><td><code>'split-flap'</code></td><td>Visual style: <code>'split-flap'</code> (two-flap card) or <code>'single-card'</code> (simple front/back flip)</td></tr>
+          <tr><td><code>driveMode</code></td><td><code>'scroll'</code></td><td><code>'scroll'</code> (scroll position mapped across word segments) or <code>'continuous'</code> (self-animating hold/flip/rewind loop)</td></tr>
+          <tr><td><code>flipWidth</code></td><td><code>55</code></td><td>% of each word's segment spent mid-flip (the rest holds on a settled word)</td></tr>
+          <tr><td><code>perspective</code></td><td><code>900</code></td><td>CSS 3D perspective in px for the flip</td></tr>
+          <tr><td><code>shading</code></td><td><code>0.55</code></td><td>0–1, how much a flap darkens as it turns edge-on</td></tr>
+          <tr><td><code>interval</code></td><td><code>1400</code></td><td>ms held on each word before flipping (continuous mode)</td></tr>
+          <tr><td><code>flipDuration</code></td><td><code>450</code></td><td>ms spent mid-flip between words (continuous mode)</td></tr>
+          <tr><td><code>rollbackSpeed</code></td><td><code>900</code></td><td>ms to rewind from the last word back to the first (continuous mode)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        <code>.remeasure()</code> recomputes card size after a font change;
+        <code>.setText(value)</code> replaces the sentence being flipped
+        through.
+      </p>
+    </div>
+  </div>

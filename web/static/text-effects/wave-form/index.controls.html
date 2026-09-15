@@ -1,0 +1,51 @@
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Space Grotesk', sans-serif" selected>Space Grotesk</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="'Archivo Black', sans-serif">Archivo Black</option>
+        <option value="'Poppins', sans-serif">Poppins</option>
+        <option value="'Caveat', cursive">Caveat (cursive)</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Wave Form" />
+    </div>
+
+    <div class="control-row">
+      <label>Amplitude <span id="amplitudeVal" class="value"></span></label>
+      <input id="amplitudeRange" type="range" min="4" max="40" step="1" value="16" />
+    </div>
+
+    <div class="control-row">
+      <label>Frequency <span id="frequencyVal" class="value"></span></label>
+      <input id="frequencyRange" type="range" min="0.2" max="2.5" step="0.05" value="0.8" />
+    </div>
+
+    <div class="control-row">
+      <label>Spread <span id="spreadVal" class="value"></span></label>
+      <input id="spreadRange" type="range" min="0.4" max="2.2" step="0.05" value="1.2" />
+      <div class="hint">How much phase offset each letter gets from its neighbor. Higher values make the wave ripple across the word rather than moving in unison.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Drift <span id="driftVal" class="value"></span></label>
+      <input id="driftRange" type="range" min="0" max="1.5" step="0.05" value="0.7" />
+      <div class="hint">Adds a slower secondary wobble on top of the base wave, giving the motion a looser, less mechanical feel.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Color fade</label>
+      <button id="fadeButton" class="toggle-button" type="button" aria-pressed="true">
+        Fading on
+      </button>
+      <div class="hint">Toggle off to keep letters at full opacity instead of pulsing lighter and darker.</div>
+    </div>

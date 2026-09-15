@@ -1,0 +1,81 @@
+
+    <div class="control-row">
+      <label>Animation mode</label>
+      <button id="driveModeButton" class="toggle-button" type="button" aria-pressed="false">
+        Scroll
+      </button>
+      <div class="hint">Continuous types and erases the line on its own clock instead of tracking wheel input.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Type duration <span id="typeDurationVal" class="value"></span></label>
+      <input id="typeDurationRange" type="range" min="500" max="6000" step="100" value="2200" />
+      <div class="hint">How long it takes to type the whole line.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Hold duration <span id="holdDurationVal" class="value"></span></label>
+      <input id="holdDurationRange" type="range" min="0" max="4000" step="100" value="1000" />
+      <div class="hint">How long the fully-typed line holds before erasing.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <input id="rollbackSpeedRange" type="range" min="100" max="3000" step="100" value="700" />
+      <div class="hint">How long it takes to erase back to empty before typing starts again.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Archivo Black', sans-serif" selected>Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Scroll to reveal the whole headline" />
+    </div>
+
+    <div class="control-row">
+      <label>Font size <span id="sizeVal" class="value"></span></label>
+      <input id="sizeRange" type="range" min="24" max="140" step="2" value="72" />
+    </div>
+
+    <div class="control-row">
+      <label>Pan pin position <span id="panVal" class="value"></span></label>
+      <input id="panRange" type="range" min="0.15" max="0.85" step="0.02" value="0.65" />
+      <div class="hint">Where the caret pins horizontally in the element once the line overflows it — the caret always sits right after the last typed character, and new characters reveal to its right as you scroll.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Pan smoothing <span id="lagVal" class="value"></span></label>
+      <input id="lagRange" type="range" min="0.02" max="1" step="0.02" value="0.18" />
+      <div class="hint">How quickly the element catches up to the caret. Lower = a softer, trailing pan; higher = an instant, snappy one.</div>
+    </div>
+
+    <div class="control-row" data-scroll-only>
+      <label>Reverse scroll behavior</label>
+      <button id="eraseButton" class="toggle-button" type="button" aria-pressed="true">
+        Erasing on scroll back
+      </button>
+      <div class="hint">On: scrolling back erases already-typed characters, like undoing the typing. Off: typed text is kept permanently and reverse scroll just rewinds the camera across it.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Blinking cursor</label>
+      <button id="cursorButton" class="toggle-button" type="button" aria-pressed="true">
+        Cursor blinking on
+      </button>
+    </div>
+
+    <div class="control-row" data-scroll-only>
+      <button id="resetButton" class="toggle-button" type="button">
+        ↺ Reset scroll
+      </button>
+    </div>

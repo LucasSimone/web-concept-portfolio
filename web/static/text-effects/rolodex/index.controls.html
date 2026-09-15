@@ -1,0 +1,72 @@
+
+    <div class="control-row">
+      <label>Animation mode</label>
+      <button id="driveModeButton" class="toggle-button" type="button" aria-pressed="false">
+        Scroll
+      </button>
+      <div class="hint">Continuous flips through the sentence on its own clock instead of tracking scroll position.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Flip interval <span id="intervalVal" class="value"></span></label>
+      <input id="intervalRange" type="range" min="200" max="4000" step="100" value="1400" />
+      <div class="hint">How long each word holds before flipping to the next.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Flip duration <span id="flipDurationVal" class="value"></span></label>
+      <input id="flipDurationRange" type="range" min="100" max="1500" step="50" value="450" />
+      <div class="hint">How long the flip motion itself takes between two words.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <input id="rollbackSpeedRange" type="range" min="200" max="4000" step="100" value="900" />
+      <div class="hint">Once the last word is reached, how long it takes to spin straight back to the first word.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Profile</label>
+      <select id="profileSelect">
+        <option value="split-flap" selected>Split-Flap</option>
+        <option value="single-card">Single Card</option>
+      </select>
+      <div class="hint">Quick presets for the flip style, flip width, and perspective below. Adjusting any control afterward just tweaks that preset.</div>
+    </div>
+    <div class="control-row">
+      <label>Font</label>
+      <select id="fontSelect">
+        <option value="'IBM Plex Mono', monospace" selected>IBM Plex Mono</option>
+        <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+        <option value="'Archivo Black', sans-serif">Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Rolodex flips through words one by one" />
+    </div>
+    <div class="control-row">
+      <label>Flip style</label>
+      <select id="modeSelect">
+        <option value="split-flap" selected>Split-flap (top &amp; bottom flaps)</option>
+        <option value="single-card">Single-card (whole word flips)</option>
+      </select>
+      <div class="hint">Split-flap: the card is cut in half by a hinge — the top flips away first, then the bottom flips in, like a real flip clock. Single-card: the whole word rotates as one card with the next word on its back.</div>
+    </div>
+    <div class="control-row" data-scroll-only>
+      <label>Flip width <span id="flipWidthVal" class="value"></span></label>
+      <input id="flipWidthRange" type="range" min="10" max="95" step="1" value="55" />
+      <div class="hint">How much of each word's scroll segment is spent mid-flip vs. holding on the fully-formed word.</div>
+    </div>
+    <div class="control-row">
+      <label>Perspective <span id="perspectiveVal" class="value"></span></label>
+      <input id="perspectiveRange" type="range" min="300" max="2400" step="20" value="900" />
+      <div class="hint">3D depth of the flip. Lower values exaggerate the foreshortening as a flap turns edge-on.</div>
+    </div>
+    <div class="control-row">
+      <label>Shading <span id="shadingVal" class="value"></span></label>
+      <input id="shadingRange" type="range" min="0" max="1" step="0.01" value="0.55" />
+      <div class="hint">How much a flap darkens as it turns edge-on, simulating light falloff.</div>
+    </div>

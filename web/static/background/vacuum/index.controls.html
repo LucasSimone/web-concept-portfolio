@@ -1,0 +1,30 @@
+
+    <div class="control-row">
+      <label>Radius <span id="radiusVal" class="value"></span></label>
+      <input type="range" id="radiusRange" min="40" max="320" step="10" value="110" />
+      <div class="hint">How close the cursor needs to be before dust starts lifting off.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Density <span id="densityVal" class="value"></span></label>
+      <input type="range" id="densityRange" min="4" max="30" step="1" value="15" />
+      <div class="hint">Spacing between candidate dust points along text and borders, in px. Lower is denser.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Pull speed <span id="speedVal" class="value"></span></label>
+      <input type="range" id="speedRange" min="1" max="16" step="0.5" value="2.5" />
+      <div class="hint">Base speed dust flies toward the cursor at.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Particle size <span id="sizeVal" class="value"></span></label>
+      <input type="range" id="sizeRange" min="1" max="8" step="0.5" value="2.5" />
+      <div class="hint">Diameter of each dust particle, in px.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Max particles <span id="maxVal" class="value"></span></label>
+      <input type="range" id="maxRange" min="40" max="600" step="20" value="300" />
+      <div class="hint">Concurrent cap, mostly a performance ceiling.</div>
+    </div>

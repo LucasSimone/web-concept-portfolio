@@ -1,0 +1,392 @@
+.home-hero {
+  padding: 8vh 6vw 4vh;
+  max-width: 720px;
+}
+.lab-section + .lab-section {
+  margin-top: 10vh;
+}
+.home-hero h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  margin: 0 0 12px;
+}
+.home-hero p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+  max-width: 60ch;
+}
+.variation-card {
+  background: #fff;
+  padding: 24px;
+  text-decoration: none;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 160px;
+  transition: background 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+.variation-card:hover { background: #f5f5f5; }
+.variation-card .type {
+  align-self: flex-start;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+  position: relative;
+  z-index: 1;
+}
+.variation-card .title-wrap {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.variation-card h2 {
+  margin: 0;
+  font-size: 25px;
+}
+.variation-card .go {
+  font-size: 15px;
+  align-self: flex-end;
+  position: relative;
+  z-index: 1;
+}
+/* --- Per-effect title styling, scaled down to card size --- */
+.variation-card h2.double-speak {
+  font-family: 'Dancing Script', cursive;
+  font-size: 42px;
+  line-height: 1.1;
+}
+.variation-card .double-speak__front,
+.variation-card .double-speak__ghost {
+  display: block;
+  color: inherit;
+}
+.variation-card .double-speak__ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.variation-card .double-speak__front {
+  position: relative;
+  z-index: 1;
+}
+
+.variation-card h2.triple-vision {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  line-height: 1.1;
+}
+.variation-card .triple-vision__front,
+.variation-card .triple-vision__channel {
+  display: block;
+}
+.variation-card .triple-vision__front {
+  position: relative;
+  z-index: 2;
+  color: inherit;
+}
+.variation-card .triple-vision__channel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.variation-card h2.wave-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.01em;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  cursor: pointer;
+}
+.variation-card .wave-form__char {
+  position: relative;
+  display: inline-block;
+}
+
+.variation-card h2.paint-drag {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 28px;
+  line-height: 1.1;
+  position: relative;
+  z-index: 2;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.85),
+    0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.variation-card h2.in-flight-out {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+.variation-card .in-flight-out__char {
+  display: inline-block;
+}
+
+/* The window spans the card's full available height (bottom to top),
+   like the real demo's terminal box, instead of just centering a
+   single line. Unlike the real demo — which only pans horizontally —
+   the line here also travels vertically inside that space (JS drives
+   a translateY on the h2 itself from carousel scroll progress), so
+   "vertical" reads as an actual up/down motion, not just a tall box. */
+.variation-card .title-wrap.type-pan-vertical-window {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  border: 1px solid #000;
+  overflow: hidden;
+  padding: 0;
+}
+.variation-card .type-pan-vertical-window::before {
+  content: '';
+  display: block;
+  height: 18px;
+  background: #000;
+  flex-shrink: 0;
+}
+.variation-card .type-pan-vertical-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.variation-card h2.type-pan-vertical {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: left;
+  will-change: transform;
+}
+.variation-card .type-pan-vertical__track {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform;
+}
+.variation-card .type-pan-vertical__cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  background: currentColor;
+  vertical-align: text-bottom;
+}
+.variation-card .type-pan-vertical__cursor--blink {
+  animation: home-type-pan-blink 1s steps(1, start) infinite;
+}
+
+.variation-card h2.type-pan {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  cursor: ns-resize;
+}
+.variation-card .type-pan__viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.variation-card .type-pan__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  white-space: pre;
+  will-change: transform;
+}
+.variation-card .type-pan__char {
+  display: inline-block;
+  opacity: 0;
+}
+.variation-card .type-pan__char--visible {
+  opacity: 1;
+}
+.variation-card .type-pan__cursor {
+  position: absolute;
+  top: 8%;
+  bottom: 8%;
+  width: 2px;
+  background: currentColor;
+  pointer-events: none;
+}
+.variation-card .type-pan__cursor--blink {
+  animation: home-type-pan-blink 1s steps(1, start) infinite;
+}
+
+@keyframes home-type-pan-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* The `.rolodex` effect's own CSS ships inside
+   /text-effects/rolodex/rolodex.js and is injected automatically.
+   This card just scales the font down to fit. */
+.variation-card h2.rolodex {
+  --font-size: 30px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Intertwine: a small looping version of the two live paths, drawn
+   continuously behind the title instead of scroll-linked (the real
+   demo pins a whole section to scrub them, which doesn't fit a card). */
+.variation-card .intertwine-mini {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.variation-card .intertwine-mini path {
+  fill: none;
+  stroke: #000;
+  stroke-width: 2;
+  stroke-dasharray: 900;
+  animation: home-intertwine-draw 6s linear infinite;
+}
+.variation-card .intertwine-mini .intertwine-path--two {
+  animation-direction: reverse;
+  animation-delay: -1s;
+}
+@keyframes home-intertwine-draw {
+  0% { stroke-dashoffset: 900; }
+  50% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -900; }
+}
+
+/* Circuit Board: the real reusable background effect, applied to the
+   whole card instead of just the title. */
+.variation-card.bg-circuit-board {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.circuit-board__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
+/* Gravity Well: same override pattern as Circuit Board above — the
+   injected canvas sits at z-index 0 within the card's own stacking
+   context instead of the -1 it uses on a full page section. */
+.variation-card.bg-gravity-well {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.gravity-well__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
+/* Vacuum: same override pattern as the two effects above, plus the
+   canvas needs to sit ABOVE the card's own title/type/go text (it
+   normally renders on top of live content) rather than below it. */
+.variation-card.bg-vacuum {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.vacuum__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+}
+
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.carousel.is-dragging { cursor: grabbing; }
+.carousel-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.carousel-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
+  z-index: 0;
+  pointer-events: none;
+}
+.carousel .variation-card {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: min(320px, 78vw);
+  height: 240px;
+  padding: 22px;
+  border: 1px solid #000;
+  will-change: transform, opacity;
+  user-select: none;
+}
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 6vw 3vh;
+  font-size: 13px;
+}
+.filter-bar label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  opacity: 0.6;
+}
+.filter-bar select {
+  padding: 6px 10px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+.variation-card[hidden] { display: none; }

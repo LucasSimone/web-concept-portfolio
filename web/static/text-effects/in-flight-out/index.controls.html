@@ -1,0 +1,60 @@
+    <div class="control-row">
+      <button id="randomizeButton" class="toggle-button" type="button">
+        🎲 Randomize
+      </button>
+      <div class="hint">Re-rolls each letter's starting/ending position and rotation, without changing any of the settings below.</div>
+    </div>
+    <div class="control-row">
+      <label>Font</label>
+      <select id="fontSelect">
+        <option value="'Bebas Neue', sans-serif" selected>Bebas Neue</option>
+        <option value="'Archivo Black', sans-serif">Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="In Flight Out" />
+    </div>
+    <div class="control-row">
+      <label>Path</label>
+      <select id="pathSelect">
+        <option value="linear" selected>Linear (bottom → top)</option>
+        <option value="random">Random (any edge → any edge)</option>
+      </select>
+      <div class="hint">Linear: every letter enters from below and exits above. Random: each letter flies in from — and out to — its own random point off any edge of the screen.</div>
+    </div>
+    <div class="control-row">
+      <label>Scatter <span id="scatterVal" class="value"></span></label>
+      <input id="scatterRange" type="range" min="0.4" max="1.8" step="0.05" value="1" />
+      <div class="hint">How far characters travel away from their final positions.</div>
+    </div>
+    <div class="control-row">
+      <label>Max distance <span id="maxDistanceVal" class="value"></span></label>
+      <input id="maxDistanceRange" type="range" min="20" max="200" step="5" value="140" />
+      <div class="hint">Caps how far off-screen a letter's flight path can carry it, as a percent of the viewport diagonal — keeps scatter from flinging letters absurdly far.</div>
+    </div>
+    <div class="control-row">
+      <label>Rotation chance <span id="rotationVal" class="value"></span></label>
+      <input id="rotationRange" type="range" min="0" max="1" step="0.01" value="0.4" />
+      <div class="hint">Both the chance a letter rotates at all and how far it rotates (as a share of the max angle below). Near 0: few letters, small angles. Near 1: most letters, near the max angle.</div>
+    </div>
+    <div class="control-row">
+      <label>Max rotation angle <span id="maxAngleVal" class="value"></span></label>
+      <input id="maxAngleRange" type="range" min="0" max="90" step="1" value="60" />
+    </div>
+    <div class="control-row">
+      <label>Entry <span id="entryVal" class="value"></span></label>
+      <input id="entryRange" type="range" min="0" max="100" step="1" value="48" />
+    </div>
+    <div class="control-row">
+      <label>Hangtime <span id="hangVal" class="value"></span></label>
+      <input id="hangRange" type="range" min="0" max="100" step="1" value="10" />
+    </div>
+    <div class="control-row">
+      <label>Exit <span id="exitVal" class="value"></span></label>
+      <input id="exitRange" type="range" min="0" max="100" step="1" value="42" />
+      <div class="hint">Entry, hangtime, and exit always add up to 100% of the scroll range — adjusting one rebalances the other two.</div>
+    </div>

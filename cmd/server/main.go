@@ -16,6 +16,7 @@ import (
 
 	"github.com/lsimone/web-concept-portfolio/internal/contact"
 	"github.com/lsimone/web-concept-portfolio/internal/httpserver"
+	"github.com/lsimone/web-concept-portfolio/internal/render"
 	"github.com/lsimone/web-concept-portfolio/web"
 )
 
@@ -27,11 +28,10 @@ func main() {
 
 	// Make sure the SQLite file's parent directory exists (e.g. "data/"
 	// on a fresh checkout, or "/data" in the Docker volume) before we
-	// try to open it.
-	if dir := filepath.Dir(dbPath); dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			log.Fatalf("create db directory: %v", err)
-		}
+	// try to open it. MkdirAll no-ops safely when the dir already exists
+	// (including "." when dbPath has no directory component).
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o755); err != nil {
+		log.Fatalf("create db directory: %v", err)
 	}
 
 	store, err := contact.OpenStore(dbPath)
@@ -48,9 +48,17 @@ func main() {
 		log.Fatalf("load embedded static assets: %v", err)
 	}
 
+	// Renders each page's *.head.html/*.body.html/*.controls.html
+	// fragments into full HTML once at startup, so request handling stays
+	// plain byte-serving (see internal/render).
+	renderedFS, err := render.Render(staticFS)
+	if err != nil {
+		log.Fatalf("render pages: %v", err)
+	}
+
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      httpserver.New(staticFS, store),
+		Handler:      httpserver.New(renderedFS, store),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
