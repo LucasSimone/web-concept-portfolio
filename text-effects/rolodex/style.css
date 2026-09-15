@@ -78,13 +78,32 @@ main {
 .control-row input[type="range"] { width: 100%; accent-color: #000; }
 
 .control-row select,
-.control-row input[type="text"] {
+.control-row input[type="text"],
+.toggle-button {
   width: 100%;
   padding: 6px;
   border: 1px solid #000;
   background: #fff;
   color: #000;
   font-size: 13px;
+}
+
+.toggle-button {
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle-button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
+.controls[data-drive-mode="scroll"] [data-continuous-only] {
+  display: none;
+}
+
+.controls[data-drive-mode="continuous"] [data-scroll-only] {
+  display: none;
 }
 
 .controls .value {

@@ -99,6 +99,15 @@
     flipWidth: 55, // percent of each word's scroll segment spent mid-flip (rest is hold)
     perspective: 900, // px
     shading: 0.55, // 0-1, how much a flap darkens as it turns edge-on
+    // 'scroll' drives the flip from scroll position (default, original
+    // behavior). 'continuous' ignores scroll and flips through the words on
+    // its own clock: hold on a word for `interval`, flip to the next over
+    // `flipDuration`, and once the last word is reached, rewind straight
+    // back to the first word over `rollbackSpeed` before repeating.
+    driveMode: 'scroll',
+    interval: 1400, // ms held on each word before flipping to the next
+    flipDuration: 450, // ms spent mid-flip between two words
+    rollbackSpeed: 900, // ms to rewind from the last word back to the first
   };
 
   class Rolodex {
@@ -112,6 +121,9 @@
       this._progress = 0;
       this._lastSegment = -1;
       this._measureCtx = null;
+      this._contState = null;
+      this._contSegment = 0;
+      this._contStateStart = null;
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
@@ -131,6 +143,9 @@
 
       this.el.innerHTML = '';
       this._lastSegment = -1;
+      this._contState = null;
+      this._contSegment = 0;
+      this._contStateStart = null;
 
       const size = this._measureCardSize();
       this._cardWidth = size.width;
@@ -222,6 +237,8 @@
     }
 
     _onScroll() {
+      if (this.options.driveMode !== 'scroll') return;
+
       const rect = this.el.getBoundingClientRect();
       const range = global.innerHeight + rect.height;
       this._progress = range > 0
@@ -252,6 +269,57 @@
       return { segmentIndex, flipT };
     }
 
+    // Drives {segmentIndex, flipT} from a clock instead of scroll position:
+    // hold on the current word for `interval`, flip to the next word over
+    // `flipDuration`, and once the last word is reached, rewind straight
+    // back to the first word over `rollbackSpeed` (eased, so it reads like a
+    // physical rolodex spinning back to start) before holding again.
+    _computeContinuous(now) {
+      const segments = Math.max(1, this._words.length - 1);
+      const { interval, flipDuration, rollbackSpeed } = this.options;
+
+      if (this._contState == null) {
+        this._contState = 'hold';
+        this._contSegment = 0;
+        this._contStateStart = now;
+      }
+
+      if (this._contState === 'hold') {
+        if (now - this._contStateStart >= interval) {
+          this._contState = this._contSegment >= segments ? 'rollback' : 'flip';
+          this._contStateStart = now;
+        }
+        const atEnd = this._contSegment >= segments;
+        return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
+      }
+
+      if (this._contState === 'flip') {
+        const t = flipDuration > 0 ? clamp((now - this._contStateStart) / flipDuration, 0, 1) : 1;
+        if (t >= 1) {
+          this._contSegment += 1;
+          this._contState = 'hold';
+          this._contStateStart = now;
+          const atEnd = this._contSegment >= segments;
+          return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
+        }
+        return { segmentIndex: this._contSegment, flipT: smoothstep(t) };
+      }
+
+      // rollback: sweep progress from 1 back to 0 across every segment in
+      // one continuous eased motion, then resume holding at the first word.
+      const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
+      if (t >= 1) {
+        this._contState = 'hold';
+        this._contSegment = 0;
+        this._contStateStart = now;
+        return { segmentIndex: 0, flipT: 0 };
+      }
+      const progress = 1 - smoothstep(t);
+      const segmentFloat = progress * segments;
+      const segmentIndex = clamp(Math.floor(segmentFloat), 0, segments - 1);
+      return { segmentIndex, flipT: segmentFloat - segmentIndex };
+    }
+
     _applySegment(segmentIndex, force) {
       if (!this._refs || (!force && segmentIndex === this._lastSegment)) return;
       this._lastSegment = segmentIndex;
@@ -273,7 +341,9 @@
       this._stage.style.perspective = `${this.options.perspective}px`;
 
       if (this._words.length >= 2) {
-        const { segmentIndex, flipT } = this._segmentForProgress(this._progress);
+        const { segmentIndex, flipT } = this.options.driveMode === 'continuous'
+          ? this._computeContinuous(performance.now())
+          : this._segmentForProgress(this._progress);
         this._applySegment(segmentIndex);
 
         const shading = clamp(this.options.shading, 0, 1);
@@ -336,8 +406,16 @@
 
     update(options = {}) {
       const modeChanged = 'mode' in options && options.mode !== this.options.mode;
+      const driveModeChanged = 'driveMode' in options && options.driveMode !== this.options.driveMode;
       Object.assign(this.options, options);
       if (modeChanged) this._buildDOM();
+      if (driveModeChanged) {
+        this._contState = null;
+        this._contSegment = 0;
+        this._contStateStart = null;
+        this._lastSegment = -1;
+        if (this.options.driveMode === 'scroll') this._onScroll();
+      }
     }
 
     setText(value) {

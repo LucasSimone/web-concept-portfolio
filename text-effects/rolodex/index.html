@@ -17,8 +17,35 @@
     </div>
   </nav>
 
-  <aside class="controls">
+  <aside class="controls" data-drive-mode="scroll">
     <h2>Controls</h2>
+
+    <div class="control-row">
+      <label>Animation mode</label>
+      <button id="driveModeButton" class="toggle-button" type="button" aria-pressed="false">
+        Scroll
+      </button>
+      <div class="hint">Continuous flips through the sentence on its own clock instead of tracking scroll position.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Flip interval <span id="intervalVal" class="value"></span></label>
+      <input id="intervalRange" type="range" min="200" max="4000" step="100" value="1400" />
+      <div class="hint">How long each word holds before flipping to the next.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Flip duration <span id="flipDurationVal" class="value"></span></label>
+      <input id="flipDurationRange" type="range" min="100" max="1500" step="50" value="450" />
+      <div class="hint">How long the flip motion itself takes between two words.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <input id="rollbackSpeedRange" type="range" min="200" max="4000" step="100" value="900" />
+      <div class="hint">Once the last word is reached, how long it takes to spin straight back to the first word.</div>
+    </div>
+
     <div class="control-row">
       <label>Profile</label>
       <select id="profileSelect">
@@ -49,7 +76,7 @@
       </select>
       <div class="hint">Split-flap: the card is cut in half by a hinge — the top flips away first, then the bottom flips in, like a real flip clock. Single-card: the whole word rotates as one card with the next word on its back.</div>
     </div>
-    <div class="control-row">
+    <div class="control-row" data-scroll-only>
       <label>Flip width <span id="flipWidthVal" class="value"></span></label>
       <input id="flipWidthRange" type="range" min="10" max="95" step="1" value="55" />
       <div class="hint">How much of each word's scroll segment is spent mid-flip vs. holding on the fully-formed word.</div>
