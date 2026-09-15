@@ -136,6 +136,23 @@ main {
   margin-bottom: 16px;
 }
 
+.controls[data-mode="scroll"] [data-continuous-only] {
+  display: none;
+}
+
+.controls[data-mode="continuous"] [data-scroll-only] {
+  display: none;
+}
+
+.controls[data-mode="continuous"][data-profile="vibrate"] [data-rotate-only] {
+  display: none;
+}
+
+.controls[data-mode="continuous"][data-profile="rotate"] [data-vibrate-only],
+.controls[data-mode="continuous"][data-profile="rotate"] [data-hide-rotate] {
+  display: none;
+}
+
 @media (max-width: 720px) {
   main {
     margin-right: 0;

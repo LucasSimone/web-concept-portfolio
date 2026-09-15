@@ -17,15 +17,42 @@
     </div>
   </nav>
 
-  <aside class="controls">
+  <aside class="controls" data-mode="scroll">
     <h2>Controls</h2>
 
     <div class="control-row">
+      <label>Animation mode</label>
+      <button id="modeButton" class="toggle-button" type="button" aria-pressed="false">
+        Scroll
+      </button>
+      <div class="hint">Continuous keeps the text in place and repeats the animation on its own instead of tracking scroll position.</div>
+    </div>
+
+    <div class="control-row" data-scroll-only>
       <label>Profile</label>
       <select id="profileSelect">
         <option value="default" selected>Default</option>
         <option value="rebound">Rebound</option>
       </select>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Continuous animation</label>
+      <select id="continuousProfileSelect">
+        <option value="vibrate" selected>Vibrate + settle</option>
+        <option value="rotate">Rotate around text</option>
+      </select>
+    </div>
+
+    <div class="control-row" data-continuous-only data-vibrate-only>
+      <label>Vibrate interval <span id="intervalVal" class="value"></span></label>
+      <input id="intervalRange" type="range" min="0" max="10" step="0.5" value="3" />
+      <div class="hint">Rest time before the next pulse. 0 vibrates continuously with no pause.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only data-rotate-only>
+      <label>Rotation speed <span id="rotateSpeedVal" class="value"></span></label>
+      <input id="rotateSpeedRange" type="range" min="0.1" max="3" step="0.1" value="1" />
     </div>
 
     <div class="control-row">
@@ -56,24 +83,24 @@
       <input id="offsetXRange" type="range" min="0" max="120" step="1" value="100" />
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-scroll-only>
       <label>Max offset Y <span id="offsetYVal" class="value"></span></label>
       <input id="offsetYRange" type="range" min="0" max="120" step="1" value="40" />
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-hide-rotate>
       <label>Lag (return speed) <span id="lagVal" class="value"></span></label>
       <input id="lagRange" type="range" min="0.01" max="0.3" step="0.005" value="0.15" />
       <div class="hint">How quickly the red/cyan channels snap back together after scrolling stops.</div>
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-hide-rotate>
       <label>Rebound <span id="reboundVal" class="value"></span></label>
       <input id="reboundRange" type="range" min="0" max="2" step="0.05" value="0" />
       <div class="hint">Adds springy overshoot as the channels converge back to center.</div>
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-scroll-only>
       <label>Scroll speed sensitivity <span id="speedVal" class="value"></span></label>
       <input id="speedRange" type="range" min="0.1" max="3" step="0.1" value="1" />
     </div>

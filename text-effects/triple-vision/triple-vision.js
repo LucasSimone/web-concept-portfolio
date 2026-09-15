@@ -67,11 +67,17 @@
     inverted: false,
     rebound: 0,
     scrollSource: null,
+    // 'scroll' drives the split from scroll delta (default, original behavior).
+    // 'continuous' keeps the text in place and repeats an animation on its own.
+    mode: 'scroll',
+    continuousProfile: 'vibrate', // 'vibrate' | 'rotate'
+    interval: 3000, // ms between vibrate pulses
   };
 
   const SCALE_X = 1;
   const SCALE_Y = 2.3;
   const TARGET_DECAY = 0.88;
+  const ROTATE_SPEED = 1.4; // radians/sec at the base rate
 
   class TripleVisionText {
     constructor(el, options = {}) {
@@ -88,6 +94,8 @@
       this._vy = 0;
       this._targetX = 0;
       this._targetY = 0;
+      this._clockStart = performance.now();
+      this._restStart = null;
 
       this._buildDOM();
       this._onScroll = this._onScroll.bind(this);
@@ -155,6 +163,8 @@
     }
 
     _onScroll() {
+      if (this.options.mode !== 'scroll') return;
+
       const y = this._getScrollPos();
       const delta = (y - this._scrollY) * this.options.speed;
       this._scrollY = y;
@@ -165,39 +175,80 @@
     }
 
     _tick() {
-      const { lag, offsetX, offsetY } = this.options;
-      const ease = clamp(lag, 0.01, 1);
+      const { lag, offsetX, offsetY, mode, continuousProfile } = this.options;
 
-      const rebound = clamp(this.options.rebound, 0, 2);
+      if (mode === 'continuous' && continuousProfile === 'rotate') {
+        // Both channels orbit the still text at a constant rate, on opposite
+        // sides of the same circle (the shared sign-flip transform below
+        // already places red/cyan at opposite offsets).
+        const radius = offsetX;
+        const elapsed = (performance.now() - this._clockStart) / 1000;
+        const angle = elapsed * ROTATE_SPEED * this.options.speed;
 
-      if (rebound > 0) {
-        const spring = Math.sqrt(rebound / 2);
-        const stiffness = ease * (0.12 + spring * 0.35);
-        const damping = 0.76 + spring * 0.2;
-
-        this._vx += (this._targetX - this._x) * stiffness;
-        this._vy += (this._targetY - this._y) * stiffness;
-        this._vx *= damping;
-        this._vy *= damping;
-        this._x += this._vx;
-        this._y += this._vy;
+        this._x = radius * Math.cos(angle);
+        this._y = radius * Math.sin(angle);
+        this._vx = 0;
+        this._vy = 0;
+        this._targetX = this._x;
+        this._targetY = this._y;
       } else {
-        this._x += (this._targetX - this._x) * ease;
-        this._y += (this._targetY - this._y) * ease;
-        this._vx = 0;
-        this._vy = 0;
-      }
+        if (mode === 'continuous') {
+          // Vibrate profile: no Y offset, and no scroll input — instead, an
+          // X impulse fires once the previous kick has settled AND the rest
+          // interval has elapsed. At interval 0 the next kick fires as soon
+          // as it settles, so it vibrates back-to-back with no pause.
+          const now = performance.now();
+          const settled = Math.abs(this._x) < 0.5 && Math.abs(this._vx) < 0.05;
 
-      this._targetX *= TARGET_DECAY;
-      this._targetY *= TARGET_DECAY;
+          if (settled) {
+            if (this._restStart == null) this._restStart = now;
+            if (now - this._restStart >= this.options.interval) {
+              this._targetX = offsetX;
+              this._restStart = null;
+            }
+          } else {
+            this._restStart = null;
+          }
+          this._targetY = 0;
+        }
 
-      if (offsetX <= 0) {
-        this._x = 0;
-        this._vx = 0;
-      }
-      if (offsetY <= 0) {
-        this._y = 0;
-        this._vy = 0;
+        const ease = clamp(lag, 0.01, 1);
+        const rebound = clamp(this.options.rebound, 0, 2);
+
+        if (rebound > 0) {
+          const spring = Math.sqrt(rebound / 2);
+          const stiffness = ease * (0.12 + spring * 0.35);
+          const damping = 0.76 + spring * 0.2;
+
+          this._vx += (this._targetX - this._x) * stiffness;
+          this._vy += (this._targetY - this._y) * stiffness;
+          this._vx *= damping;
+          this._vy *= damping;
+          this._x += this._vx;
+          this._y += this._vy;
+        } else {
+          this._x += (this._targetX - this._x) * ease;
+          this._y += (this._targetY - this._y) * ease;
+          this._vx = 0;
+          this._vy = 0;
+        }
+
+        this._targetX *= TARGET_DECAY;
+        this._targetY *= TARGET_DECAY;
+
+        if (mode === 'continuous') {
+          this._y = 0;
+          this._vy = 0;
+        } else {
+          if (offsetX <= 0) {
+            this._x = 0;
+            this._vx = 0;
+          }
+          if (offsetY <= 0) {
+            this._y = 0;
+            this._vy = 0;
+          }
+        }
       }
 
       // Red and cyan split apart in opposite directions from the same lag
@@ -213,8 +264,24 @@
     }
 
     update(options = {}) {
+      const prevMode = this.options.mode;
+      const prevProfile = this.options.continuousProfile;
+
       Object.assign(this.options, options);
       this._applyStaticStyles();
+
+      const modeChanged = options.mode && options.mode !== prevMode;
+      const profileChanged = options.continuousProfile && options.continuousProfile !== prevProfile;
+
+      if (modeChanged || profileChanged) {
+        this._x = this._y = this._vx = this._vy = this._targetX = this._targetY = 0;
+        this._clockStart = performance.now();
+        this._restStart = null;
+      }
+
+      if (modeChanged && options.mode === 'scroll') {
+        this.resync();
+      }
     }
 
     setText(html) {

@@ -422,8 +422,8 @@
       <div class="title-wrap"><h2 class="in-flight-out">In Flight Out</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/text-effects/triple-vision/index.html" data-type="scroll">
-      <div class="type">Scroll</div>
+    <a class="variation-card" href="/text-effects/triple-vision/index.html" data-type="scroll continuous">
+      <div class="type">Scroll + Continuous</div>
       <div class="title-wrap"><h2 class="triple-vision">Triple Vision</h2></div>
       <div class="go">View →</div>
     </a>
@@ -536,7 +536,8 @@
       filter.addEventListener('change', () => {
         const value = filter.value;
         cards.forEach((card) => {
-          card.hidden = value !== 'all' && card.dataset.type !== value;
+          const types = card.dataset.type.split(' ');
+          card.hidden = value !== 'all' && !types.includes(value);
         });
         if (onChange) onChange();
       });
