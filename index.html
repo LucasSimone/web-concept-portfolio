@@ -264,6 +264,14 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* The `.rolodex` effect's own CSS ships inside
+       /text-effects/rolodex/rolodex.js and is injected automatically.
+       This card just scales the font down to fit. */
+    .variation-card h2.rolodex {
+      --font-size: 30px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
     /* Intertwine: a small looping version of the two live paths, drawn
        continuously behind the title instead of scroll-linked (the real
        demo pins a whole section to scrub them, which doesn't fit a card). */
@@ -429,6 +437,11 @@
       <div class="title-wrap"><h2 class="type-pan">Type Pan Horizontal</h2></div>
       <div class="go">View →</div>
     </a>
+    <a class="variation-card" href="/text-effects/rolodex/index.html" data-type="scroll">
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="rolodex" data-text="Rolodex flips through words">Rolodex flips through words</h2></div>
+      <div class="go">View →</div>
+    </a>
   </div>
   </div>
 
@@ -504,6 +517,7 @@
   <script src="/text-effects/in-flight-out/in-flight-out.js"></script>
   <script src="/text-effects/type-pan-vertical/type-pan-vertical.js"></script>
   <script src="/text-effects/type-pan-horizontal/type-pan-horizontal.js"></script>
+  <script src="/text-effects/rolodex/rolodex.js"></script>
   <script src="/background/circuit-board/circuit-board.js"></script>
   <script src="/shared/carousel.js"></script>
   <!-- This script must stay a plain synchronous inline block (not wrapped
@@ -723,6 +737,14 @@
           typePanHorizontalCard._maxTypedPx = Math.max(typePanHorizontalCard._maxTypedPx, px);
         },
       });
+    }
+    const [rolodexCard] = Rolodex.initAll('.variation-card h2.rolodex', {
+      mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05,
+    });
+    if (rolodexCard) {
+      window.removeEventListener('scroll', rolodexCard._onScroll);
+      window.removeEventListener('resize', rolodexCard._onResize);
+      bindCarouselProgressDriver(variationCarousel.root, rolodexCard, { restProgress: 0.1 });
     }
     CircuitBoard.initAll('.variation-card.bg-circuit-board', {
       maxTraces: 30, cell: 20, speed: 30,
