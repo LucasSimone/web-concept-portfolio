@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Circuit Board — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <aside class="controls">
+    <h2>Controls</h2>
+
+    <div class="control-row">
+      <label>Max traces <span id="maxTracesVal" class="value"></span></label>
+      <input type="range" id="maxTracesRange" min="2" max="250" step="1" value="80" />
+      <div class="hint">The most traces that can be lit up and moving at once.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Grid size <span id="cellVal" class="value"></span></label>
+      <input type="range" id="cellRange" min="18" max="60" step="2" value="34" />
+      <div class="hint">Spacing between the grid points traces bend at.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Max length <span id="maxLengthVal" class="value"></span></label>
+      <input type="range" id="maxLengthRange" min="6" max="60" step="1" value="30" />
+      <div class="hint">The longest a trace can randomly grow, in grid steps.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Speed <span id="speedVal" class="value"></span></label>
+      <input type="range" id="speedRange" min="10" max="200" step="5" value="20" />
+      <div class="hint">How fast each dot travels along its trace.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Fade out <span id="fadeDurationVal" class="value"></span></label>
+      <input type="range" id="fadeDurationRange" min="0.5" max="4" step="0.1" value="0.5" />
+      <div class="hint">How long a finished trace takes to disappear before a new one appears elsewhere.</div>
+    </div>
+
+    <div class="control-row">
+      <button id="overlapToggle" type="button" class="toggle-button" aria-pressed="false">Overlap: Off</button>
+      <div class="hint">On lets new traces cross existing ones; off keeps every trace self-contained.</div>
+    </div>
+
+    <div class="control-row">
+      <button id="randomizeButton" type="button">Randomize traces</button>
+      <div class="hint">Instantly retires every trace on the board and starts fresh ones.</div>
+    </div>
+  </aside>
+
+  <main>
+    <section class="circuit-intro">
+      <p class="eyebrow">Background 01 — Continuous</p>
+      <h1>Circuit Board</h1>
+      <p class="intro">
+        A black &amp; white background of PCB traces that only exist because
+        a dot is lighting them up. Each dot leaves a fading tail as it
+        travels, the trace it's drawn dims out once it's done, and a new one
+        appears somewhere else — nothing repeats in the same spot twice.
+      </p>
+    </section>
+
+    <section class="circuit-hero bg-circuit-board" aria-label="Circuit board background, full width">
+      <span class="label">Applied to a full section</span>
+    </section>
+
+    <p class="section-label">Applied to a smaller element</p>
+    <div class="circuit-card-row">
+      <div class="circuit-card bg-circuit-board">
+        <p>Same class, same script — just a smaller box.</p>
+      </div>
+      <div class="circuit-card bg-circuit-board">
+        <p>The grid and traces regenerate to fit whatever size it's given.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="circuit-board.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

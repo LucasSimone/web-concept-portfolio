@@ -69,14 +69,6 @@
       position: relative;
       z-index: 1;
     }
-    .placeholder-card {
-      cursor: default;
-    }
-    .placeholder-card h2 {
-      opacity: 0.4;
-    }
-    .placeholder-card:hover { background: #fff; }
-
     /* --- Per-effect title styling, scaled down to card size --- */
     .variation-card h2.double-speak {
       font-family: 'Dancing Script', cursive;
@@ -402,44 +394,41 @@
   <div class="carousel-line" data-carousel-line="top"></div>
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="variationGrid">
-    <a class="variation-card" href="/double-speak/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/double-speak/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap"><h2 class="double-speak">Double Speak</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/wave-form/index.html" data-type="continuous">
+    <a class="variation-card" href="/text-effects/wave-form/index.html" data-type="continuous">
       <div class="type">Continuous</div>
       <div class="title-wrap"><h2 class="wave-form">Wave Form</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/paint-drag/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/paint-drag/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap"><h2 class="paint-drag">Paint Drag</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/in-flight-out/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/in-flight-out/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap"><h2 class="in-flight-out">In Flight Out</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/triple-vision/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/triple-vision/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap"><h2 class="triple-vision">Triple Vision</h2></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/type-pan-vertical/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/type-pan-vertical/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap type-pan-vertical-window"><div class="type-pan-vertical-stage"><h2 class="type-pan-vertical">Type Pan Vertical</h2></div></div>
       <div class="go">View →</div>
     </a>
-    <a class="variation-card" href="/type-pan/index.html" data-type="scroll">
+    <a class="variation-card" href="/text-effects/type-pan-horizontal/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <div class="title-wrap"><h2 class="type-pan">Type Pan Horizontal</h2></div>
       <div class="go">View →</div>
     </a>
-    <div class="variation-card placeholder-card">
-      <div class="title-wrap"><h2>Next variation</h2></div>
-    </div>
   </div>
   </div>
 
@@ -461,7 +450,7 @@
   <div class="carousel-line" data-carousel-line="top"></div>
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="conceptGrid">
-    <a class="variation-card" href="/intertwine/index.html" data-type="scroll">
+    <a class="variation-card" href="/concepts/intertwine/index.html" data-type="scroll">
       <div class="type">Scroll</div>
       <svg class="intertwine-mini" viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true">
         <path class="intertwine-path--one" d="M400 0 C95 85 95 130 400 175 S705 260 400 300 S95 355 400 400" />
@@ -500,7 +489,7 @@
   <div class="carousel-line" data-carousel-line="top"></div>
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="backgroundGrid">
-    <a class="variation-card bg-circuit-board" href="/circuit-board/index.html" data-type="continuous">
+    <a class="variation-card bg-circuit-board" href="/background/circuit-board/index.html" data-type="continuous">
       <div class="type">Continuous</div>
       <div class="title-wrap"><h2>Circuit Board</h2></div>
       <div class="go">View →</div>
@@ -508,15 +497,23 @@
   </div>
   </div>
 
-  <script src="/shared/double-speak.js"></script>
-  <script src="/shared/triple-vision-text.js"></script>
-  <script src="/shared/wave-form.js"></script>
-  <script src="/shared/paint-drag.js"></script>
-  <script src="/shared/in-flight-out.js"></script>
-  <script src="/shared/type-pan-vertical.js"></script>
-  <script src="/shared/type-pan-horizontal.js"></script>
-  <script src="/shared/circuit-board.js"></script>
+  <script src="/text-effects/double-speak/double-speak.js"></script>
+  <script src="/text-effects/triple-vision/triple-vision.js"></script>
+  <script src="/text-effects/wave-form/wave-form.js"></script>
+  <script src="/text-effects/paint-drag/paint-drag.js"></script>
+  <script src="/text-effects/in-flight-out/in-flight-out.js"></script>
+  <script src="/text-effects/type-pan-vertical/type-pan-vertical.js"></script>
+  <script src="/text-effects/type-pan-horizontal/type-pan-horizontal.js"></script>
+  <script src="/background/circuit-board/circuit-board.js"></script>
   <script src="/shared/carousel.js"></script>
+  <!-- This script must stay a plain synchronous inline block (not wrapped
+       in its own DOMContentLoaded listener). The shared effect scripts
+       above now auto-init with default options on DOMContentLoaded; the
+       custom-tuned initAll() calls below need to run and claim these
+       elements (via class matches like h2.double-speak) before that fires,
+       so the defaults never get applied to these preview cards. Plain
+       inline scripts always finish before DOMContentLoaded, which is what
+       makes this ordering safe. -->
   <script>
     function setupFilter(filterId, gridId, onChange) {
       const filter = document.getElementById(filterId);

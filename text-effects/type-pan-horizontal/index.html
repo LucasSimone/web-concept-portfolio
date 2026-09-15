@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Type Pan Horizontal — Web Concept Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@700&family=IBM+Plex+Mono:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/shared/site.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <aside class="controls">
+    <h2>Controls</h2>
+
+    <div class="control-row">
+      <label>Font <span id="fontLabel" class="value"></span></label>
+      <select id="fontSelect">
+        <option value="'Archivo Black', sans-serif" selected>Archivo Black</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+        <option value="'Playfair Display', serif">Playfair Display (serif)</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Courier New', monospace">Courier New (monospace)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Text</label>
+      <input id="textInput" type="text" value="Scroll to reveal the whole headline" />
+    </div>
+
+    <div class="control-row">
+      <label>Font size <span id="sizeVal" class="value"></span></label>
+      <input id="sizeRange" type="range" min="24" max="140" step="2" value="72" />
+    </div>
+
+    <div class="control-row">
+      <label>Pan pin position <span id="panVal" class="value"></span></label>
+      <input id="panRange" type="range" min="0.15" max="0.85" step="0.02" value="0.4" />
+      <div class="hint">Where the caret pins horizontally in the element once the line overflows it — the caret always sits right after the last typed character, and new characters reveal to its right as you scroll.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Pan smoothing <span id="lagVal" class="value"></span></label>
+      <input id="lagRange" type="range" min="0.02" max="1" step="0.02" value="0.18" />
+      <div class="hint">How quickly the element catches up to the caret. Lower = a softer, trailing pan; higher = an instant, snappy one.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Reverse scroll behavior</label>
+      <button id="eraseButton" class="toggle-button" type="button" aria-pressed="true">
+        Erasing on scroll back
+      </button>
+      <div class="hint">On: scrolling back erases already-typed characters, like undoing the typing. Off: typed text is kept permanently and reverse scroll just rewinds the camera across it.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Blinking cursor</label>
+      <button id="cursorButton" class="toggle-button" type="button" aria-pressed="true">
+        Cursor blinking on
+      </button>
+    </div>
+
+    <div class="control-row">
+      <button id="resetButton" class="toggle-button" type="button">
+        ↺ Reset scroll
+      </button>
+    </div>
+  </aside>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Scroll (regular mouse wheel) over the text to type it out and pan right</p>
+      <div id="demoText" class="type-pan" data-text="Scroll to reveal the whole headline">Scroll to reveal the whole headline</div>
+      <p class="direction">Keep scrolling to type out every character — the caret always sits right after the last one, revealing new text to its right, and the line pans left once it outgrows the space. Scroll back to reverse. From here a page could keep panning horizontally or hand off to a normal vertical scroll — that part's up to you.</p>
+    </section>
+  </main>
+
+  <script src="type-pan-horizontal.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+/* Page-specific styles for the Type Pan variation.
+   Base layout/nav comes from /shared/site.css */
+
+:root {
+  --type-pan-vertical-size: 34px;
+}
+
+.scroll-spacer {
+  height: 60vh;
+}
+
+main {
+  margin-right: 300px;
+}
+
+.hero {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 6vh 5vw;
+  text-align: center;
+}
+
+.hero .eyebrow {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.6;
+}
+
+.hero .direction {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.55;
+  max-width: 46ch;
+}
+
+/* --- The window that clips/pans the typed line --- */
+.type-pan-vertical-window {
+  width: min(86vw, 760px);
+  border: 1px solid #000;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+}
+
+.type-pan-vertical-window::before {
+  content: '';
+  display: block;
+  height: 28px;
+  background: #000;
+}
+
+/* The `.type-pan-vertical` effect's own CSS ships inside
+   ./type-pan-vertical.js and is injected automatically. This page
+   layers a couple of demo-only touches on top via the shared class name. */
+.type-pan-vertical {
+  font-family: 'IBM Plex Mono', monospace;
+  padding: 20px 24px;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select,
+.control-row input[type="text"],
+.toggle-button {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.toggle-button {
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle-button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+  .controls {
+    width: 100%;
+    position: static;
+    border-left: none;
+    border-top: 1px solid #000;
+  }
+  :root { --type-pan-vertical-size: 22px; }
+}
