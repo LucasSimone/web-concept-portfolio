@@ -317,6 +317,21 @@
       display: block;
     }
 
+    /* Gravity Well: same override pattern as Circuit Board above — the
+       injected canvas sits at z-index 0 within the card's own stacking
+       context instead of the -1 it uses on a full page section. */
+    .variation-card.bg-gravity-well {
+      isolation: isolate;
+      background: #fff;
+      color: #000;
+    }
+    .gravity-well__canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: block;
+    }
+
     .carousel {
       position: relative;
       width: 100%;
@@ -509,6 +524,11 @@
       <div class="title-wrap"><h2>Circuit Board</h2></div>
       <div class="go">View →</div>
     </a>
+    <a class="variation-card bg-gravity-well" href="/background/gravity-well/index.html" data-type="interactive">
+      <div class="type">Interactive</div>
+      <div class="title-wrap"><h2>Gravity Well</h2></div>
+      <div class="go">View →</div>
+    </a>
   </div>
   </div>
 
@@ -521,6 +541,7 @@
   <script src="/text-effects/type-pan-horizontal/type-pan-horizontal.js"></script>
   <script src="/text-effects/rolodex/rolodex.js"></script>
   <script src="/background/circuit-board/circuit-board.js"></script>
+  <script src="/background/gravity-well/gravity-well.js"></script>
   <script src="/shared/carousel.js"></script>
   <!-- This script must stay a plain synchronous inline block (not wrapped
        in its own DOMContentLoaded listener). The shared effect scripts
@@ -751,6 +772,9 @@
     }
     CircuitBoard.initAll('.variation-card.bg-circuit-board', {
       maxTraces: 30, cell: 20, speed: 30,
+    });
+    GravityWell.initAll('.variation-card.bg-gravity-well', {
+      cell: 20, radius: 110, strength: 40,
     });
   </script>
 </body>

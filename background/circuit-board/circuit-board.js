@@ -97,11 +97,15 @@
       }
     }
 
+    // clientWidth/clientHeight (not getBoundingClientRect) because the host
+    // element may sit under a CSS transform (e.g. the homepage carousel's
+    // coverflow scale) — the canvas is a child of that same element, so it
+    // inherits that transform too. Sizing it off the already-scaled
+    // bounding rect would apply the scale twice.
     _resize() {
-      const rect = this.el.getBoundingClientRect();
       const dpr = Math.min(global.devicePixelRatio || 1, 2);
-      this._w = Math.max(1, Math.round(rect.width));
-      this._h = Math.max(1, Math.round(rect.height));
+      this._w = Math.max(1, this.el.clientWidth);
+      this._h = Math.max(1, this.el.clientHeight);
       this.canvas.width = Math.round(this._w * dpr);
       this.canvas.height = Math.round(this._h * dpr);
       this.canvas.style.width = `${this._w}px`;

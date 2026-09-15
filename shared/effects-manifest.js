@@ -83,5 +83,13 @@
       jsPath: '/background/circuit-board/circuit-board.js',
       docsPath: '/docs/background/circuit-board.html',
     },
+    {
+      slug: 'gravity-well',
+      name: 'Gravity Well',
+      category: 'background',
+      demoPath: '/background/gravity-well/index.html',
+      jsPath: '/background/gravity-well/gravity-well.js',
+      docsPath: '/docs/background/gravity-well.html',
+    },
   ];
 })(window);
