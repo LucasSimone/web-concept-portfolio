@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Web Concept Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Space+Grotesk:wght@700&family=Archivo+Black&family=Bebas+Neue&family=IBM+Plex+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/shared/site.css" />
   <style>
     .home-hero {
@@ -32,37 +34,287 @@
       flex-direction: column;
       gap: 8px;
       min-height: 160px;
-      justify-content: space-between;
       transition: background 0.15s ease;
+      position: relative;
+      overflow: hidden;
     }
     .variation-card:hover { background: #f5f5f5; }
-    .variation-card .tag {
+    .variation-card .type {
+      align-self: flex-start;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       opacity: 0.55;
+      position: relative;
+      z-index: 1;
+    }
+    .variation-card .title-wrap {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      z-index: 1;
     }
     .variation-card h2 {
+      margin: 0;
       font-size: 25px;
-      margin: 0;
-    }
-    .variation-card p {
-      font-size: 15px;
-      opacity: 0.7;
-      margin: 0;
-      line-height: 1.5;
     }
     .variation-card .go {
       font-size: 15px;
-      margin-top: 12px;
+      align-self: flex-end;
+      position: relative;
+      z-index: 1;
     }
     .placeholder-card {
       cursor: default;
     }
-    .placeholder-card > div {
+    .placeholder-card h2 {
       opacity: 0.4;
     }
     .placeholder-card:hover { background: #fff; }
+
+    /* --- Per-effect title styling, scaled down to card size --- */
+    .variation-card h2.double-speak {
+      font-family: 'Dancing Script', cursive;
+      font-size: 42px;
+      line-height: 1.1;
+    }
+    .variation-card .double-speak__front,
+    .variation-card .double-speak__ghost {
+      display: block;
+      color: inherit;
+    }
+    .variation-card .double-speak__ghost {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .variation-card .double-speak__front {
+      position: relative;
+      z-index: 1;
+    }
+
+    .variation-card h2.triple-vision {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 34px;
+      line-height: 1.1;
+    }
+    .variation-card .triple-vision__front,
+    .variation-card .triple-vision__channel {
+      display: block;
+    }
+    .variation-card .triple-vision__front {
+      position: relative;
+      z-index: 2;
+      color: inherit;
+    }
+    .variation-card .triple-vision__channel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+
+    .variation-card h2.wave-form {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.01em;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 30px;
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      cursor: pointer;
+    }
+    .variation-card .wave-form__char {
+      position: relative;
+      display: inline-block;
+    }
+
+    .variation-card h2.paint-drag {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 28px;
+      line-height: 1.1;
+      position: relative;
+      z-index: 2;
+      text-shadow:
+        0 0 6px rgba(255, 255, 255, 0.85),
+        0 0 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .variation-card h2.in-flight-out {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 34px;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+    }
+    .variation-card .in-flight-out__char {
+      display: inline-block;
+    }
+
+    /* The window spans the card's full available height (bottom to top),
+       like the real demo's terminal box, instead of just centering a
+       single line. Unlike the real demo — which only pans horizontally —
+       the line here also travels vertically inside that space (JS drives
+       a translateY on the h2 itself from carousel scroll progress), so
+       "vertical" reads as an actual up/down motion, not just a tall box. */
+    .variation-card .title-wrap.type-pan-vertical-window {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      text-align: left;
+      border: 1px solid #000;
+      overflow: hidden;
+      padding: 0;
+    }
+    .variation-card .type-pan-vertical-window::before {
+      content: '';
+      display: block;
+      height: 18px;
+      background: #000;
+      flex-shrink: 0;
+    }
+    .variation-card .type-pan-vertical-stage {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+    .variation-card h2.type-pan-vertical {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      box-sizing: border-box;
+      padding: 10px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 16px;
+      line-height: 1.4;
+      text-align: left;
+      will-change: transform;
+    }
+    .variation-card .type-pan-vertical__track {
+      display: inline-block;
+      white-space: pre;
+      will-change: transform;
+    }
+    .variation-card .type-pan-vertical__cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      margin-left: 1px;
+      background: currentColor;
+      vertical-align: text-bottom;
+    }
+    .variation-card .type-pan-vertical__cursor--blink {
+      animation: home-type-pan-blink 1s steps(1, start) infinite;
+    }
+
+    .variation-card h2.type-pan {
+      position: relative;
+      width: 100%;
+      height: 40px;
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 18px;
+      line-height: 1;
+      cursor: ns-resize;
+    }
+    .variation-card .type-pan__viewport {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+    .variation-card .type-pan__track {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      white-space: pre;
+      will-change: transform;
+    }
+    .variation-card .type-pan__char {
+      display: inline-block;
+      opacity: 0;
+    }
+    .variation-card .type-pan__char--visible {
+      opacity: 1;
+    }
+    .variation-card .type-pan__cursor {
+      position: absolute;
+      top: 8%;
+      bottom: 8%;
+      width: 2px;
+      background: currentColor;
+      pointer-events: none;
+    }
+    .variation-card .type-pan__cursor--blink {
+      animation: home-type-pan-blink 1s steps(1, start) infinite;
+    }
+
+    @keyframes home-type-pan-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    /* Intertwine: a small looping version of the two live paths, drawn
+       continuously behind the title instead of scroll-linked (the real
+       demo pins a whole section to scrub them, which doesn't fit a card). */
+    .variation-card .intertwine-mini {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .variation-card .intertwine-mini path {
+      fill: none;
+      stroke: #000;
+      stroke-width: 2;
+      stroke-dasharray: 900;
+      animation: home-intertwine-draw 6s linear infinite;
+    }
+    .variation-card .intertwine-mini .intertwine-path--two {
+      animation-direction: reverse;
+      animation-delay: -1s;
+    }
+    @keyframes home-intertwine-draw {
+      0% { stroke-dashoffset: 900; }
+      50% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -900; }
+    }
+
+    /* Circuit Board: the real reusable background effect, applied to the
+       whole card instead of just the title. */
+    .variation-card.bg-circuit-board {
+      isolation: isolate;
+      background: #fff;
+      color: #000;
+    }
+    .circuit-board__canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: block;
+    }
+
     .carousel {
       position: relative;
       width: 100%;
@@ -129,7 +381,7 @@
   </nav>
 
   <section class="home-hero lab-section">
-    <h1>Text Effects Lab</h1>
+    <h1>Text Effect Lab</h1>
     <p>
       A collection of black &amp; white text animation experiments. Pick a
       web effect below to see it live and tune its parameters with the
@@ -151,67 +403,42 @@
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="variationGrid">
     <a class="variation-card" href="/double-speak/index.html" data-type="scroll">
-      <div>
-        <div class="tag">01 — Double Speak — Scroll</div>
-        <h2>Double Speak</h2>
-        <p>A ghost copy of the text trails behind as you scroll, like a pen stroke drawn twice.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="double-speak">Double Speak</h2></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/wave-form/index.html" data-type="continuous">
-      <div>
-        <div class="tag">02 — Wave Form — Continuous</div>
-        <h2>Wave Form</h2>
-        <p>Each character wriggles in a slow wave, pushing the text into a fluid, drifting rhythm.</p>
-      </div>
+      <div class="type">Continuous</div>
+      <div class="title-wrap"><h2 class="wave-form">Wave Form</h2></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/paint-drag/index.html" data-type="scroll">
-      <div>
-        <div class="tag">03 — Paint Drag — Scroll</div>
-        <h2>Paint Drag</h2>
-        <p>Text smears like wet paint dragged by a brush, streaking and fading as you scroll.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="paint-drag">Paint Drag</h2></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/in-flight-out/index.html" data-type="scroll">
-      <div>
-        <div class="tag">04 — In Flight Out — Scroll</div>
-        <h2>In Flight Out</h2>
-        <p>Letters arrive from scattered paths below, assemble into a phrase, then scatter away above as you keep scrolling.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="in-flight-out">In Flight Out</h2></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/triple-vision/index.html" data-type="scroll">
-      <div>
-        <div class="tag">05 — Triple Vision — Scroll</div>
-        <h2>Triple Vision</h2>
-        <p>Old-school red &amp; cyan 3D-glasses print separation — the channels split apart as you scroll and snap back together when you stop.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="triple-vision">Triple Vision</h2></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/type-pan-vertical/index.html" data-type="scroll">
-      <div>
-        <div class="tag">06 — Type Pan Vertical — Scroll</div>
-        <h2>Type Pan Vertical</h2>
-        <p>A typewriter caret types out the line as you scroll, panning the window right as the line outgrows it — scroll back to rewind or erase, your choice.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap type-pan-vertical-window"><div class="type-pan-vertical-stage"><h2 class="type-pan-vertical">Type Pan Vertical</h2></div></div>
       <div class="go">View →</div>
     </a>
     <a class="variation-card" href="/type-pan/index.html" data-type="scroll">
-      <div>
-        <div class="tag">07 — Type Pan — Scroll</div>
-        <h2>Type Pan</h2>
-        <p>Regular mouse-wheel scrolling pans the whole page sideways, typing out a long title as the caret line reaches each letter — reverse to erase or keep it, your choice.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <div class="title-wrap"><h2 class="type-pan">Type Pan Horizontal</h2></div>
       <div class="go">View →</div>
     </a>
     <div class="variation-card placeholder-card">
-      <div>
-        <div class="tag">08 — Coming soon</div>
-        <h2>Next variation</h2>
-        <p>More effects will appear here as they're added.</p>
-      </div>
+      <div class="title-wrap"><h2>Next variation</h2></div>
     </div>
   </div>
   </div>
@@ -235,11 +462,12 @@
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="conceptGrid">
     <a class="variation-card" href="/intertwine/index.html" data-type="scroll">
-      <div>
-        <div class="tag">01 — Intertwine — Scroll</div>
-        <h2>Intertwine</h2>
-        <p>Two fixed SVG paths chase and cross one another as the illustration is drawn through scrolling.</p>
-      </div>
+      <div class="type">Scroll</div>
+      <svg class="intertwine-mini" viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true">
+        <path class="intertwine-path--one" d="M400 0 C95 85 95 130 400 175 S705 260 400 300 S95 355 400 400" />
+        <path class="intertwine-path--two" d="M400 0 C705 85 705 130 400 175 S95 260 400 300 S705 355 400 400" />
+      </svg>
+      <div class="title-wrap"><h2>Intertwine</h2></div>
       <div class="go">View →</div>
     </a>
   </div>
@@ -272,17 +500,22 @@
   <div class="carousel-line" data-carousel-line="top"></div>
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="backgroundGrid">
-    <a class="variation-card" href="/circuit-board/index.html" data-type="continuous">
-      <div>
-        <div class="tag">01 — Circuit Board — Continuous</div>
-        <h2>Circuit Board</h2>
-        <p>A black &amp; white PCB pattern that breathes and pulses on its own — apply it to a page or any element with one class.</p>
-      </div>
+    <a class="variation-card bg-circuit-board" href="/circuit-board/index.html" data-type="continuous">
+      <div class="type">Continuous</div>
+      <div class="title-wrap"><h2>Circuit Board</h2></div>
       <div class="go">View →</div>
     </a>
   </div>
   </div>
 
+  <script src="/shared/double-speak.js"></script>
+  <script src="/shared/triple-vision-text.js"></script>
+  <script src="/shared/wave-form.js"></script>
+  <script src="/shared/paint-drag.js"></script>
+  <script src="/shared/in-flight-out.js"></script>
+  <script src="/shared/type-pan-vertical.js"></script>
+  <script src="/shared/type-pan-horizontal.js"></script>
+  <script src="/shared/circuit-board.js"></script>
   <script src="/shared/carousel.js"></script>
   <script>
     function setupFilter(filterId, gridId, onChange) {
@@ -305,6 +538,194 @@
 
     setupFilter('typeFilter', 'variationGrid', () => variationCarousel.refresh());
     setupFilter('conceptTypeFilter', 'conceptGrid', () => conceptCarousel.refresh());
+
+    // While scrolling the page normally, a card's lag effect uses its
+    // default (vertical) profile, driven by the instance's own window-
+    // scroll listener. While the user is actively wheeling/dragging the
+    // carousel itself, we temporarily switch it to the horizontal profile
+    // and drive the offset directly from that wheel/drag input instead —
+    // then revert to vertical once carousel input goes idle.
+    function bindCarouselAxisSwitch(carouselEl, instance, verticalProfile, horizontalProfile) {
+      const SCALE_X = 1;
+      const DRAG_SCALE = 6;
+      const IDLE_DELAY = 350;
+      const maxOffset = horizontalProfile.offsetX || 0;
+      let idleTimer = null;
+      let dragging = false;
+      let lastX = 0;
+
+      function scheduleRevert() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => instance.update(verticalProfile), IDLE_DELAY);
+      }
+
+      function nudge(delta) {
+        instance.update(horizontalProfile);
+        instance._targetX = maxOffset > 0
+          ? Math.max(-maxOffset, Math.min(maxOffset, delta * SCALE_X))
+          : 0;
+        instance._targetY = 0;
+        scheduleRevert();
+      }
+
+      carouselEl.addEventListener('wheel', (event) => {
+        const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+        nudge(raw);
+      }, { passive: true });
+
+      carouselEl.addEventListener('pointerdown', (event) => {
+        dragging = true;
+        lastX = event.clientX;
+      });
+      window.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        const dx = event.clientX - lastX;
+        lastX = event.clientX;
+        nudge(-dx * DRAG_SCALE);
+      });
+      window.addEventListener('pointerup', () => { dragging = false; });
+    }
+
+    // In Flight Out and Type Pan Vertical normally derive their progress
+    // (0-1) from the element's position in the viewport as the page
+    // scrolls. On these cards that's disabled entirely (see below) and
+    // progress is driven only by wheel/drag input on the carousel itself,
+    // easing back to a resting value once that input goes idle.
+    function bindCarouselProgressDriver(carouselEl, instance, options = {}) {
+      const sensitivity = options.sensitivity ?? 0.0015;
+      const dragSensitivity = options.dragSensitivity ?? 0.004;
+      const restProgress = options.restProgress ?? 0.5;
+      const idleDelay = options.idleDelay ?? 350;
+      const revertEase = options.revertEase ?? 0.08;
+      // Defaults to reading/writing instance._progress (In Flight Out,
+      // Type Pan Vertical); pass get/set to drive some other 0-1 stand-in,
+      // e.g. Type Pan Horizontal's pixel-based typed length.
+      const getProgress = options.get || (() => instance._progress);
+      const setProgress = options.set || ((value) => { instance._progress = value; });
+      let idleTimer = null;
+      let revertRaf = null;
+      let dragging = false;
+      let lastX = 0;
+
+      function stopRevert() {
+        if (revertRaf) cancelAnimationFrame(revertRaf);
+        revertRaf = null;
+      }
+
+      function startRevert() {
+        stopRevert();
+        function step() {
+          setProgress(getProgress() + (restProgress - getProgress()) * revertEase);
+          if (Math.abs(getProgress() - restProgress) < 0.0015) {
+            setProgress(restProgress);
+            revertRaf = null;
+            return;
+          }
+          revertRaf = requestAnimationFrame(step);
+        }
+        revertRaf = requestAnimationFrame(step);
+      }
+
+      function scheduleIdleRevert() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(startRevert, idleDelay);
+      }
+
+      function nudge(delta) {
+        stopRevert();
+        setProgress(Math.max(0, Math.min(1, getProgress() + delta)));
+        scheduleIdleRevert();
+      }
+
+      carouselEl.addEventListener('wheel', (event) => {
+        const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+        nudge(raw * sensitivity);
+      }, { passive: true });
+
+      carouselEl.addEventListener('pointerdown', (event) => {
+        dragging = true;
+        lastX = event.clientX;
+      });
+      window.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        const dx = event.clientX - lastX;
+        lastX = event.clientX;
+        nudge(-dx * dragSensitivity);
+      });
+      window.addEventListener('pointerup', () => { dragging = false; });
+
+      setProgress(restProgress);
+    }
+
+    const DOUBLE_SPEAK_VERTICAL = { offsetX: 0, offsetY: 14, lag: 0.15, opacity: 0.5 };
+    const DOUBLE_SPEAK_HORIZONTAL = { offsetX: 14, offsetY: 0, lag: 0.15, opacity: 0.5 };
+    const [doubleSpeakCard] = DoubleSpeak.initAll('.variation-card h2.double-speak', DOUBLE_SPEAK_VERTICAL);
+    if (doubleSpeakCard) {
+      bindCarouselAxisSwitch(variationCarousel.root, doubleSpeakCard, DOUBLE_SPEAK_VERTICAL, DOUBLE_SPEAK_HORIZONTAL);
+    }
+
+    const TRIPLE_VISION_VERTICAL = { offsetX: 0, offsetY: 100, lag: 0.15, opacity: 0.6 };
+    const TRIPLE_VISION_HORIZONTAL = { offsetX: 100, offsetY: 0, lag: 0.15, opacity: 0.6 };
+    const [tripleVisionCard] = TripleVisionText.initAll('.variation-card h2.triple-vision', TRIPLE_VISION_VERTICAL);
+    if (tripleVisionCard) {
+      bindCarouselAxisSwitch(variationCarousel.root, tripleVisionCard, TRIPLE_VISION_VERTICAL, TRIPLE_VISION_HORIZONTAL);
+    }
+    WaveForm.initAll('.variation-card h2.wave-form', {
+      amplitude: 6, frequency: 0.8, spread: 1.1, drift: 0.6,
+    });
+    PaintDrag.initAll('.variation-card h2.paint-drag', {
+      smearLength: 40, spread: 6, blur: 3, fadeTime: 0.5,
+    });
+    const [inFlightOutCard] = InFlightOut.initAll('.variation-card h2.in-flight-out', {
+      scatter: 0.45, maxDistance: 60, rotation: 0.4, maxAngle: 40,
+    });
+    if (inFlightOutCard) {
+      window.removeEventListener('scroll', inFlightOutCard._onScroll);
+      window.removeEventListener('resize', inFlightOutCard._onScroll);
+      bindCarouselProgressDriver(variationCarousel.root, inFlightOutCard, { restProgress: 0.5 });
+    }
+
+    const [typePanVerticalCard] = TypePanVertical.initAll('.variation-card h2.type-pan-vertical', {
+      panPosition: 0.6, lag: 0.18,
+    });
+    if (typePanVerticalCard) {
+      window.removeEventListener('scroll', typePanVerticalCard._onScroll);
+      window.removeEventListener('resize', typePanVerticalCard._onScroll);
+      bindCarouselProgressDriver(variationCarousel.root, typePanVerticalCard, { restProgress: 1 });
+
+      // The window's height (minus the title bar) is the line's vertical
+      // travel range: progress 0 sits at the bottom, progress 1 at the top.
+      const stageEl = typePanVerticalCard.el.closest('.type-pan-vertical-window')
+        .querySelector('.type-pan-vertical-stage');
+      (function syncVerticalPosition() {
+        const travel = Math.max(0, stageEl.clientHeight - typePanVerticalCard.el.offsetHeight);
+        const y = (1 - typePanVerticalCard._progress) * travel;
+        typePanVerticalCard.el.style.transform = `translateY(${y.toFixed(1)}px)`;
+        requestAnimationFrame(syncVerticalPosition);
+      })();
+    }
+    // Type Pan Horizontal normally types from wheel input captured right on
+    // its own title. That's replaced here with the same carousel-driven
+    // progress approach as Type Pan Vertical, just mapped onto its
+    // pixel-based typed length instead of a 0-1 progress field.
+    const [typePanHorizontalCard] = TypePanHorizontal.initAll('.variation-card h2.type-pan', {
+      sensitivity: 1, panPosition: 0.75,
+    });
+    if (typePanHorizontalCard) {
+      typePanHorizontalCard.el.removeEventListener('wheel', typePanHorizontalCard._onWheel);
+      bindCarouselProgressDriver(variationCarousel.root, typePanHorizontalCard, {
+        restProgress: 1,
+        get: () => typePanHorizontalCard._typedPx / (typePanHorizontalCard._totalWidth || 1),
+        set: (value) => {
+          const px = value * (typePanHorizontalCard._totalWidth || 0);
+          typePanHorizontalCard._typedPx = px;
+          typePanHorizontalCard._maxTypedPx = Math.max(typePanHorizontalCard._maxTypedPx, px);
+        },
+      });
+    }
+    CircuitBoard.initAll('.variation-card.bg-circuit-board', {
+      maxTraces: 30, cell: 20, speed: 30,
+    });
   </script>
 </body>
 </html>
