@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Type Pan Vertical — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll-driven</p>
+      <h1>Type Pan Vertical</h1>
+      <p>
+        A fixed-width clipped "window" types out a single line of text
+        character by character as the user scrolls down the page. Once the
+        typed line grows wider than the window, the window pans horizontally
+        to keep the caret in view instead of wrapping. Scroll position
+        drives the typing exactly, so it's reversible/scrubbable.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/type-pan-vertical/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/type-pan-vertical/type-pan-vertical.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="type-pan-vertical.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag
+        (including the blink keyframes) on first use, so no companion CSS
+        file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="type-pan-vertical" data-text="Type Pan scrolls the carriage sideways as the line keeps growing."&gt;
+  Type Pan scrolls the carriage sideways as the line keeps growing.
+&lt;/div&gt;
+&lt;script src="type-pan-vertical.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Reads <code>data-text</code> or trimmed <code>textContent</code>.
+        Auto-initializes against every <code>.type-pan-vertical</code>
+        element. To configure options:
+      </p>
+      <pre><code>TypePanVertical.initAll('.type-pan-vertical', {
+  panPosition: 0.6,
+  lag: 0.18,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>panPosition</code></td><td><code>0.62</code></td><td>Fraction of window width the caret pins to once text overflows</td></tr>
+          <tr><td><code>lag</code></td><td><code>0.18</code></td><td>Smoothing (0–1) applied to the pan movement; higher is snappier</td></tr>
+          <tr><td><code>eraseOnReverse</code></td><td><code>true</code></td><td>Erase typed characters when scrolling back up; false keeps text and only rewinds the camera</td></tr>
+          <tr><td><code>cursorBlink</code></td><td><code>true</code></td><td>Whether the caret blinks</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Scroll-driven only — no continuous mode in this variant (unlike its
+        horizontal sibling, <a href="/docs/text-effects/type-pan-horizontal.html">Type Pan Horizontal</a>).
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Double Speak — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll-driven</p>
+      <h1>Double Speak</h1>
+      <p>
+        Clones the element's text into a translucent "ghost" copy layered
+        behind it. As the page scrolls, the ghost lags behind the real text
+        with spring/ease physics, creating a smeared double-exposure trail.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/double-speak/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/double-speak/double-speak.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="double-speak.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
+        first use, so no companion CSS file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="double-speak"&gt;Double Speak&lt;/div&gt;
+&lt;script src="double-speak.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes on <code>DOMContentLoaded</code> against every
+        <code>.double-speak</code> element, reading its existing
+        <code>innerHTML</code>. To configure options instead of using the
+        defaults, call it yourself:
+      </p>
+      <pre><code>DoubleSpeak.initAll('.double-speak', {
+  offsetY: 40,
+  lag: 0.2,
+  opacity: 0.4,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>offsetX</code></td><td><code>0</code></td><td>Max horizontal ghost displacement in px (0 disables X movement)</td></tr>
+          <tr><td><code>offsetY</code></td><td><code>60</code></td><td>Max vertical ghost displacement in px (0 disables Y movement)</td></tr>
+          <tr><td><code>lag</code></td><td><code>0.15</code></td><td>Easing factor (0.01–1) for how quickly the ghost catches up to its target position</td></tr>
+          <tr><td><code>speed</code></td><td><code>1</code></td><td>Multiplier applied to scroll delta before it drives displacement</td></tr>
+          <tr><td><code>opacity</code></td><td><code>0.5</code></td><td>Opacity of the ghost layer</td></tr>
+          <tr><td><code>blur</code></td><td><code>0</code></td><td>CSS blur (px) applied to the ghost layer</td></tr>
+          <tr><td><code>color</code></td><td><code>null</code></td><td>Explicit ghost text color; falls back to the inherited color if null</td></tr>
+          <tr><td><code>inverted</code></td><td><code>false</code></td><td>If true, the front (real) text lags instead of the ghost</td></tr>
+          <tr><td><code>rebound</code></td><td><code>0</code></td><td>0–2, adds spring/bounce physics instead of plain easing when above 0</td></tr>
+          <tr><td><code>scrollSource</code></td><td><code>null</code></td><td>Element to listen for scroll on instead of <code>window</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Scroll-driven only — there's no continuous/time-based mode for this
+        effect. <code>DoubleSpeak.get(elOrSelector)</code> and
+        <code>DoubleSpeak.getAll(selector)</code> retrieve existing instances;
+        each instance also exposes <code>.update(options)</code> and
+        <code>.destroy()</code>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paint Drag — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll-driven</p>
+      <h1>Paint Drag</h1>
+      <p>
+        The real text scrolls normally with the page. A single shared canvas
+        fixed to the viewport stamps the text at its current screen position
+        every frame, leaving a fading paint-like smear behind it — a brush
+        dragged across the screen rather than a trail that travels with the
+        text.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/paint-drag/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/paint-drag/paint-drag.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="paint-drag.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
+        first use, so no companion CSS file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="paint-drag"&gt;Paint Drag&lt;/div&gt;
+&lt;script src="paint-drag.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Reads <code>data-text</code> if present, else trimmed
+        <code>textContent</code>. Auto-initializes against every
+        <code>.paint-drag</code> element — note all instances on a page share
+        one fixed full-viewport canvas. To configure options:
+      </p>
+      <pre><code>PaintDrag.initAll('.paint-drag', {
+  smearLength: 0,
+  spread: 0,
+  blur: 2,
+  fadeTime: 0.1,
+  density: 0,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>smearLength</code></td><td><code>140</code></td><td>How far the stroke is stretched beyond real movement, in px, at full speed</td></tr>
+          <tr><td><code>spread</code></td><td><code>18</code></td><td>Perpendicular random jitter/scatter of each brush stamp, in px</td></tr>
+          <tr><td><code>fadeTime</code></td><td><code>0.6</code></td><td>Seconds for a stamp/trail to fully fade after motion stops</td></tr>
+          <tr><td><code>density</code></td><td><code>10</code></td><td>Max interpolated stamps drawn per frame at full speed</td></tr>
+          <tr><td><code>blur</code></td><td><code>6</code></td><td>Canvas shadow blur per stamp (bristle softness)</td></tr>
+          <tr><td><code>skew</code></td><td><code>true</code></td><td>Whether stamps slant/rotate along the drag direction</td></tr>
+          <tr><td><code>color</code></td><td><code>null</code></td><td>Explicit trail color; defaults to the element's computed text color</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Implemented as a continuous <code>requestAnimationFrame</code> loop
+        that samples <code>getBoundingClientRect()</code> each frame rather
+        than a scroll listener, but reads as scroll-driven since velocity
+        comes from the element's on-screen position changing as the page
+        scrolls. The injected canvas overlay uses a very high z-index to sit
+        above host-page content.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

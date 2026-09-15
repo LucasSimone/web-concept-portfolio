@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wave Form — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Continuous</p>
+      <h1>Wave Form</h1>
+      <p>
+        Splits text into per-character spans that continuously drift up and
+        down on layered sine waves — a base wave plus a faster shimmer wave —
+        with pointer position adding directional drift, rotation, and
+        shimmer intensity.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/wave-form/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/wave-form/wave-form.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="wave-form.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
+        first use, so no companion CSS file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="wave-form" data-text="Wave Form"&gt;Wave Form&lt;/div&gt;
+&lt;script src="wave-form.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Reads the <code>data-text</code> attribute if present, else falls
+        back to trimmed <code>textContent</code>. Auto-initializes against
+        every <code>.wave-form</code> element. To configure options:
+      </p>
+      <pre><code>WaveForm.initAll('.wave-form', {
+  amplitude: 6,
+  frequency: 0.8,
+  spread: 1.1,
+  drift: 0.6,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>amplitude</code></td><td><code>16</code></td><td>Peak vertical wave/shimmer displacement in px</td></tr>
+          <tr><td><code>frequency</code></td><td><code>0.8</code></td><td>Base oscillation speed multiplier</td></tr>
+          <tr><td><code>spread</code></td><td><code>1.2</code></td><td>Phase offset per character index — higher values ripple across the word instead of moving in unison</td></tr>
+          <tr><td><code>drift</code></td><td><code>0.7</code></td><td>Adds to the wave's frequency multiplier, increasing perceived speed</td></tr>
+          <tr><td><code>fade</code></td><td><code>true</code></td><td>Whether character opacity oscillates (shimmer fade) or stays fixed at 1</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Continuous/time-driven only — a <code>requestAnimationFrame</code>
+        loop keyed off <code>performance.now()</code>, with pointer position
+        perturbing it. No scroll dependency and no mode toggle.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

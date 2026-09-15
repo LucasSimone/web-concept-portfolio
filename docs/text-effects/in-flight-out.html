@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>In Flight Out — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Text Effect · Scroll-driven</p>
+      <h1>In Flight Out</h1>
+      <p>
+        Splits text into per-character spans that fly in from scattered
+        off-screen paths, assemble and hold while the element crosses the
+        viewport, then fly apart and off-screen again — driven exactly by
+        scroll position, so it's fully reversible.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/text-effects/in-flight-out/index.html">View Demo</a>
+        <a class="btn" href="/text-effects/in-flight-out/in-flight-out.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="in-flight-out.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
+        first use, so no companion CSS file is required.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;div class="in-flight-out" data-text="In Flight Out"&gt;In Flight Out&lt;/div&gt;
+&lt;script src="in-flight-out.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Reads <code>data-text</code> or trimmed <code>textContent</code>.
+        Auto-initializes against every <code>.in-flight-out</code> element.
+        To configure options:
+      </p>
+      <pre><code>InFlightOut.initAll('.in-flight-out', {
+  scatter: 0.45,
+  maxDistance: 60,
+  rotation: 0.4,
+  maxAngle: 40,
+});</code></pre>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>scatter</code></td><td><code>1</code></td><td>Multiplier scaling how far entry/exit points are from center</td></tr>
+          <tr><td><code>maxDistance</code></td><td><code>140</code></td><td>Cap on flight distance, as % of viewport diagonal</td></tr>
+          <tr><td><code>rotation</code></td><td><code>0.4</code></td><td>0–1 chance-and-intensity dial for how many/how much letters rotate</td></tr>
+          <tr><td><code>maxAngle</code></td><td><code>60</code></td><td>Max rotation angle in degrees when rotation is fully active</td></tr>
+          <tr><td><code>entryPercent</code></td><td><code>48</code></td><td>Share of scroll progress spent on the entry animation</td></tr>
+          <tr><td><code>hangPercent</code></td><td><code>10</code></td><td>Share of scroll progress the text holds fully assembled</td></tr>
+          <tr><td><code>exitPercent</code></td><td><code>42</code></td><td>Share of scroll progress spent on the exit animation</td></tr>
+          <tr><td><code>path</code></td><td><code>'linear'</code></td><td><code>'linear'</code> (enter below / exit above, like credits) or <code>'random'</code> (each letter enters/exits from a random viewport edge)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Call <code>.reshuffle()</code> on an instance to re-roll random
+        entry/exit points and rotation without rebuilding the DOM or
+        touching options. Scroll-driven only — no continuous mode.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

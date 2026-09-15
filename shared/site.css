@@ -55,3 +55,223 @@ a { color: inherit; }
 .site-nav .links a[aria-current="page"] {
   border-bottom-color: #000;
 }
+
+.site-nav .actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid #000;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  background: #fff;
+  color: #000;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn:hover {
+  background: #000;
+  color: #fff;
+}
+
+/* --- Docs --- */
+
+.docs-layout {
+  display: flex;
+  align-items: flex-start;
+}
+
+.docs-sidebar {
+  position: sticky;
+  top: 57px;
+  width: 220px;
+  flex-shrink: 0;
+  height: calc(100vh - 57px);
+  overflow-y: auto;
+  padding: 32px 20px;
+  border-right: 1px solid #000;
+  font-size: 13px;
+}
+
+.docs-sidebar a {
+  display: block;
+  padding: 4px 0;
+  text-decoration: none;
+  opacity: 0.65;
+}
+
+.docs-sidebar a:hover,
+.docs-sidebar a[aria-current="page"] {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.docs-sidebar-group h3 {
+  margin: 22px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.5;
+}
+
+.docs-sidebar-group:first-child h3 {
+  margin-top: 20px;
+}
+
+.docs-content {
+  flex: 1;
+  min-width: 0;
+  padding: 7vh 6vw;
+  max-width: 760px;
+}
+
+.docs-content .docs-eyebrow {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+.docs-content h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 40px);
+}
+
+.docs-content h2 {
+  margin: 40px 0 12px;
+  font-size: 18px;
+}
+
+.docs-content p {
+  max-width: 62ch;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.docs-content .docs-actions {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0 8px;
+}
+
+.docs-content pre {
+  position: relative;
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  background: #000;
+  color: #fff;
+  overflow-x: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.docs-content pre .copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.docs-content pre .copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.docs-content pre:hover .copy-btn,
+.docs-content pre .copy-btn:focus-visible,
+.docs-content pre .copy-btn[data-copied] {
+  opacity: 1;
+}
+
+.docs-content code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: #f2f2f2;
+  padding: 1px 5px;
+}
+
+.docs-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.docs-content table {
+  width: 100%;
+  margin: 8px 0 24px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.docs-content th,
+.docs-content td {
+  border: 1px solid #000;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.docs-content th {
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.docs-content td code {
+  white-space: nowrap;
+}
+
+.docs-index-list a {
+  display: block;
+  padding: 14px 0;
+  border-bottom: 1px solid #000;
+  text-decoration: none;
+  color: inherit;
+}
+
+.docs-index-list a:first-child {
+  border-top: 1px solid #000;
+}
+
+.docs-index-list .name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.docs-index-list .desc {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .docs-layout {
+    flex-direction: column;
+  }
+  .docs-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #000;
+  }
+}
