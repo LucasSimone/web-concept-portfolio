@@ -106,6 +106,14 @@ main {
   color: #fff;
 }
 
+.controls[data-drive-mode="scroll"] [data-continuous-only] {
+  display: none;
+}
+
+.controls[data-drive-mode="continuous"] [data-scroll-only] {
+  display: none;
+}
+
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;

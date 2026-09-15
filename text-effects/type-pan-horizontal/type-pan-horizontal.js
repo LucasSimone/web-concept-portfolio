@@ -92,11 +92,19 @@
   }
 
   const DEFAULTS = {
-    panPosition: 0.4, // fraction of the element width the caret pins to once text overflows
+    panPosition: 0.65, // fraction of the element width the caret pins to once text overflows
     lag: 0.18, // smoothing applied to the pan (0-1, higher = snappier)
     eraseOnReverse: true, // erase typed characters when scrolling back
     cursorBlink: true,
     sensitivity: 1, // multiplier applied to wheel delta before it becomes typing progress
+    // 'scroll' drives typing from wheel input (default, original behavior).
+    // 'continuous' ignores wheel input and types/erases the line on its own
+    // clock: type the whole line over `typeDuration`, hold fully typed for
+    // `holdDuration`, erase back to empty over `rollbackSpeed`, and repeat.
+    driveMode: 'scroll',
+    typeDuration: 2200, // ms to type the full line
+    holdDuration: 1000, // ms held fully typed before erasing
+    rollbackSpeed: 700, // ms to erase back to empty
   };
 
   class TypePanHorizontal {
@@ -110,6 +118,8 @@
       this._maxTypedPx = 0;
       this._panX = 0;
       this._totalWidth = 0;
+      this._contState = null;
+      this._contStateStart = null;
 
       this._onWheel = this._onWheel.bind(this);
       this._onResize = this._onResize.bind(this);
@@ -155,6 +165,8 @@
       this._typedPx = 0;
       this._maxTypedPx = 0;
       this._panX = 0;
+      this._contState = null;
+      this._contStateStart = null;
       this._applyCursorStyle();
     }
 
@@ -176,6 +188,8 @@
     }
 
     _onWheel(event) {
+      if (this.options.driveMode !== 'scroll') return;
+
       // Ordinary vertical wheel motion (plus any native horizontal delta,
       // e.g. trackpad swipes) is redirected into typing progress instead of
       // the page scrolling — this element owns "scrolling" while active.
@@ -186,10 +200,56 @@
       this._typedPx = clamp(next, 0, this._totalWidth);
     }
 
+    // Drives `_typedPx` from a clock instead of wheel input: type the full
+    // line over `typeDuration`, hold fully typed for `holdDuration`, erase
+    // back to empty over `rollbackSpeed`, then loop back into typing.
+    _advanceContinuous(now) {
+      const { typeDuration, holdDuration, rollbackSpeed } = this.options;
+
+      if (this._contState == null) {
+        this._contState = 'type';
+        this._contStateStart = now;
+      }
+
+      if (this._contState === 'type') {
+        const t = typeDuration > 0 ? clamp((now - this._contStateStart) / typeDuration, 0, 1) : 1;
+        this._typedPx = t * this._totalWidth;
+        if (t >= 1) {
+          this._contState = 'hold';
+          this._contStateStart = now;
+        }
+        return;
+      }
+
+      if (this._contState === 'hold') {
+        this._typedPx = this._totalWidth;
+        if (now - this._contStateStart >= holdDuration) {
+          this._contState = 'erase';
+          this._contStateStart = now;
+        }
+        return;
+      }
+
+      // erase
+      const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
+      this._typedPx = (1 - t) * this._totalWidth;
+      if (t >= 1) {
+        this._contState = 'type';
+        this._contStateStart = now;
+      }
+    }
+
     _tick() {
       const total = this._chars.length;
+
+      if (this.options.driveMode === 'continuous') {
+        this._advanceContinuous(performance.now());
+      }
+
       this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
-      const revealPx = this.options.eraseOnReverse ? this._typedPx : this._maxTypedPx;
+      const revealPx = this.options.driveMode === 'continuous'
+        ? this._typedPx
+        : (this.options.eraseOnReverse ? this._typedPx : this._maxTypedPx);
 
       const fraction = this._totalWidth > 0 ? clamp(revealPx / this._totalWidth, 0, 1) : 0;
       const revealedCount = clamp(Math.round(fraction * total), 0, total);
@@ -220,9 +280,16 @@
     }
 
     update(options = {}) {
+      const driveModeChanged = 'driveMode' in options && options.driveMode !== this.options.driveMode;
       Object.assign(this.options, options);
       this._applyCursorStyle();
       this._measure();
+
+      if (driveModeChanged) {
+        this._contState = null;
+        this._contStateStart = null;
+        if (this.options.driveMode === 'scroll') this.reset();
+      }
     }
 
     setText(value) {

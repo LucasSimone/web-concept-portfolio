@@ -17,8 +17,34 @@
     </div>
   </nav>
 
-  <aside class="controls">
+  <aside class="controls" data-drive-mode="scroll">
     <h2>Controls</h2>
+
+    <div class="control-row">
+      <label>Animation mode</label>
+      <button id="driveModeButton" class="toggle-button" type="button" aria-pressed="false">
+        Scroll
+      </button>
+      <div class="hint">Continuous types and erases the line on its own clock instead of tracking wheel input.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Type duration <span id="typeDurationVal" class="value"></span></label>
+      <input id="typeDurationRange" type="range" min="500" max="6000" step="100" value="2200" />
+      <div class="hint">How long it takes to type the whole line.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Hold duration <span id="holdDurationVal" class="value"></span></label>
+      <input id="holdDurationRange" type="range" min="0" max="4000" step="100" value="1000" />
+      <div class="hint">How long the fully-typed line holds before erasing.</div>
+    </div>
+
+    <div class="control-row" data-continuous-only>
+      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <input id="rollbackSpeedRange" type="range" min="100" max="3000" step="100" value="700" />
+      <div class="hint">How long it takes to erase back to empty before typing starts again.</div>
+    </div>
 
     <div class="control-row">
       <label>Font <span id="fontLabel" class="value"></span></label>
@@ -44,7 +70,7 @@
 
     <div class="control-row">
       <label>Pan pin position <span id="panVal" class="value"></span></label>
-      <input id="panRange" type="range" min="0.15" max="0.85" step="0.02" value="0.4" />
+      <input id="panRange" type="range" min="0.15" max="0.85" step="0.02" value="0.65" />
       <div class="hint">Where the caret pins horizontally in the element once the line overflows it — the caret always sits right after the last typed character, and new characters reveal to its right as you scroll.</div>
     </div>
 
@@ -54,7 +80,7 @@
       <div class="hint">How quickly the element catches up to the caret. Lower = a softer, trailing pan; higher = an instant, snappy one.</div>
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-scroll-only>
       <label>Reverse scroll behavior</label>
       <button id="eraseButton" class="toggle-button" type="button" aria-pressed="true">
         Erasing on scroll back
@@ -69,7 +95,7 @@
       </button>
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-scroll-only>
       <button id="resetButton" class="toggle-button" type="button">
         ↺ Reset scroll
       </button>

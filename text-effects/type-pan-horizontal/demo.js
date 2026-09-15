@@ -1,7 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const typePan = TypePanHorizontal.get('.type-pan');
+  const controlsPanel = document.querySelector('.controls');
 
   const controls = {
+    driveMode: document.getElementById('driveModeButton'),
+    typeDuration: document.getElementById('typeDurationRange'),
+    holdDuration: document.getElementById('holdDurationRange'),
+    rollbackSpeed: document.getElementById('rollbackSpeedRange'),
     font: document.getElementById('fontSelect'),
     text: document.getElementById('textInput'),
     size: document.getElementById('sizeRange'),
@@ -13,16 +18,47 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const labels = {
+    typeDuration: document.getElementById('typeDurationVal'),
+    holdDuration: document.getElementById('holdDurationVal'),
+    rollbackSpeed: document.getElementById('rollbackSpeedVal'),
     size: document.getElementById('sizeVal'),
     pan: document.getElementById('panVal'),
     lag: document.getElementById('lagVal'),
   };
 
   function syncLabels() {
+    labels.typeDuration.textContent = `${controls.typeDuration.value}ms`;
+    labels.holdDuration.textContent = `${controls.holdDuration.value}ms`;
+    labels.rollbackSpeed.textContent = `${controls.rollbackSpeed.value}ms`;
     labels.size.textContent = `${controls.size.value}px`;
     labels.pan.textContent = controls.pan.value;
     labels.lag.textContent = controls.lag.value;
   }
+
+  controls.driveMode.addEventListener('click', () => {
+    const continuous = controls.driveMode.getAttribute('aria-pressed') !== 'true';
+
+    controls.driveMode.setAttribute('aria-pressed', String(continuous));
+    controls.driveMode.textContent = continuous ? 'Continuous' : 'Scroll';
+    controlsPanel.dataset.driveMode = continuous ? 'continuous' : 'scroll';
+
+    typePan.update({ driveMode: continuous ? 'continuous' : 'scroll' });
+  });
+
+  controls.typeDuration.addEventListener('input', () => {
+    typePan.update({ typeDuration: Number(controls.typeDuration.value) });
+    syncLabels();
+  });
+
+  controls.holdDuration.addEventListener('input', () => {
+    typePan.update({ holdDuration: Number(controls.holdDuration.value) });
+    syncLabels();
+  });
+
+  controls.rollbackSpeed.addEventListener('input', () => {
+    typePan.update({ rollbackSpeed: Number(controls.rollbackSpeed.value) });
+    syncLabels();
+  });
 
   controls.font.addEventListener('input', () => {
     document.querySelector('.type-pan').style.fontFamily = controls.font.value;
