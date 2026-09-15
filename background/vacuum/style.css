@@ -1,0 +1,190 @@
+main {
+  margin-right: 300px;
+}
+
+.vacuum-intro {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10vh 10vw 6vh;
+  max-width: 720px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.vacuum-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.section-label {
+  padding: 0 10vw;
+  margin: 6vh 0 2vh;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* The `.bg-vacuum` effect's own CSS ships inside ./vacuum.js and is
+   injected automatically — nothing to define here. Everything below is
+   this demo page's own staging. */
+.vacuum-hero {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  text-align: center;
+  padding: 8vh 10vw;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.vacuum-hero .label {
+  font-size: clamp(28px, 6vw, 64px);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  max-width: 900px;
+}
+
+.vacuum-hero .sub {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.65;
+  max-width: 46rem;
+}
+
+.vacuum-swatch {
+  display: block;
+  width: min(320px, 60vw);
+  height: auto;
+  border: 1px solid #000;
+}
+
+.vacuum-border-box {
+  padding: 28px 36px;
+  border: 6px solid #000;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vacuum-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 10vw 10vh;
+}
+
+.vacuum-card {
+  width: 320px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #000;
+  text-align: center;
+}
+
+.vacuum-card.solid-panel {
+  background: #480ca8;
+  color: #fff;
+}
+
+.vacuum-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.vacuum-card .fine-print {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+/* --- Control panel, matching the rest of the lab --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+
+  .controls {
+    position: static;
+    width: 100%;
+    max-height: none;
+    border-left: none;
+    border-top: 1px solid #000;
+  }
+}

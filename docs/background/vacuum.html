@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vacuum — Docs — Web Concept Portfolio</title>
+  <link rel="stylesheet" href="/shared/site.css" />
+  <script src="/shared/effects-manifest.js"></script>
+  <script src="/shared/nav.js"></script>
+  <script src="/shared/docs-nav.js"></script>
+  <script src="/shared/docs-copy.js"></script>
+</head>
+<body>
+  <nav class="site-nav">
+    <a class="brand" href="/index.html">Web Lab</a>
+    <div class="links">
+      <a href="/index.html">Home</a>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Interactive</p>
+      <h1>Vacuum</h1>
+      <p>
+        A canvas overlay that sheds colored dust off whatever's inside the
+        host element — text, images, borders, plain color panels — whenever
+        the cursor gets close to it. Dust flies toward the live cursor
+        position and fades out as it's pulled in. The real DOM content is
+        never touched, hidden, or altered; the canvas sits on top of it with
+        pointer events disabled, so it only ever draws the dust itself.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/vacuum/index.html">View Demo</a>
+        <a class="btn" href="/background/vacuum/vacuum.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="vacuum.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag for the canvas overlay,
+        so no companion CSS file is required — but the host element needs
+        its own height/content, since the injected CSS doesn't size it.
+      </p>
+
+      <h2>Usage</h2>
+      <pre><code>&lt;section class="bg-vacuum"&gt;
+  &lt;h1&gt;Some text&lt;/h1&gt;
+  &lt;img src="photo.jpg" alt=""&gt;
+&lt;/section&gt;
+&lt;script src="vacuum.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No text/data attribute needed — just apply the class to a container.
+        A <code>ResizeObserver</code> and a debounced <code>MutationObserver</code>
+        on the host rebuild the dust source points whenever the element
+        resizes or its content changes. Auto-initializes against every
+        <code>.bg-vacuum</code> element. To configure options:
+      </p>
+      <pre><code>Vacuum.initAll('.bg-vacuum', {
+  radius: 160,
+  speed: 8,
+});</code></pre>
+
+      <h2>Where dust comes from</h2>
+      <p>
+        On every rebuild, the whole subtree is scanned for four kinds of
+        sources, each colored differently:
+      </p>
+      <table>
+        <thead>
+          <tr><th>Source</th><th>Color</th><th>How points are placed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Text</td><td>Computed <code>color</code> of the text's parent element</td><td>Along each visual line box, via <code>Range.getClientRects()</code> — wrapped lines each get their own strip</td></tr>
+          <tr><td>Borders</td><td>Computed <code>border-*-color</code> per side</td><td>Along that side's edge, on any element with a visible border</td></tr>
+          <tr><td><code>&lt;img&gt;</code> elements</td><td>Actual pixel color, read from an offscreen canvas</td><td>A grid across the image's rendered box, each point sampling its own nearest pixel — so different corners of the same image shed different colors</td></tr>
+          <tr><td>Solid backgrounds</td><td>Computed <code>background-color</code></td><td>A sparse grid across any element with a non-transparent background, including the host itself</td></tr>
+        </tbody>
+      </table>
+      <p>
+        An image from another origin without CORS headers taints the
+        offscreen canvas and can't be read — it silently just won't shed any
+        dust rather than sampling the wrong color.
+      </p>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>radius</code></td><td><code>110</code></td><td>Distance from the cursor, in px, at which nearby points start shedding dust</td></tr>
+          <tr><td><code>density</code></td><td><code>15</code></td><td>Spacing in px between candidate points along text lines and borders</td></tr>
+          <tr><td><code>fillDensity</code></td><td><code>22</code></td><td>Spacing in px between candidate points across solid-background fills</td></tr>
+          <tr><td><code>imageStep</code></td><td><code>8</code></td><td>Spacing in px between sampled pixels across an image's rendered box</td></tr>
+          <tr><td><code>maxParticles</code></td><td><code>300</code></td><td>Concurrent particle cap, mostly a performance ceiling</td></tr>
+          <tr><td><code>particleSize</code></td><td><code>2.5</code></td><td>Particle diameter in px at full strength</td></tr>
+          <tr><td><code>speed</code></td><td><code>2.5</code></td><td>Base speed particles travel toward the cursor; accelerates as they get closer</td></tr>
+          <tr><td><code>spawnChance</code></td><td><code>0.5</code></td><td>Probability a given point sheds a particle once its cooldown has elapsed, scaled by proximity to the cursor</td></tr>
+          <tr><td><code>cooldown</code></td><td><code>160</code></td><td>Minimum time in ms a point must wait before shedding another particle</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Points aren't consumed — a spot that's already shed dust can shed
+        more once its cooldown passes, so hovering the same area repeatedly
+        never runs it dry. Leaving the element doesn't cancel particles
+        already in flight; they keep travelling to the last known cursor
+        position and fade out there instead of freezing mid-air. Respects
+        <code>prefers-reduced-motion</code> by skipping the animation loop
+        entirely, so no dust sheds at all.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

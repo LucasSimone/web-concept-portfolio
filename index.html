@@ -332,6 +332,21 @@
       display: block;
     }
 
+    /* Vacuum: same override pattern as the two effects above, plus the
+       canvas needs to sit ABOVE the card's own title/type/go text (it
+       normally renders on top of live content) rather than below it. */
+    .variation-card.bg-vacuum {
+      isolation: isolate;
+      background: #fff;
+      color: #000;
+    }
+    .vacuum__canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: block;
+    }
+
     .carousel {
       position: relative;
       width: 100%;
@@ -529,6 +544,11 @@
       <div class="title-wrap"><h2>Gravity Well</h2></div>
       <div class="go">View →</div>
     </a>
+    <a class="variation-card bg-vacuum" href="/background/vacuum/index.html" data-type="interactive">
+      <div class="type">Interactive</div>
+      <div class="title-wrap"><h2>Vacuum</h2></div>
+      <div class="go">View →</div>
+    </a>
   </div>
   </div>
 
@@ -542,6 +562,7 @@
   <script src="/text-effects/rolodex/rolodex.js"></script>
   <script src="/background/circuit-board/circuit-board.js"></script>
   <script src="/background/gravity-well/gravity-well.js"></script>
+  <script src="/background/vacuum/vacuum.js"></script>
   <script src="/shared/carousel.js"></script>
   <!-- This script must stay a plain synchronous inline block (not wrapped
        in its own DOMContentLoaded listener). The shared effect scripts
@@ -775,6 +796,9 @@
     });
     GravityWell.initAll('.variation-card.bg-gravity-well', {
       cell: 20, radius: 110, strength: 40,
+    });
+    Vacuum.initAll('.variation-card.bg-vacuum', {
+      radius: 90, density: 8, maxParticles: 80,
     });
   </script>
 </body>

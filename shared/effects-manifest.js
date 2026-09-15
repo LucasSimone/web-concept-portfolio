@@ -91,5 +91,13 @@
       jsPath: '/background/gravity-well/gravity-well.js',
       docsPath: '/docs/background/gravity-well.html',
     },
+    {
+      slug: 'vacuum',
+      name: 'Vacuum',
+      category: 'background',
+      demoPath: '/background/vacuum/index.html',
+      jsPath: '/background/vacuum/vacuum.js',
+      docsPath: '/docs/background/vacuum.html',
+    },
   ];
 })(window);
