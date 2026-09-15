@@ -101,18 +101,20 @@
       this._measure();
     }
 
-    // Reads the natural (unscaled) card box — transforms don't affect
-    // layout size, so any one visible card gives the shared base size —
+    // Reads the natural (unscaled) card box — offsetWidth/offsetHeight are
+    // the layout box and ignore CSS transforms (unlike
+    // getBoundingClientRect, which would return whatever scale _render()
+    // last applied to this particular card), so any one visible card gives
+    // the shared base size regardless of which card is currently focused —
     // and places the guide lines at a distance-1 neighbor's height so they
     // land exactly on its top/bottom edge.
     _measure() {
       this._width = this.root.clientWidth;
       const card = this._cards[0];
       if (!card) return;
-      const rect = card.getBoundingClientRect();
-      this._cardWidth = rect.width;
+      this._cardWidth = card.offsetWidth;
       const neighborScale = this.options.minScale + (1 - this.options.minScale) * Math.exp(-this.options.scaleDecay);
-      const halfNeighborHeight = (rect.height * neighborScale) / 2;
+      const halfNeighborHeight = (card.offsetHeight * neighborScale) / 2;
       if (this.topLine) this.topLine.style.top = `calc(50% - ${halfNeighborHeight.toFixed(2)}px)`;
       if (this.bottomLine) this.bottomLine.style.top = `calc(50% + ${halfNeighborHeight.toFixed(2)}px)`;
     }
