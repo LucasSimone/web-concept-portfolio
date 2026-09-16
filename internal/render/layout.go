@@ -57,9 +57,11 @@ const layoutSrc = `<!doctype html>
     // and its <script src> underneath the others.
     window.PageTransitionConfig = {
       shutter: { selector: '[data-pt-transition="shutter"]' },
+      aperture: { selector: '[data-pt-transition="aperture"]' },
     };
   </script>
   <script src="/page-transitions/shutter/shutter.js"></script>
+  <script src="/page-transitions/aperture/aperture.js"></script>
 {{.Head}}</head>
 <body>
   <nav class="site-nav">

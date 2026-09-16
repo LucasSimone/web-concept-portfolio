@@ -93,26 +93,26 @@
         <code>sessionStorage</code> key of
         <code>pt-shutter-pending</code> — so a second, differently named
         effect's script can register alongside this one without either
-        clobbering the other:
+        clobbering the other. This site's own layout does exactly that,
+        loading <a href="/docs/page-transitions/aperture.html">Aperture</a>
+        alongside Shutter on every page:
       </p>
       <pre><code>&lt;script&gt;
   window.PageTransitionConfig = {
-    shutter: { selector: '[data-pt-transition="shutter"]' },
-    fade:    { selector: '[data-pt-transition="fade"]' },
+    shutter:  { selector: '[data-pt-transition="shutter"]' },
+    aperture: { selector: '[data-pt-transition="aperture"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
-&lt;script src="fade.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        (<code>fade.js</code> here just stands in for whatever second
-        effect a site might run — this site currently only ships
-        Shutter.) Which link uses which effect is decided by the
+        Which link uses which effect is decided by the
         <em>value</em> of <code>data-pt-transition</code> — each script
         only reacts to the name matching its own slug, so a given link
         can only ever belong to one effect:
       </p>
       <pre><code>&lt;a href="/a" data-pt-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
-&lt;a href="/b" data-pt-transition="fade"&gt;Uses the other effect&lt;/a&gt;</code></pre>
+&lt;a href="/b" data-pt-transition="aperture"&gt;Uses Aperture&lt;/a&gt;</code></pre>
       <p>
         Neither script coordinates with the other. Arriving on the next
         page, each one only checks whether its own

@@ -1,0 +1,42 @@
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">600ms</span></label>
+      <input type="range" id="ptDuration" min="200" max="1500" step="50" value="600" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing</label>
+      <select id="ptEasing">
+        <option value="cubic-bezier(.65,0,.35,1)" selected>Default</option>
+        <option value="linear">Linear</option>
+        <option value="ease-in-out">Ease In Out</option>
+        <option value="cubic-bezier(.2,1,.1,1)">Punchy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptBlades">Blades <span class="value" id="ptBladesVal">8</span></label>
+      <input type="range" id="ptBlades" min="3" max="16" step="1" value="8" />
+    </div>
+
+    <div class="control-row">
+      <label>Panel Color</label>
+      <div class="pt-swatches" role="group" aria-label="Panel color" data-swatch-group="panel">
+        <button type="button" class="pt-swatch" data-color="#fff" style="background:#fff" aria-pressed="true" aria-label="White"></button>
+        <button type="button" class="pt-swatch" data-color="#000" style="background:#000" aria-pressed="false" aria-label="Black"></button>
+        <button type="button" class="pt-swatch" data-color="#999" style="background:#999" aria-pressed="false" aria-label="Gray"></button>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <label>Line Color</label>
+      <div class="pt-swatches" role="group" aria-label="Line color" data-swatch-group="line">
+        <button type="button" class="pt-swatch" data-color="#000" style="background:#000" aria-pressed="true" aria-label="Black"></button>
+        <button type="button" class="pt-swatch" data-color="#999" style="background:#999" aria-pressed="false" aria-label="Gray"></button>
+        <button type="button" class="pt-swatch" data-color="#fff" style="background:#fff" aria-pressed="false" aria-label="White"></button>
+      </div>
+    </div>
+
+    <p class="hint">
+      These only change the Page One → Page Two transition below. Leaving
+      this demo for another page always plays the default profile.
+    </p>

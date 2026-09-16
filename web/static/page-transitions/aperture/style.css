@@ -1,0 +1,141 @@
+/* Page-specific styles for the Aperture page-transition demo.
+   Base layout/nav comes from /shared/site.css. The aperture effect's own
+   CSS ships inside ./aperture.js and is injected automatically. */
+
+.aperture-demo {
+  min-height: calc(100vh - 57px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4vh 6vw;
+}
+
+.aperture-hero {
+  max-width: 60ch;
+}
+
+.aperture-hero .eyebrow {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+}
+
+.aperture-hero h1 {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(40px, 9vw, 96px);
+  line-height: 1;
+  margin: 0 0 1.5rem;
+}
+
+.aperture-hero p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+  margin: 0 0 2rem;
+}
+
+.aperture-hero p code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.4em;
+}
+
+.aperture-next {
+  display: inline-block;
+  padding: 14px 28px;
+  font-size: 14px;
+}
+
+/* Page One reserves space for the controls panel; Page Two has none. */
+.aperture-demo--controls {
+  margin-right: 300px;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.pt-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.pt-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.pt-swatch[aria-pressed="true"] {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .aperture-demo--controls {
+    margin-right: 0;
+  }
+}

@@ -231,7 +231,8 @@
   100% { stroke-dashoffset: -900; }
 }
 
-.variation-card h2.shutter {
+.variation-card h2.shutter,
+.variation-card h2.aperture {
   font-family: 'Archivo Black', sans-serif;
   font-size: 34px;
   line-height: 1;

@@ -99,5 +99,13 @@
       jsPath: '/page-transitions/shutter/shutter.js',
       docsPath: '/docs/page-transitions/shutter.html',
     },
+    {
+      slug: 'aperture',
+      name: 'Aperture',
+      category: 'page-transitions',
+      demoPath: '/page-transitions/aperture/index.html',
+      jsPath: '/page-transitions/aperture/aperture.js',
+      docsPath: '/docs/page-transitions/aperture.html',
+    },
   ];
 })(window);
