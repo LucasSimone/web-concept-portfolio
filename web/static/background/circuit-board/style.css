@@ -136,7 +136,7 @@ main {
   margin-bottom: 16px;
 }
 
-.controls button {
+.control-row button {
   width: 100%;
   padding: 8px;
   border: 1px solid #000;
@@ -147,7 +147,7 @@ main {
   cursor: pointer;
 }
 
-.controls button:hover {
+.control-row button:hover {
   background: #f5f5f5;
 }
 
