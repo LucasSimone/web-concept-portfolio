@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"io/fs"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,10 +23,19 @@ import (
 )
 
 func main() {
+	// .env is gitignored and only present on dev machines; it's how DEV=1
+	// (see below) ends up being the default for local development without
+	// making it the default for the Docker/production build, which has no
+	// .env file and so falls back to real env vars only.
+	loadDotEnv(".env")
+
 	// PORT and DB_PATH are the only two knobs today. Both have sane
-	// defaults so `go run ./cmd/server` works with zero setup.
+	// defaults so `go run ./cmd/server` works with zero setup. DEV=1 trades
+	// the embedded, compiled-in static site for one read live off disk, so
+	// editing HTML/CSS/JS shows up on refresh without a rebuild.
 	port := envOr("PORT", "8080")
 	dbPath := envOr("DB_PATH", "data/contact.db")
+	dev := os.Getenv("DEV") != ""
 
 	// Make sure the SQLite file's parent directory exists (e.g. "data/"
 	// on a fresh checkout, or "/data" in the Docker volume) before we
@@ -42,18 +53,33 @@ func main() {
 
 	// web.FS embeds everything under web/static/ with that prefix intact;
 	// fs.Sub strips it so paths served at "/" match the source tree, e.g.
-	// web/static/shared/site.css -> served at /shared/site.css.
-	staticFS, err := fs.Sub(web.FS, "static")
-	if err != nil {
-		log.Fatalf("load embedded static assets: %v", err)
+	// web/static/shared/site.css -> served at /shared/site.css. In dev mode
+	// we read the same tree straight off disk instead, so edits don't need
+	// a rebuild to take effect.
+	var staticFS fs.FS
+	if dev {
+		staticFS = os.DirFS("web/static")
+	} else {
+		staticFS, err = fs.Sub(web.FS, "static")
+		if err != nil {
+			log.Fatalf("load embedded static assets: %v", err)
+		}
 	}
 
 	// Renders each page's *.head.html/*.body.html/*.controls.html
-	// fragments into full HTML once at startup, so request handling stays
-	// plain byte-serving (see internal/render).
-	renderedFS, err := render.Render(staticFS)
-	if err != nil {
-		log.Fatalf("render pages: %v", err)
+	// fragments into full HTML. In dev mode this happens fresh on every
+	// request (render.Live) so fragment edits show up on refresh too;
+	// otherwise it happens once at startup so request handling stays plain
+	// byte-serving (see internal/render).
+	var renderedFS fs.FS
+	if dev {
+		renderedFS = render.Live(staticFS)
+		log.Print("dev mode: serving static assets live from disk")
+	} else {
+		renderedFS, err = render.Render(staticFS)
+		if err != nil {
+			log.Fatalf("render pages: %v", err)
+		}
 	}
 
 	srv := &http.Server{
@@ -95,4 +121,34 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// loadDotEnv reads simple KEY=VALUE lines from path into the process
+// environment, skipping blank lines and lines starting with '#'. It never
+// overrides a variable already set in the real environment, so `DEV=0 go
+// run ./cmd/server` still wins over a .env that sets DEV=1. Missing file is
+// not an error — .env is optional and gitignored.
+func loadDotEnv(path string) {
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		key = strings.TrimSpace(key)
+		if _, set := os.LookupEnv(key); set {
+			continue
+		}
+		os.Setenv(key, strings.TrimSpace(value))
+	}
 }

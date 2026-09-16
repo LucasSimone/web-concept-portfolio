@@ -69,3 +69,22 @@ func Render(staticFS fs.FS) (fs.FS, error) {
 
 	return overlayFS{base: staticFS, pages: pages}, nil
 }
+
+// Live returns an fs.FS that re-renders staticFS on every Open call instead
+// of once up front, so edits to files on disk (head/body fragments, CSS, JS)
+// show up on the next browser refresh with no server restart. Meant for
+// local dev only: staticFS should be an os.DirFS in that case, and the
+// re-render cost (trivial for this site's page count) is paid per request.
+func Live(staticFS fs.FS) fs.FS {
+	return liveFS{base: staticFS}
+}
+
+type liveFS struct{ base fs.FS }
+
+func (l liveFS) Open(name string) (fs.File, error) {
+	rendered, err := Render(l.base)
+	if err != nil {
+		return nil, err
+	}
+	return rendered.Open(name)
+}
