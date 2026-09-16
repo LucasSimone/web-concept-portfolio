@@ -134,6 +134,27 @@
   outline-offset: 2px;
 }
 
+.pt-style-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.pt-style-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  cursor: pointer;
+}
+
+.pt-style-btn[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
 @media (max-width: 720px) {
   .aperture-demo--controls {
     margin-right: 0;

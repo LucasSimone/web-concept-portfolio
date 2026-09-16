@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const easing = document.getElementById('ptEasing');
   const blades = document.getElementById('ptBlades');
   const bladesVal = document.getElementById('ptBladesVal');
+  const styleButtons = Array.from(document.querySelectorAll('[data-style-group] .pt-style-btn'));
   const panelSwatches = Array.from(document.querySelectorAll('[data-swatch-group="panel"] .pt-swatch'));
   const lineSwatches = Array.from(document.querySelectorAll('[data-swatch-group="line"] .pt-swatch'));
 
@@ -32,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         duration: duration.value,
         easing: easing.value,
         blades: blades.value,
+        style: link.dataset.ptStyle,
         color: link.dataset.ptColor,
         lineColor: link.dataset.ptLineColor,
       }));
@@ -42,6 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const match = list.find((b) => b.dataset.color === color) || list[0];
     list.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
     link.dataset[datasetKey] = match.dataset.color;
+  }
+
+  function selectStyle(style) {
+    const match = styleButtons.find((b) => b.dataset.style === style) || styleButtons[0];
+    styleButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
+    link.dataset.ptStyle = match.dataset.style;
   }
 
   function syncDuration() {
@@ -77,15 +85,23 @@ document.addEventListener('DOMContentLoaded', () => {
       save();
     });
   });
+  styleButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectStyle(btn.dataset.style);
+      save();
+    });
+  });
 
   const saved = loadSaved();
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
     blades.value = saved.blades || 8;
+    selectStyle(saved.style);
     selectSwatch(panelSwatches, saved.color, 'ptColor');
     selectSwatch(lineSwatches, saved.lineColor, 'ptLineColor');
   } else {
+    selectStyle(styleButtons.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.style);
     selectSwatch(panelSwatches, panelSwatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color, 'ptColor');
     selectSwatch(lineSwatches, lineSwatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color, 'ptLineColor');
   }

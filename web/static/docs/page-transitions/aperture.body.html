@@ -58,16 +58,16 @@
       </p>
       <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
       <p>
-        To change the timing, colors, blade count, twist, or which links
-        it watches, configure it before the script tag runs. Config and
-        the script's own public API are both keyed by
+        To change the timing, colors, blade count, blade style, twist, or
+        which links it watches, configure it before the script tag runs.
+        Config and the script's own public API are both keyed by
         <code>"aperture"</code> rather than a shared name — see
         <a href="#multiple-transitions">Multiple Transitions</a> below
         for why:
       </p>
       <pre><code>&lt;script&gt;
   window.PageTransitionConfig = {
-    aperture: { duration: 800, color: '#eee', lineColor: '#111', blades: 6, selector: 'a[href]' },
+    aperture: { duration: 800, color: '#eee', lineColor: '#111', blades: 6, style: 'sharp', selector: 'a[href]' },
   };
 &lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
@@ -78,13 +78,14 @@
       <pre><code>PageTransitions.aperture.configure({ selector: '[data-pt-transition="aperture"]' });</code></pre>
       <p>
         A single link can override duration, easing, panel color, line
-        color, blade count, or spin for just its own transition, leaving
-        every other link on the page using the default profile — this is
-        how the <a href="/page-transitions/aperture/index.html">demo's
-        controls panel</a> customizes only the Page One → Page Two link
-        without touching the site nav around it:
+        color, blade count, blade style, or spin for just its own
+        transition, leaving every other link on the page using the
+        default profile — this is how the
+        <a href="/page-transitions/aperture/index.html">demo's controls
+        panel</a> customizes only the Page One → Page Two link without
+        touching the site nav around it:
       </p>
-      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-blades="5" data-pt-color="#000" data-pt-line-color="#fff"&gt;
+      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-blades="5" data-pt-style="sharp" data-pt-color="#000" data-pt-line-color="#fff"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
       <p>
@@ -135,9 +136,9 @@
         different places is a separate case that doesn't need any of
         this — see the per-link <code>data-pt-duration</code>/
         <code>-easing</code>/<code>-color</code>/<code>-line-color</code>/
-        <code>-blades</code>/<code>-spin</code> attributes above, which
-        already let one script handle any number of differently
-        configured links on one page.
+        <code>-blades</code>/<code>-style</code>/<code>-spin</code>
+        attributes above, which already let one script handle any number
+        of differently configured links on one page.
       </p>
 
       <h2>Options</h2>
@@ -151,6 +152,7 @@
           <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Blade panel fill color</td></tr>
           <tr><td><code>lineColor</code></td><td><code>'#000'</code></td><td>Blade seam/edge stroke color</td></tr>
           <tr><td><code>blades</code></td><td><code>8</code></td><td>Number of iris blades</td></tr>
+          <tr><td><code>style</code></td><td><code>'curved'</code></td><td><code>'curved'</code> (gentle pivot sweep, a rounded near-circular opening) or <code>'sharp'</code> (a wider pivot sweep and a straight-chord opening, closer to a printed lens-icon graphic)</td></tr>
           <tr><td><code>spin</code></td><td><code>70</code></td><td>Degrees the ring rotates through as it opens/closes — the spiral twist</td></tr>
           <tr><td><code>selector</code></td><td><code>'a[href]'</code></td><td>Which links are eligible for interception</td></tr>
         </tbody>
@@ -166,6 +168,7 @@
           <tr><td><code>data-pt-color</code></td><td><code>color</code></td></tr>
           <tr><td><code>data-pt-line-color</code></td><td><code>lineColor</code></td></tr>
           <tr><td><code>data-pt-blades</code></td><td><code>blades</code></td></tr>
+          <tr><td><code>data-pt-style</code></td><td><code>style</code></td></tr>
           <tr><td><code>data-pt-spin</code></td><td><code>spin</code></td></tr>
         </tbody>
       </table>
@@ -179,17 +182,19 @@
         tangentially as they run inward instead of radiating straight
         out. Two blades sharing a seam compute that shared curve from
         the same absolute angle so they always meet exactly, stroked in
-        <code>lineColor</code>. The inner edge is a true circular arc,
-        the same shape a real iris opening traces, filled in
-        <code>color</code>. Their shared inner radius is driven by a
-        single registered custom property,
+        <code>lineColor</code>. The inner edge — filled in
+        <code>color</code> — is either a true circular arc (the
+        <code>'curved'</code> style, the same shape a real iris opening
+        traces) or a straight chord (the <code>'sharp'</code> style, a
+        more faceted, graphic opening). Their shared inner radius is
+        driven by a single registered custom property,
         <code>--pt-aperture-progress</code>, which the browser
         transitions natively; a <code>requestAnimationFrame</code> loop
         just samples its live computed value every frame and rebuilds
         all the blade paths from it, since arbitrary path geometry can't
         be CSS-transitioned directly. At progress 0 every blade's inner
         edge collapses onto the center point, giving the sealed ring its
-        curved triangular tips.
+        pointed tips.
       </p>
       <p>
         Respects <code>prefers-reduced-motion</code>: with it set, clicking

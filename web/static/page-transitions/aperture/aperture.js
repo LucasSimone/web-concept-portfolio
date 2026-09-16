@@ -43,14 +43,14 @@
  * — so a second effect's script (e.g. Shutter) can register alongside
  * it without either clobbering the other.
  *
- * A single link can override duration/easing/color/lineColor/blades/spin
- * for just its own transition with `data-pt-duration`, `data-pt-easing`,
- * `data-pt-color`, `data-pt-line-color`, `data-pt-blades`,
- * `data-pt-spin` — every other link keeps using the page's default
- * profile. The chosen profile travels to the next page in the same
- * one-shot sessionStorage handoff already used to trigger the reveal, so
- * a customized cover and its matching reveal always agree, without
- * persisting anything.
+ * A single link can override duration/easing/color/lineColor/blades/spin/
+ * style for just its own transition with `data-pt-duration`,
+ * `data-pt-easing`, `data-pt-color`, `data-pt-line-color`,
+ * `data-pt-blades`, `data-pt-spin`, `data-pt-style` — every other link
+ * keeps using the page's default profile. The chosen profile travels to
+ * the next page in the same one-shot sessionStorage handoff already used
+ * to trigger the reveal, so a customized cover and its matching reveal
+ * always agree, without persisting anything.
  */
 (function (global, document) {
   var NAME = 'aperture';
@@ -65,6 +65,17 @@
   var DEG2RAD = Math.PI / 180;
   var root = document.documentElement;
 
+  // Per-style geometry: `skew` is how far a blade's outer anchor trails
+  // its inner point (as a fraction of one blade's angular width) — the
+  // pivot sweep described below — and `arcInner` is whether the inner
+  // edge is a true circular arc (a rounded, near-circular opening) or a
+  // straight chord (a faceted, more angular one, closer to a printed
+  // lens-icon graphic).
+  var BLADE_STYLES = {
+    curved: { skew: 0.5, arcInner: true },
+    sharp: { skew: 0.78, arcInner: false },
+  };
+
   var DEFAULTS = {
     duration: 600, // ms for each half (close or open) of the motion
     easing: 'cubic-bezier(.65,0,.35,1)',
@@ -72,6 +83,7 @@
     lineColor: '#000', // blade seam / edge stroke
     spin: 70, // degrees the ring twists through as it opens/closes — the "spiral"
     blades: 8, // number of iris blades
+    style: 'curved', // 'curved' or 'sharp' — see BLADE_STYLES
     selector: 'a[href]', // which links this page intercepts
   };
   var pageConfig = (global.PageTransitionConfig && global.PageTransitionConfig[NAME]) || {};
@@ -161,15 +173,16 @@
   // makes its edges curve as they sweep toward their neighbor instead of
   // radiating out as straight spokes. Each blade's two side edges are a
   // quadratic curve from an outer anchor — offset backward from its
-  // inner point by a fixed `skew` angle — into that inner point, so the
-  // curve sweeps sideways (tangentially) as well as inward. Both blades
-  // sharing a seam compute that shared curve from the same absolute
-  // angle, so they always meet exactly with no gap. The inner edge
-  // between a blade's own two points is a true circular arc, so the
-  // opening it traces reads as the rounded polygon/near-circle a real
-  // iris forms. At progress 0 the arc's radius hits zero and everything
-  // collapses onto the center point, giving the sealed blades their
-  // curved tips.
+  // inner point by a `skew` angle (how far that trails, set per
+  // `activeProfile.style` — see BLADE_STYLES) — into that inner point,
+  // so the curve sweeps sideways (tangentially) as well as inward. Both
+  // blades sharing a seam compute that shared curve from the same
+  // absolute angle, so they always meet exactly with no gap. The inner
+  // edge between a blade's own two points is either a true circular arc
+  // (a rounded, near-circular opening) or a straight chord (a faceted,
+  // more angular one), again per style. At progress 0 that inner edge's
+  // radius hits zero and everything collapses onto the center point,
+  // giving the sealed blades their pointed tips.
   function renderBlades(progress) {
     var n = blades.length;
     if (!n) return;
@@ -178,6 +191,7 @@
     // mid-flight, which would otherwise hand the SVG arc command below a
     // negative radius.
     progress = Math.min(1, Math.max(0, progress));
+    var styleDef = BLADE_STYLES[activeProfile.style] || BLADE_STYLES.curved;
     var cx = geometry.cx;
     var cy = geometry.cy;
     var maxR = geometry.maxR;
@@ -185,7 +199,7 @@
     var r = innerR.toFixed(2);
     var spinRad = activeProfile.spin * (1 - progress) * DEG2RAD;
     var step = (Math.PI * 2) / n;
-    var skew = step * 0.5; // how far the outer anchor trails its inner point — the pivot sweep
+    var skew = step * styleDef.skew; // how far the outer anchor trails its inner point — the pivot sweep
     var midR = (maxR + innerR) / 2;
 
     function outer(angle) {
@@ -203,11 +217,14 @@
     for (var i = 0; i < n; i++) {
       var a0 = i * step - Math.PI / 2 + spinRad;
       var a1 = a0 + step;
+      var innerEdge = styleDef.arcInner
+        ? 'A' + r + ' ' + r + ' 0 0 1 ' + inner(a1)
+        : 'L' + inner(a1);
 
       blades[i].setAttribute('d',
         'M' + outer(a0) +
         'Q' + ctrl(a0) + ' ' + inner(a0) +
-        'A' + r + ' ' + r + ' 0 0 1 ' + inner(a1) +
+        innerEdge +
         'Q' + ctrl(a1) + ' ' + outer(a1) + 'Z');
     }
   }
@@ -355,9 +372,9 @@
     setTimeout(go, profile.duration + 150); // fallback if transitionend never fires
   }
 
-  // A link's own data-pt-duration/-easing/-color/-line-color/-blades/-spin
-  // win over the page's default profile, but only for that one link —
-  // every other link keeps using `options` untouched.
+  // A link's own data-pt-duration/-easing/-color/-line-color/-blades/-spin/
+  // -style win over the page's default profile, but only for that one
+  // link — every other link keeps using `options` untouched.
   function resolveProfile(a) {
     var ds = a.dataset;
     var duration = ds.ptDuration ? Number(ds.ptDuration) : NaN;
@@ -370,6 +387,7 @@
       lineColor: ds.ptLineColor || options.lineColor,
       spin: Number.isFinite(spin) ? spin : options.spin,
       blades: Number.isFinite(blades_) ? blades_ : options.blades,
+      style: (ds.ptStyle && BLADE_STYLES[ds.ptStyle]) ? ds.ptStyle : options.style,
     };
   }
 
