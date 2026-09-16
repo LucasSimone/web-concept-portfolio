@@ -1,33 +1,39 @@
 /**
- * TypePanHorizontal
- * -----------------
- * The horizontal twin of TypePanVertical. Instead of the browser's native
- * vertical scroll driving the effect, ordinary mouse-wheel input is
- * captured and converted into typing progress — so "scrolling" here pans
- * the whole element horizontally rather than the page moving down.
+ * TypePan
+ * -------
+ * A single line of text types itself out character by character, the caret
+ * always sitting immediately after the last revealed character (never at an
+ * independent fixed reveal line) — so new characters reveal to its right
+ * exactly like a real typewriter. Once the typed line grows wider than the
+ * element, it pans left underneath a pinned caret.
  *
- * The caret always sits immediately after the last revealed character
- * (never at an independent fixed reveal line), so new characters reveal
- * to its right exactly like a real typewriter. Once the typed line grows
- * wider than the element, it pans left underneath a pinned caret — the
- * same "camera follows the caret" behavior as the vertical variant.
+ * Three drive modes:
+ *  - 'scroll' (default): real page scroll position drives typing, exactly
+ *    like the other scroll-linked effects — reversible/scrubbable by
+ *    scrolling the page.
+ *  - 'continuous': ignores scroll/wheel and types/erases the line on its
+ *    own clock.
+ *  - 'hover' ("static scroll"): the element stays put on the page; wheel/
+ *    trackpad input over it (or over an element elsewhere on the page
+ *    tagged `data-type-pan-hover="<id>"`) drives typing directly instead of
+ *    scrolling the page.
  *
- * Scrolling back (wheel up / trackpad reverse) rewinds the caret. By
- * default that also erases characters past the caret; toggling
+ * Reversing (scrolling back, or scrolling back while hovering) rewinds the
+ * caret. By default that also erases characters past the caret; toggling
  * `eraseOnReverse` off keeps every typed character permanently and turns
- * reverse-scroll into a pure camera rewind across the already-typed text.
+ * reverse input into a pure camera rewind across the already-typed text.
  *
- * This only concerns itself with revealing a single line of text as you
- * "pan" across it — what happens once the whole line is visible (keep
- * panning, hand off to a normal vertical scroll, etc.) is left entirely
- * up to the page/developer using it.
+ * This only concerns itself with revealing a single line of text — what
+ * happens once the whole line is visible (keep panning, hand off to a
+ * normal vertical scroll, etc.) is left entirely up to the page/developer
+ * using it.
  *
  * Usage: give any element `class="type-pan"` with the text as its content
  * (or a `data-text` attribute). This file injects its own CSS and
  * auto-initializes every matching element on load.
  */
 (function (global) {
-  const STYLE_ID = 'type-pan-horizontal-styles';
+  const STYLE_ID = 'type-pan-styles';
   const CSS = `
 .type-pan {
   position: relative;
@@ -94,42 +100,86 @@
   const DEFAULTS = {
     panPosition: 0.65, // fraction of the element width the caret pins to once text overflows
     lag: 0.18, // smoothing applied to the pan (0-1, higher = snappier)
-    eraseOnReverse: true, // erase typed characters when scrolling back
+    eraseOnReverse: true, // erase typed characters on reverse input (scroll/hover modes)
     cursorBlink: true,
-    sensitivity: 1, // multiplier applied to wheel delta before it becomes typing progress
-    // 'scroll' drives typing from wheel input (default, original behavior).
-    // 'continuous' ignores wheel input and types/erases the line on its own
-    // clock: type the whole line over `typeDuration`, hold fully typed for
-    // `holdDuration`, erase back to empty over `rollbackSpeed`, and repeat.
+    sensitivity: 1, // multiplier applied to wheel delta before it becomes typing progress, in 'hover' driveMode
+    // 'scroll' drives typing from real page scroll position (default,
+    // reversible/scrubbable like the other scroll-linked effects).
+    // 'continuous' ignores scroll/wheel and types/erases the line on its
+    // own clock: type the whole line over `typeDuration`, hold fully typed
+    // for `holdDuration`, erase back to empty over `rollbackSpeed`, and
+    // repeat. 'hover' keeps the element static on the page — wheel/
+    // trackpad input over it (or over an element elsewhere on the page
+    // carrying `data-type-pan-hover="<id>"`, where `<id>` is this
+    // element's own `id`) drives typing directly, and is prevented from
+    // scrolling the page itself.
     driveMode: 'scroll',
     typeDuration: 2200, // ms to type the full line
     holdDuration: 1000, // ms held fully typed before erasing
     rollbackSpeed: 700, // ms to erase back to empty
   };
 
-  class TypePanHorizontal {
+  class TypePan {
     constructor(el, options = {}) {
-      if (!el) throw new Error('TypePanHorizontal: element is required');
+      if (!el) throw new Error('TypePan: element is required');
       injectStyles();
 
       this.el = el;
       this.options = { ...DEFAULTS, ...options };
-      this._typedPx = 0; // virtual "scroll" accumulator, driven by wheel input
+      this._typedPx = 0; // virtual "scroll" accumulator, driven by wheel input in 'hover' mode
       this._maxTypedPx = 0;
+      this._progress = 0; // 0-1, driven by real page scroll in 'scroll' mode
+      this._maxProgress = 0;
       this._panX = 0;
       this._totalWidth = 0;
       this._contState = null;
       this._contStateStart = null;
+      this._hoverTargets = [];
 
-      this._onWheel = this._onWheel.bind(this);
+      this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
+      // In 'hover' driveMode the element stays put on the page — wheel
+      // input over it drives typing directly (same accumulator as before)
+      // instead of scrolling the page. Other drive modes ignore wheel
+      // entirely, letting the page scroll as normal.
+      this._onWheel = (event) => {
+        if (this.options.driveMode !== 'hover') return;
+
+        // Ordinary vertical wheel motion (plus any native horizontal
+        // delta, e.g. trackpad swipes) is redirected into typing progress.
+        const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+        event.preventDefault();
+
+        const next = this._typedPx + delta * this.options.sensitivity;
+        this._typedPx = clamp(next, 0, this._totalWidth);
+      };
 
       this._buildDOM();
-      this.el.addEventListener('wheel', this._onWheel, { passive: false });
+      this._bindHoverTargets();
+      global.addEventListener('scroll', this._onScroll, { passive: true });
       global.addEventListener('resize', this._onResize);
       this._measure();
+      this._onScroll();
       this._raf = requestAnimationFrame(this._tick);
+    }
+
+    // Hover targets are this element plus, if it has an `id`, any element
+    // anywhere on the page tagged `data-type-pan-hover="<that id>"` — lets
+    // a caller drive typing by wheeling over a different element than the
+    // text itself without this instance needing to know about it up front.
+    _bindHoverTargets() {
+      const targets = [this.el];
+      const id = this.el.id;
+      if (id && global.CSS && typeof global.CSS.escape === 'function') {
+        document.querySelectorAll(`[data-type-pan-hover="${global.CSS.escape(id)}"]`).forEach((node) => {
+          if (!targets.includes(node)) targets.push(node);
+        });
+      }
+      this._hoverTargets = targets;
+      targets.forEach((target) => {
+        target.addEventListener('wheel', this._onWheel, { passive: false });
+      });
     }
 
     _buildDOM() {
@@ -147,7 +197,7 @@
       this._chars = Array.from(value).map((char) => {
         const span = document.createElement('span');
         span.className = 'type-pan__char';
-        span.textContent = char === ' ' ? '\u00A0' : char;
+        span.textContent = char === ' ' ? ' ' : char;
         track.appendChild(span);
         return span;
       });
@@ -164,6 +214,8 @@
       this.cursorEl = cursor;
       this._typedPx = 0;
       this._maxTypedPx = 0;
+      this._progress = 0;
+      this._maxProgress = 0;
       this._panX = 0;
       this._contState = null;
       this._contStateStart = null;
@@ -185,24 +237,23 @@
 
     _onResize() {
       this._measure();
+      this._onScroll();
     }
 
-    _onWheel(event) {
+    _onScroll() {
       if (this.options.driveMode !== 'scroll') return;
 
-      // Ordinary vertical wheel motion (plus any native horizontal delta,
-      // e.g. trackpad swipes) is redirected into typing progress instead of
-      // the page scrolling — this element owns "scrolling" while active.
-      const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
-      event.preventDefault();
-
-      const next = this._typedPx + delta * this.options.sensitivity;
-      this._typedPx = clamp(next, 0, this._totalWidth);
+      const rect = this.el.getBoundingClientRect();
+      const range = global.innerHeight + rect.height;
+      this._progress = range > 0
+        ? clamp((global.innerHeight - rect.top) / range, 0, 1)
+        : 0;
     }
 
-    // Drives `_typedPx` from a clock instead of wheel input: type the full
-    // line over `typeDuration`, hold fully typed for `holdDuration`, erase
-    // back to empty over `rollbackSpeed`, then loop back into typing.
+    // Drives a 0-1 reveal fraction from a clock instead of scroll/wheel
+    // input: type the full line over `typeDuration`, hold fully typed for
+    // `holdDuration`, erase back to empty over `rollbackSpeed`, then loop
+    // back into typing.
     _advanceContinuous(now) {
       const { typeDuration, holdDuration, rollbackSpeed } = this.options;
 
@@ -213,45 +264,45 @@
 
       if (this._contState === 'type') {
         const t = typeDuration > 0 ? clamp((now - this._contStateStart) / typeDuration, 0, 1) : 1;
-        this._typedPx = t * this._totalWidth;
         if (t >= 1) {
           this._contState = 'hold';
           this._contStateStart = now;
         }
-        return;
+        return t;
       }
 
       if (this._contState === 'hold') {
-        this._typedPx = this._totalWidth;
         if (now - this._contStateStart >= holdDuration) {
           this._contState = 'erase';
           this._contStateStart = now;
         }
-        return;
+        return 1;
       }
 
       // erase
       const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
-      this._typedPx = (1 - t) * this._totalWidth;
       if (t >= 1) {
         this._contState = 'type';
         this._contStateStart = now;
       }
+      return 1 - t;
     }
 
     _tick() {
       const total = this._chars.length;
 
+      let fraction;
       if (this.options.driveMode === 'continuous') {
-        this._advanceContinuous(performance.now());
+        fraction = this._advanceContinuous(performance.now());
+      } else if (this.options.driveMode === 'hover') {
+        this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
+        const revealPx = this.options.eraseOnReverse ? this._typedPx : this._maxTypedPx;
+        fraction = this._totalWidth > 0 ? clamp(revealPx / this._totalWidth, 0, 1) : 0;
+      } else {
+        this._maxProgress = Math.max(this._maxProgress, this._progress);
+        fraction = this.options.eraseOnReverse ? this._progress : this._maxProgress;
       }
 
-      this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
-      const revealPx = this.options.driveMode === 'continuous'
-        ? this._typedPx
-        : (this.options.eraseOnReverse ? this._typedPx : this._maxTypedPx);
-
-      const fraction = this._totalWidth > 0 ? clamp(revealPx / this._totalWidth, 0, 1) : 0;
       const revealedCount = clamp(Math.round(fraction * total), 0, total);
 
       this._chars.forEach((span, index) => {
@@ -288,7 +339,11 @@
       if (driveModeChanged) {
         this._contState = null;
         this._contStateStart = null;
-        if (this.options.driveMode === 'scroll') this.reset();
+        this._typedPx = 0;
+        this._maxTypedPx = 0;
+        this._progress = 0;
+        this._maxProgress = 0;
+        if (this.options.driveMode === 'scroll') this._onScroll();
       }
     }
 
@@ -296,9 +351,12 @@
       this.el.dataset.text = value || '';
       this._buildDOM();
       this._measure();
+      this._onScroll();
     }
 
-    // Resets typing progress back to the start.
+    // Resets typing progress back to the start (meaningful in 'hover' mode
+    // — 'scroll' mode's progress is re-derived live from page scroll
+    // position, and 'continuous' mode runs its own clock).
     reset() {
       this._typedPx = 0;
       this._maxTypedPx = 0;
@@ -306,8 +364,11 @@
 
     destroy() {
       cancelAnimationFrame(this._raf);
-      this.el.removeEventListener('wheel', this._onWheel);
+      global.removeEventListener('scroll', this._onScroll);
       global.removeEventListener('resize', this._onResize);
+      this._hoverTargets.forEach((target) => {
+        target.removeEventListener('wheel', this._onWheel);
+      });
     }
   }
 
@@ -315,31 +376,31 @@
     return Math.max(min, Math.min(max, value));
   }
 
-  TypePanHorizontal.initAll = function (selector = '.type-pan', options = {}) {
+  TypePan.initAll = function (selector = '.type-pan', options = {}) {
     return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__typePanHorizontalInstance)
+      .filter((el) => !el.__typePanInstance)
       .map((el) => {
-        const instance = new TypePanHorizontal(el, options);
-        el.__typePanHorizontalInstance = instance;
+        const instance = new TypePan(el, options);
+        el.__typePanInstance = instance;
         return instance;
       });
   };
 
-  TypePanHorizontal.get = function (elOrSelector) {
+  TypePan.get = function (elOrSelector) {
     const el = typeof elOrSelector === 'string' ? document.querySelector(elOrSelector) : elOrSelector;
-    return el ? el.__typePanHorizontalInstance || null : null;
+    return el ? el.__typePanInstance || null : null;
   };
 
-  TypePanHorizontal.getAll = function (selector = '.type-pan') {
+  TypePan.getAll = function (selector = '.type-pan') {
     return Array.from(document.querySelectorAll(selector))
-      .map((el) => el.__typePanHorizontalInstance)
+      .map((el) => el.__typePanInstance)
       .filter(Boolean);
   };
 
-  global.TypePanHorizontal = TypePanHorizontal;
+  global.TypePan = TypePan;
 
   function autoInit() {
-    TypePanHorizontal.initAll();
+    TypePan.initAll();
   }
 
   if (document.readyState === 'loading') {

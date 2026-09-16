@@ -12,9 +12,9 @@ import (
 // own JS. Everyone else gets none. Small enough to hardcode rather than
 // invent a per-page metadata file for two data points.
 var controlsAttrOverrides = map[string]string{
-	"text-effects/rolodex/index.html":             ` data-drive-mode="scroll"`,
-	"text-effects/type-pan-horizontal/index.html": ` data-drive-mode="scroll"`,
-	"text-effects/triple-vision/index.html":       ` data-mode="scroll"`,
+	"text-effects/rolodex/index.html":       ` data-drive-mode="scroll"`,
+	"text-effects/type-pan/index.html":      ` data-drive-mode="scroll"`,
+	"text-effects/triple-vision/index.html": ` data-mode="scroll"`,
 }
 
 const headSuffix = ".head.html"

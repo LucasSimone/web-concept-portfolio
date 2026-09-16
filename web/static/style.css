@@ -147,66 +147,6 @@
   display: inline-block;
 }
 
-/* The window spans the card's full available height (bottom to top),
-   like the real demo's terminal box, instead of just centering a
-   single line. Unlike the real demo — which only pans horizontally —
-   the line here also travels vertically inside that space (JS drives
-   a translateY on the h2 itself from carousel scroll progress), so
-   "vertical" reads as an actual up/down motion, not just a tall box. */
-.variation-card .title-wrap.type-pan-vertical-window {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  text-align: left;
-  border: 1px solid #000;
-  overflow: hidden;
-  padding: 0;
-}
-.variation-card .type-pan-vertical-window::before {
-  content: '';
-  display: block;
-  height: 18px;
-  background: #000;
-  flex-shrink: 0;
-}
-.variation-card .type-pan-vertical-stage {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-}
-.variation-card h2.type-pan-vertical {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  box-sizing: border-box;
-  padding: 10px 14px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 16px;
-  line-height: 1.4;
-  text-align: left;
-  will-change: transform;
-}
-.variation-card .type-pan-vertical__track {
-  display: inline-block;
-  white-space: pre;
-  will-change: transform;
-}
-.variation-card .type-pan-vertical__cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 1px;
-  background: currentColor;
-  vertical-align: text-bottom;
-}
-.variation-card .type-pan-vertical__cursor--blink {
-  animation: home-type-pan-blink 1s steps(1, start) infinite;
-}
-
 .variation-card h2.type-pan {
   position: relative;
   width: 100%;

@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const typePan = TypePanHorizontal.get('.type-pan');
+  const typePan = TypePan.get('.type-pan');
   const controlsPanel = document.querySelector('.controls');
 
   const controls = {
-    driveMode: document.getElementById('driveModeButton'),
+    driveMode: document.getElementById('driveModeSelect'),
+    sensitivity: document.getElementById('sensitivityRange'),
     typeDuration: document.getElementById('typeDurationRange'),
     holdDuration: document.getElementById('holdDurationRange'),
     rollbackSpeed: document.getElementById('rollbackSpeedRange'),
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const labels = {
+    sensitivity: document.getElementById('sensitivityVal'),
     typeDuration: document.getElementById('typeDurationVal'),
     holdDuration: document.getElementById('holdDurationVal'),
     rollbackSpeed: document.getElementById('rollbackSpeedVal'),
@@ -27,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function syncLabels() {
+    labels.sensitivity.textContent = `${controls.sensitivity.value}×`;
     labels.typeDuration.textContent = `${controls.typeDuration.value}ms`;
     labels.holdDuration.textContent = `${controls.holdDuration.value}ms`;
     labels.rollbackSpeed.textContent = `${controls.rollbackSpeed.value}ms`;
@@ -35,14 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
     labels.lag.textContent = controls.lag.value;
   }
 
-  controls.driveMode.addEventListener('click', () => {
-    const continuous = controls.driveMode.getAttribute('aria-pressed') !== 'true';
+  controls.driveMode.addEventListener('change', () => {
+    const driveMode = controls.driveMode.value;
+    controlsPanel.dataset.driveMode = driveMode;
+    typePan.update({ driveMode });
+  });
 
-    controls.driveMode.setAttribute('aria-pressed', String(continuous));
-    controls.driveMode.textContent = continuous ? 'Continuous' : 'Scroll';
-    controlsPanel.dataset.driveMode = continuous ? 'continuous' : 'scroll';
-
-    typePan.update({ driveMode: continuous ? 'continuous' : 'scroll' });
+  controls.sensitivity.addEventListener('input', () => {
+    typePan.update({ sensitivity: Number(controls.sensitivity.value) });
+    syncLabels();
   });
 
   controls.typeDuration.addEventListener('input', () => {

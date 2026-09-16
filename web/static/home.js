@@ -184,43 +184,15 @@ if (inFlightOutCard) {
   bindCarouselProgressDriver(variationCarousel.root, inFlightOutCard, { restProgress: 0.5 });
 }
 
-const [typePanVerticalCard] = TypePanVertical.initAll('.variation-card h2.type-pan-vertical', {
-  panPosition: 0.6, lag: 0.18,
-});
-if (typePanVerticalCard) {
-  window.removeEventListener('scroll', typePanVerticalCard._onScroll);
-  window.removeEventListener('resize', typePanVerticalCard._onScroll);
-  bindCarouselProgressDriver(variationCarousel.root, typePanVerticalCard, { restProgress: 1 });
-
-  // The window's height (minus the title bar) is the line's vertical
-  // travel range: progress 0 sits at the bottom, progress 1 at the top.
-  const stageEl = typePanVerticalCard.el.closest('.type-pan-vertical-window')
-    .querySelector('.type-pan-vertical-stage');
-  (function syncVerticalPosition() {
-    const travel = Math.max(0, stageEl.clientHeight - typePanVerticalCard.el.offsetHeight);
-    const y = (1 - typePanVerticalCard._progress) * travel;
-    typePanVerticalCard.el.style.transform = `translateY(${y.toFixed(1)}px)`;
-    requestAnimationFrame(syncVerticalPosition);
-  })();
-}
-// Type Pan Horizontal normally types from wheel input captured right on
-// its own title. That's replaced here with the same carousel-driven
-// progress approach as Type Pan Vertical, just mapped onto its
-// pixel-based typed length instead of a 0-1 progress field.
-const [typePanHorizontalCard] = TypePanHorizontal.initAll('.variation-card h2.type-pan', {
+// Type Pan normally types from real page scroll position. That's replaced
+// here with the same carousel-driven progress approach as the other cards.
+const [typePanCard] = TypePan.initAll('.variation-card h2.type-pan', {
   sensitivity: 1, panPosition: 0.75,
 });
-if (typePanHorizontalCard) {
-  typePanHorizontalCard.el.removeEventListener('wheel', typePanHorizontalCard._onWheel);
-  bindCarouselProgressDriver(variationCarousel.root, typePanHorizontalCard, {
-    restProgress: 1,
-    get: () => typePanHorizontalCard._typedPx / (typePanHorizontalCard._totalWidth || 1),
-    set: (value) => {
-      const px = value * (typePanHorizontalCard._totalWidth || 0);
-      typePanHorizontalCard._typedPx = px;
-      typePanHorizontalCard._maxTypedPx = Math.max(typePanHorizontalCard._maxTypedPx, px);
-    },
-  });
+if (typePanCard) {
+  window.removeEventListener('scroll', typePanCard._onScroll);
+  window.removeEventListener('resize', typePanCard._onResize);
+  bindCarouselProgressDriver(variationCarousel.root, typePanCard, { restProgress: 1 });
 }
 const [rolodexCard] = Rolodex.initAll('.variation-card h2.rolodex', {
   mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05,

@@ -1,27 +1,26 @@
-/* Page-specific styles for the Type Pan variation.
+/* Page-specific styles for the Type Pan demo.
    Base layout/nav comes from /shared/site.css */
 
 :root {
-  --type-pan-vertical-size: 34px;
-}
-
-.scroll-spacer {
-  height: 60vh;
+  --type-pan-size: 72px;
 }
 
 main {
   margin-right: 300px;
 }
 
+.scroll-spacer {
+  height: 60vh;
+}
+
 .hero {
-  min-height: 90vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   gap: 1.5rem;
-  padding: 6vh 5vw;
-  text-align: center;
+  padding: 8vh 4vw;
 }
 
 .hero .eyebrow {
@@ -30,37 +29,25 @@ main {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   opacity: 0.6;
+  text-align: center;
 }
 
 .hero .direction {
   margin: 0;
   font-size: 13px;
   opacity: 0.55;
-  max-width: 46ch;
+  max-width: 60ch;
+  text-align: center;
+  align-self: center;
 }
 
-/* --- The window that clips/pans the typed line --- */
-.type-pan-vertical-window {
-  width: min(86vw, 760px);
-  border: 1px solid #000;
-  background: #fff;
-  padding: 0;
-  overflow: hidden;
-}
-
-.type-pan-vertical-window::before {
-  content: '';
-  display: block;
-  height: 28px;
-  background: #000;
-}
-
-/* The `.type-pan-vertical` effect's own CSS ships inside
-   ./type-pan-vertical.js and is injected automatically. This page
-   layers a couple of demo-only touches on top via the shared class name. */
-.type-pan-vertical {
-  font-family: 'IBM Plex Mono', monospace;
-  padding: 20px 24px;
+/* The `.type-pan` effect's own CSS ships inside ./type-pan.js and is
+   injected automatically. This page layers a couple of demo-only touches
+   on top via the shared class name. */
+.type-pan {
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  font-family: 'Archivo Black', sans-serif;
 }
 
 /* --- Control panel --- */
@@ -123,6 +110,18 @@ main {
   color: #fff;
 }
 
+.controls:not([data-drive-mode="continuous"]) [data-continuous-only] {
+  display: none;
+}
+
+.controls[data-drive-mode="continuous"] [data-scroll-only] {
+  display: none;
+}
+
+.controls:not([data-drive-mode="hover"]) [data-hover-only] {
+  display: none;
+}
+
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
@@ -139,5 +138,5 @@ main {
   main {
     margin-right: 0;
   }
-  :root { --type-pan-vertical-size: 22px; }
+  :root { --type-pan-size: 36px; }
 }
