@@ -67,7 +67,7 @@
       </p>
       <pre><code>&lt;script&gt;
   window.PageTransitionConfig = {
-    aperture: { duration: 800, color: '#eee', lineColor: '#111', blades: 6, style: 'sharp', selector: 'a[href]' },
+    aperture: { duration: 800, color: '#eee', lineColor: '#111', blades: 6, style: 'curved', selector: 'a[href]' },
   };
 &lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
@@ -85,7 +85,7 @@
         panel</a> customizes only the Page One → Page Two link without
         touching the site nav around it:
       </p>
-      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-blades="5" data-pt-style="sharp" data-pt-color="#000" data-pt-line-color="#fff"&gt;
+      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-blades="5" data-pt-style="curved" data-pt-color="#000" data-pt-line-color="#fff"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
       <p>
@@ -152,7 +152,7 @@
           <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Blade panel fill color</td></tr>
           <tr><td><code>lineColor</code></td><td><code>'#000'</code></td><td>Blade seam/edge stroke color</td></tr>
           <tr><td><code>blades</code></td><td><code>8</code></td><td>Number of iris blades</td></tr>
-          <tr><td><code>style</code></td><td><code>'curved'</code></td><td><code>'curved'</code> (gentle pivot sweep, a rounded near-circular opening) or <code>'sharp'</code> (a wider pivot sweep and a straight-chord opening, closer to a printed lens-icon graphic)</td></tr>
+          <tr><td><code>style</code></td><td><code>'sharp'</code></td><td><code>'sharp'</code> (a wide pivot sweep and a straight-chord opening, closer to a printed lens-icon graphic) or <code>'curved'</code> (a gentler sweep and a rounded near-circular opening)</td></tr>
           <tr><td><code>spin</code></td><td><code>70</code></td><td>Degrees the ring rotates through as it opens/closes — the spiral twist</td></tr>
           <tr><td><code>selector</code></td><td><code>'a[href]'</code></td><td>Which links are eligible for interception</td></tr>
         </tbody>

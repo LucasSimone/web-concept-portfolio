@@ -83,7 +83,7 @@
     lineColor: '#000', // blade seam / edge stroke
     spin: 70, // degrees the ring twists through as it opens/closes — the "spiral"
     blades: 8, // number of iris blades
-    style: 'curved', // 'curved' or 'sharp' — see BLADE_STYLES
+    style: 'sharp', // 'curved' or 'sharp' — see BLADE_STYLES
     selector: 'a[href]', // which links this page intercepts
   };
   var pageConfig = (global.PageTransitionConfig && global.PageTransitionConfig[NAME]) || {};
