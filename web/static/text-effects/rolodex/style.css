@@ -98,11 +98,15 @@ main {
   color: #fff;
 }
 
-.controls[data-drive-mode="scroll"] [data-continuous-only] {
+.controls:not([data-drive-mode="continuous"]) [data-continuous-only] {
   display: none;
 }
 
 .controls[data-drive-mode="continuous"] [data-scroll-only] {
+  display: none;
+}
+
+.controls:not([data-drive-mode="hover"]) [data-hover-only] {
   display: none;
 }
 

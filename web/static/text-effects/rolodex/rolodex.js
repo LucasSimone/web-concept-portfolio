@@ -111,12 +111,20 @@
     // behavior). 'continuous' ignores scroll and flips through the words on
     // its own clock: hold on a word for `interval`, flip to the next over
     // `flipDuration`, and once the last word is reached, rewind straight
-    // back to the first word over `rollbackSpeed` before repeating.
+    // back to the first word over `rollbackSpeed` before repeating. 'hover'
+    // keeps the element static on the page (no page scroll involved at
+    // all) and instead drives the exact same scroll-position math as
+    // 'scroll' mode from wheel/trackpad input, but only while the pointer
+    // is over the rolodex element itself (or any element elsewhere on the
+    // page carrying `data-rolodex-hover="<id>"`, where `<id>` is this
+    // rolodex element's own `id`) — that input is also prevented from
+    // scrolling the page itself.
     driveMode: 'scroll',
     interval: 1400, // ms held on each word before flipping to the next
     flipDuration: 450, // ms spent mid-flip between two words
     rollbackSpeed: 900, // ms to rewind from the last word back to the first
-    scrollIdleDelay: 120, // ms of no scroll events before treating scroll as idle
+    hoverScrollDistance: 1000, // px-equivalent of wheel delta to sweep through the whole word list in 'hover' driveMode
+    scrollIdleDelay: 120, // ms of no scroll/wheel events before treating scroll as idle
     snapStrength: 0.4, // 0-1, how fast the idle settle finishes a fold each frame — kept snappy so it doesn't dwell in the mid-flip "half old, half new" look
   };
 
@@ -138,15 +146,54 @@
       this._scrollIdleTimer = null;
       this._scrollDirection = 0;
       this._displaySegmentFloat = null;
+      this._hoverTargets = [];
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
+      // In 'hover' driveMode the element stays put on the page — wheel
+      // input over it drives the flip directly (same progress math as
+      // 'scroll' mode) instead of scrolling the page. Other drive modes
+      // ignore wheel entirely, letting the page scroll as normal.
+      this._onWheel = (event) => {
+        if (this.options.driveMode !== 'hover') return;
+        event.preventDefault();
+
+        const next = clamp(this._progress + event.deltaY / this.options.hoverScrollDistance, 0, 1);
+        if (next !== this._progress) this._scrollDirection = next > this._progress ? 1 : -1;
+        this._progress = next;
+
+        this._scrollActive = true;
+        clearTimeout(this._scrollIdleTimer);
+        this._scrollIdleTimer = setTimeout(() => {
+          this._scrollActive = false;
+        }, this.options.scrollIdleDelay);
+      };
 
       this._buildDOM();
+      this._bindHoverTargets();
       global.addEventListener('scroll', this._onScroll, { passive: true });
       global.addEventListener('resize', this._onResize);
       this._onScroll();
       this._raf = requestAnimationFrame(this._tick);
+    }
+
+    // Hover targets are this element plus, if it has an `id`, any element
+    // anywhere on the page tagged `data-rolodex-hover="<that id>"` — lets a
+    // caller drive the flip by wheeling over a different element than the
+    // text itself (e.g. a surrounding card or button) without this
+    // instance needing to know about it up front.
+    _bindHoverTargets() {
+      const targets = [this.el];
+      const id = this.el.id;
+      if (id && global.CSS && typeof global.CSS.escape === 'function') {
+        document.querySelectorAll(`[data-rolodex-hover="${global.CSS.escape(id)}"]`).forEach((node) => {
+          if (!targets.includes(node)) targets.push(node);
+        });
+      }
+      this._hoverTargets = targets;
+      targets.forEach((target) => {
+        target.addEventListener('wheel', this._onWheel, { passive: false });
+      });
     }
 
     _buildDOM() {
@@ -390,6 +437,10 @@
         if (this.options.driveMode === 'continuous') {
           ({ segmentIndex, flipT } = this._computeContinuous(performance.now()));
         } else {
+          // Shared by 'scroll' and 'hover': both just feed `this._progress`
+          // (0-1) into the same easing/idle-settle logic below — 'scroll'
+          // sets it from page scroll position (_onScroll), 'hover' sets it
+          // from wheel input over the element (_onWheel).
           const segments = Math.max(1, this._words.length - 1);
           const rawSegmentFloat = clamp(this._progress, 0, 1) * segments;
 
@@ -530,6 +581,10 @@
         this._contStateStart = null;
         this._lastSegment = -1;
         this._displaySegmentFloat = null;
+        this._progress = 0;
+        this._scrollActive = false;
+        this._scrollDirection = 0;
+        clearTimeout(this._scrollIdleTimer);
         if (this.options.driveMode === 'scroll') this._onScroll();
       }
     }
@@ -545,6 +600,9 @@
       clearTimeout(this._scrollIdleTimer);
       global.removeEventListener('scroll', this._onScroll);
       global.removeEventListener('resize', this._onResize);
+      this._hoverTargets.forEach((target) => {
+        target.removeEventListener('wheel', this._onWheel);
+      });
     }
   }
 

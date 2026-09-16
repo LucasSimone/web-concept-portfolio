@@ -3,13 +3,14 @@
     <nav class="docs-sidebar" data-docs-sidebar></nav>
 
     <div class="docs-content">
-      <p class="docs-eyebrow">Text Effect · Scroll + Continuous</p>
+      <p class="docs-eyebrow">Text Effect · Scroll + Continuous + Hover</p>
       <h1>Rolodex</h1>
       <p>
         Splits a sentence into words and shows them one at a time on a
         fixed-size 3D card that flips to the next word — either a two-flap
         "split-flap" display or a single-card front/back flip — as the user
-        scrolls, or on a timed loop in continuous mode.
+        scrolls, on a timed loop in continuous mode, or, in "static scroll"
+        mode, by scrolling with the page held still while hovering it.
       </p>
 
       <div class="docs-actions">
@@ -53,13 +54,24 @@
         </thead>
         <tbody>
           <tr><td><code>mode</code></td><td><code>'split-flap'</code></td><td>Visual style: <code>'split-flap'</code> (two-flap card) or <code>'single-card'</code> (simple front/back flip)</td></tr>
-          <tr><td><code>driveMode</code></td><td><code>'scroll'</code></td><td><code>'scroll'</code> (scroll position mapped across word segments) or <code>'continuous'</code> (self-animating hold/flip/rewind loop)</td></tr>
+          <tr>
+            <td><code>driveMode</code></td>
+            <td><code>'scroll'</code></td>
+            <td>
+              <ul>
+                <li><code>'scroll'</code> — scroll position mapped across word segments</li>
+                <li><code>'continuous'</code> — self-animating hold/flip/rewind loop</li>
+                <li><code>'hover'</code> ("static scroll") — the element stays put on the page; wheel/trackpad input over it (or over an element tagged <code>data-rolodex-hover="&lt;that element's id&gt;"</code>) drives the same scroll-position math as <code>'scroll'</code> mode instead of scrolling the page</li>
+              </ul>
+            </td>
+          </tr>
           <tr><td><code>flipWidth</code></td><td><code>55</code></td><td>% of each word's segment spent mid-flip (the rest holds on a settled word)</td></tr>
           <tr><td><code>perspective</code></td><td><code>900</code></td><td>CSS 3D perspective in px for the flip</td></tr>
           <tr><td><code>shading</code></td><td><code>0.55</code></td><td>0–1, how much a flap darkens as it turns edge-on</td></tr>
           <tr><td><code>interval</code></td><td><code>1400</code></td><td>ms held on each word before flipping (continuous mode)</td></tr>
           <tr><td><code>flipDuration</code></td><td><code>450</code></td><td>ms spent mid-flip between words (continuous mode)</td></tr>
           <tr><td><code>rollbackSpeed</code></td><td><code>900</code></td><td>ms to rewind from the last word back to the first (continuous mode)</td></tr>
+          <tr><td><code>hoverScrollDistance</code></td><td><code>1000</code></td><td>px-equivalent of wheel delta needed to sweep through the whole word list (hover mode)</td></tr>
         </tbody>
       </table>
 

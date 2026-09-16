@@ -257,6 +257,15 @@ a { color: inherit; }
   white-space: nowrap;
 }
 
+.docs-content td ul {
+  margin: 0;
+  padding-left: 1.1em;
+}
+
+.docs-content td li + li {
+  margin-top: 6px;
+}
+
 .docs-index-list a {
   display: block;
   padding: 14px 0;

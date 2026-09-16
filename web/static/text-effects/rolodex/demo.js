@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const controls = {
-    driveMode: document.getElementById('driveModeButton'),
+    driveMode: document.getElementById('driveModeSelect'),
+    hoverScrollDistance: document.getElementById('hoverScrollDistanceRange'),
     interval: document.getElementById('intervalRange'),
     flipDuration: document.getElementById('flipDurationRange'),
     rollbackSpeed: document.getElementById('rollbackSpeedRange'),
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const labels = {
+    hoverScrollDistance: document.getElementById('hoverScrollDistanceVal'),
     interval: document.getElementById('intervalVal'),
     flipDuration: document.getElementById('flipDurationVal'),
     rollbackSpeed: document.getElementById('rollbackSpeedVal'),
@@ -36,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function syncLabels() {
+    labels.hoverScrollDistance.textContent = `${controls.hoverScrollDistance.value}px`;
     labels.interval.textContent = `${controls.interval.value}ms`;
     labels.flipDuration.textContent = `${controls.flipDuration.value}ms`;
     labels.rollbackSpeed.textContent = `${controls.rollbackSpeed.value}ms`;
@@ -57,14 +60,15 @@ document.addEventListener('DOMContentLoaded', () => {
     syncLabels();
   }
 
-  controls.driveMode.addEventListener('click', () => {
-    const continuous = controls.driveMode.getAttribute('aria-pressed') !== 'true';
+  controls.driveMode.addEventListener('change', () => {
+    const driveMode = controls.driveMode.value;
+    controlsPanel.dataset.driveMode = driveMode;
+    instance.update({ driveMode });
+  });
 
-    controls.driveMode.setAttribute('aria-pressed', String(continuous));
-    controls.driveMode.textContent = continuous ? 'Continuous' : 'Scroll';
-    controlsPanel.dataset.driveMode = continuous ? 'continuous' : 'scroll';
-
-    instance.update({ driveMode: continuous ? 'continuous' : 'scroll' });
+  controls.hoverScrollDistance.addEventListener('input', () => {
+    instance.update({ hoverScrollDistance: Number(controls.hoverScrollDistance.value) });
+    syncLabels();
   });
 
   controls.interval.addEventListener('input', () => {
