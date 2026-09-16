@@ -10,9 +10,9 @@
   var CATEGORY_LABELS = {
     'text-effects': 'Text Effects',
     background: 'Background',
-    'page-transitions': 'Page Transitions',
+    transitions: 'Transitions',
   };
-  var CATEGORY_ORDER = ['text-effects', 'background', 'page-transitions'];
+  var CATEGORY_ORDER = ['text-effects', 'background', 'transitions'];
 
   document.addEventListener('DOMContentLoaded', function () {
     var mount = document.querySelector('[data-docs-sidebar]');

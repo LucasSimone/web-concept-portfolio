@@ -3,7 +3,7 @@
     <nav class="docs-sidebar" data-docs-sidebar></nav>
 
     <div class="docs-content">
-      <p class="docs-eyebrow">Page Transition · Navigation</p>
+      <p class="docs-eyebrow">Transition · Navigation</p>
       <h1>Aperture</h1>
       <p>
         A ring of camera-iris blades — curved panels seamed with lines,
@@ -12,13 +12,13 @@
         sealing shut at a point, then spirals back outward from that
         point once the next page loads, opening to reveal it. One
         continuous motion, split across the navigation boundary — the
-        same shape as <a href="/docs/page-transitions/shutter.html">Shutter</a>'s
+        same shape as <a href="/docs/transitions/shutter.html">Shutter</a>'s
         rise/recede, but a twisting iris in place of a sliding panel.
       </p>
 
       <div class="docs-actions">
-        <a class="btn" href="/page-transitions/aperture/index.html">View Demo</a>
-        <a class="btn" href="/page-transitions/aperture/aperture.js" download>Download JS</a>
+        <a class="btn" href="/transitions/aperture/index.html">View Demo</a>
+        <a class="btn" href="/transitions/aperture/aperture.js" download>Download JS</a>
       </div>
 
       <h2>Install</h2>
@@ -36,16 +36,23 @@
         and a fixed-position element renders correctly regardless of
         where in the tree it sits.
       </p>
+      <p>
+        Dropping the script in doesn't intercept anything by itself:
+        navigation is off until you set <code>selector</code> (see Options
+        below). With no config at all, you still get
+        <a href="#element-transitions"><code>Transitions.aperture.play</code>/<code>cover</code>/<code>reveal</code></a>
+        for transitioning elements — just no link interception.
+      </p>
 
       <h2>Usage</h2>
       <p>
-        There's no class to add and no elements to opt in — once it's on a
-        page, it listens for clicks on the whole document and intercepts
-        any left-click on a same-origin <code>&lt;a href&gt;</code> that
-        isn't a hash link, a <code>download</code> link, a
-        <code>target="_blank"</code> link, or opened with a modifier key
-        held. Clicking one spirals the iris shut, then navigates once it
-        finishes.
+        No class to add and no elements to opt in for navigation itself —
+        once you've turned it on with a <code>selector</code>, it listens
+        for clicks on the whole document and intercepts any left-click on
+        a same-origin <code>&lt;a href&gt;</code> that isn't a hash link, a
+        <code>download</code> link, a <code>target="_blank"</code> link,
+        or opened with a modifier key held. Clicking one spirals the iris
+        shut, then navigates once it finishes.
       </p>
       <p>
         The reveal only plays on the page that receives that navigation —
@@ -66,7 +73,7 @@
         for why:
       </p>
       <pre><code>&lt;script&gt;
-  window.PageTransitionConfig = {
+  window.TransitionConfig = {
     aperture: { duration: 800, color: '#eee', lineColor: '#111', blades: 6, style: 'curved', selector: 'a[href]' },
   };
 &lt;/script&gt;
@@ -75,17 +82,17 @@
         Or reconfigure it later, from any script that runs after
         <code>aperture.js</code> has loaded:
       </p>
-      <pre><code>PageTransitions.aperture.configure({ selector: '[data-pt-transition="aperture"]' });</code></pre>
+      <pre><code>Transitions.aperture.configure({ selector: '[data-t-transition="aperture"]' });</code></pre>
       <p>
         A single link can override duration, easing, panel color, line
         color, blade count, blade style, or spin for just its own
         transition, leaving every other link on the page using the
         default profile — this is how the
-        <a href="/page-transitions/aperture/index.html">demo's controls
+        <a href="/transitions/aperture/index.html">demo's controls
         panel</a> customizes only the Page One → Page Two link without
         touching the site nav around it:
       </p>
-      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-blades="5" data-pt-style="curved" data-pt-color="#000" data-pt-line-color="#fff"&gt;
+      <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-blades="5" data-t-style="curved" data-t-color="#000" data-t-line-color="#fff"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
       <p>
@@ -94,36 +101,89 @@
         the two halves of the motion always match.
       </p>
 
+      <h2 id="element-transitions">Element Transitions</h2>
+      <p>
+        Beyond whole-page navigation, Aperture can also transition any
+        element in place — seal it shut, swap what's inside, then spiral
+        back open — with no page load involved. Mark the element
+        <code>class="t-el"</code> (gives the iris a positioning context
+        to size itself against) and call <code>play</code>:
+      </p>
+      <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
+
+&lt;script&gt;
+  Transitions.aperture.play(document.getElementById('card'), {
+    swap: (el) =&gt; { el.textContent = 'New content'; },
+  });
+&lt;/script&gt;</code></pre>
+      <p>
+        <code>play(el, options)</code> covers <code>el</code>, calls
+        <code>options.swap(el)</code> once it's fully sealed (waiting on
+        it first if it returns a promise), then reveals — one call for the
+        common case. <code>cover(el, options)</code> and
+        <code>reveal(el, options)</code> are also public on their own, for
+        anything that doesn't fit that cover→swap→reveal shape. All three
+        take the same fields as the per-link <code>data-t-*</code>
+        attributes above, as a plain object, and return a promise that
+        resolves once that step finishes — they're the primitives
+        <code>play</code> is built from, not a separate flow.
+      </p>
+      <p>
+        Blade geometry is derived from the target element's own size
+        (rather than the viewport, as the navigation case uses), and
+        <code>overflow: hidden</code> is applied to it only while
+        animating, so it clips blade overshoot at the element's edge
+        without ever clipping the element's normal content the rest of
+        the time.
+      </p>
+      <p>
+        Every element gets independent state: two different elements (or
+        the same element called repeatedly, e.g. to loop it) each animate
+        on their own, with nothing shared between them.
+      </p>
+      <pre><code>// Two cards, two independent seals, at the same time.
+Transitions.aperture.play(cardA);
+Transitions.aperture.play(cardB);
+
+// Looping the same element.
+(function loop() { Transitions.aperture.play(card).then(loop); })();</code></pre>
+      <p>
+        Not part of the navigation flow above — a navigating page's cover
+        has no same-document reveal to chain into (it navigates instead),
+        so that flow uses <code>cover</code>/<code>reveal</code> directly
+        rather than <code>play</code>.
+      </p>
+
       <h2 id="multiple-transitions">Multiple Transitions</h2>
       <p>
-        A page can load more than one page-transition effect at once,
+        A page can load more than one transition effect at once,
         each handling a different set of links. Every effect keeps its
         public API, its config, and its arrival flag under its own slug —
-        <code>window.PageTransitions.aperture</code>,
-        <code>window.PageTransitionConfig.aperture</code>, and a
+        <code>window.Transitions.aperture</code>,
+        <code>window.TransitionConfig.aperture</code>, and a
         <code>sessionStorage</code> key of
-        <code>pt-aperture-pending</code> — so it registers alongside
-        <a href="/docs/page-transitions/shutter.html">Shutter</a> without
+        <code>t-aperture-pending</code> — so it registers alongside
+        <a href="/docs/transitions/shutter.html">Shutter</a> without
         either clobbering the other. This site's own layout does exactly
         that: both scripts load on every page, each one reacting only to
         links tagged with its own slug:
       </p>
       <pre><code>&lt;script&gt;
-  window.PageTransitionConfig = {
-    shutter:  { selector: '[data-pt-transition="shutter"]' },
-    aperture: { selector: '[data-pt-transition="aperture"]' },
+  window.TransitionConfig = {
+    shutter:  { selector: '[data-t-transition="shutter"]' },
+    aperture: { selector: '[data-t-transition="aperture"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Which link uses which effect is decided by the <em>value</em> of
-        <code>data-pt-transition</code> — each script only reacts to the
+        <code>data-t-transition</code> — each script only reacts to the
         name matching its own slug, so a given link can only ever belong
         to one effect:
       </p>
-      <pre><code>&lt;a href="/a" data-pt-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
-&lt;a href="/b" data-pt-transition="aperture"&gt;Uses Aperture&lt;/a&gt;</code></pre>
+      <pre><code>&lt;a href="/a" data-t-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
+&lt;a href="/b" data-t-transition="aperture"&gt;Uses Aperture&lt;/a&gt;</code></pre>
       <p>
         Neither script coordinates with the other. Arriving on the next
         page, each one only checks whether its own
@@ -134,11 +194,21 @@
       <p>
         Running the <em>same</em> effect configured differently in
         different places is a separate case that doesn't need any of
-        this — see the per-link <code>data-pt-duration</code>/
+        this — see the per-link <code>data-t-duration</code>/
         <code>-easing</code>/<code>-color</code>/<code>-line-color</code>/
         <code>-blades</code>/<code>-style</code>/<code>-spin</code>
         attributes above, which already let one script handle any number
         of differently configured links on one page.
+      </p>
+      <p>
+        That's a different multiplicity than
+        <a href="#element-transitions">Element Transitions</a>' concurrent
+        instances above — this section is about running <em>different</em>
+        named effects (Shutter, Aperture, …) on one page without them
+        colliding; that one is about running <em>this same</em> effect on
+        several elements (or the same element repeatedly) at once, which
+        works because each target keeps its own independent state rather
+        than sharing one page-wide profile.
       </p>
 
       <h2>Options</h2>
@@ -154,7 +224,7 @@
           <tr><td><code>blades</code></td><td><code>8</code></td><td>Number of iris blades</td></tr>
           <tr><td><code>style</code></td><td><code>'sharp'</code></td><td><code>'sharp'</code> (a wide pivot sweep and a straight-chord opening, closer to a printed lens-icon graphic) or <code>'curved'</code> (a gentler sweep and a rounded near-circular opening)</td></tr>
           <tr><td><code>spin</code></td><td><code>70</code></td><td>Degrees the ring rotates through as it opens/closes — the spiral twist</td></tr>
-          <tr><td><code>selector</code></td><td><code>'a[href]'</code></td><td>Which links are eligible for interception</td></tr>
+          <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are eligible for interception — navigation stays off until this is set</td></tr>
         </tbody>
       </table>
       <p>Per-link attributes, checked on the clicked element at click time and overriding the options above for just that one transition:</p>
@@ -163,13 +233,13 @@
           <tr><th>Attribute</th><th>Overrides</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>data-pt-duration</code></td><td><code>duration</code></td></tr>
-          <tr><td><code>data-pt-easing</code></td><td><code>easing</code></td></tr>
-          <tr><td><code>data-pt-color</code></td><td><code>color</code></td></tr>
-          <tr><td><code>data-pt-line-color</code></td><td><code>lineColor</code></td></tr>
-          <tr><td><code>data-pt-blades</code></td><td><code>blades</code></td></tr>
-          <tr><td><code>data-pt-style</code></td><td><code>style</code></td></tr>
-          <tr><td><code>data-pt-spin</code></td><td><code>spin</code></td></tr>
+          <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-line-color</code></td><td><code>lineColor</code></td></tr>
+          <tr><td><code>data-t-blades</code></td><td><code>blades</code></td></tr>
+          <tr><td><code>data-t-style</code></td><td><code>style</code></td></tr>
+          <tr><td><code>data-t-spin</code></td><td><code>spin</code></td></tr>
         </tbody>
       </table>
 
@@ -188,7 +258,7 @@
         traces) or a straight chord (the <code>'sharp'</code> style, a
         more faceted, graphic opening). Their shared inner radius is
         driven by a single registered custom property,
-        <code>--pt-aperture-progress</code>, which the browser
+        <code>--t-aperture-progress</code>, which the browser
         transitions natively; a <code>requestAnimationFrame</code> loop
         just samples its live computed value every frame and rebuilds
         all the blade paths from it, since arbitrary path geometry can't
@@ -199,12 +269,24 @@
       <p>
         Respects <code>prefers-reduced-motion</code>: with it set, clicking
         a link navigates immediately with no seal, and an arrival never
-        plays a reveal. A back/forward (bfcache) restore also skips
-        replaying anything — <code>pageshow</code> with
-        <code>event.persisted</code> resets straight to the clean, open
-        state instead. Arrival state is tracked with a short-lived
-        <code>sessionStorage</code> flag rather than anything in the URL, so
-        it costs nothing to add and never shows up as a query param or hash.
+        plays a reveal; <code>cover</code>/<code>reveal</code>/<code>play</code>
+        resolve immediately the same way — <code>play</code>'s
+        <code>swap</code> still runs, just with no seal shown around it.
+        A back/forward (bfcache) restore also skips replaying anything —
+        <code>pageshow</code> with <code>event.persisted</code> resets
+        every still-active element straight to its clean, open state
+        instead of replaying anything. Arrival state (for navigation) is
+        tracked with a short-lived <code>sessionStorage</code> flag rather
+        than anything in the URL, so it costs nothing to add and never
+        shows up as a query param or hash.
+      </p>
+      <p>
+        The overlay stacks above the target element's own content, not
+        above the whole page — for the navigation case (covering
+        <code>&lt;html&gt;</code>) that's already the top of everything,
+        but for an element target it's only as high as that element's own
+        stacking context allows. A descendant with its own higher
+        <code>z-index</code> can still paint above it.
       </p>
     </div>
   </div>

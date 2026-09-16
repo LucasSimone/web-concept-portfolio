@@ -1,0 +1,243 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Transition · Navigation</p>
+      <h1>Shutter</h1>
+      <p>
+        A full-screen black panel that rises from the bottom edge to cover
+        the viewport when a link is clicked, then recedes back down to
+        reveal the next page once it loads — one continuous vertical
+        motion, split across the navigation boundary.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/transitions/shutter/index.html">View Demo</a>
+        <a class="btn" href="/transitions/shutter/shutter.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Unlike the other effects on this site, this one belongs in
+        <code>&lt;head&gt;</code>, not next to the markup it affects — as a
+        plain, non-<code>async</code>/<code>defer</code> tag, on every page
+        that should take part. It has to run and register its CSS before
+        the page paints, so the initial cover (when arriving from another
+        transitioned page) shows with no flash of the page underneath.
+      </p>
+      <p>
+        Dropping the script in doesn't intercept anything by itself:
+        navigation is off until you set <code>selector</code> (see Options
+        below). With no config at all, you still get
+        <a href="#element-transitions"><code>Transitions.shutter.play</code>/<code>cover</code>/<code>reveal</code></a>
+        for transitioning elements — just no link interception.
+      </p>
+
+      <h2>Usage</h2>
+      <p>
+        No class to add and no elements to opt in for navigation itself —
+        once you've turned it on with a <code>selector</code>, it listens
+        for clicks on the whole document and intercepts any left-click on
+        a same-origin <code>&lt;a href&gt;</code> that isn't a hash link, a
+        <code>download</code> link, a <code>target="_blank"</code> link,
+        or opened with a modifier key held. Clicking one plays the exit
+        cover, then navigates once it finishes.
+      </p>
+      <p>
+        The reveal only plays on the page that receives that navigation —
+        a direct load, refresh, or bookmarked visit never shows the
+        overlay at all, and if the destination page doesn't also load
+        <code>shutter.js</code>, the cover simply finishes and that page
+        appears underneath with no reveal of its own. To exempt a specific
+        link from interception without removing the script, add
+        <code>data-no-transition</code> to it:
+      </p>
+      <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      <p>
+        To change the timing, color, or which links it watches, configure
+        it before the script tag runs. Config and the script's own public
+        API are both keyed by <code>"shutter"</code> rather than a shared
+        name — see <a href="#multiple-transitions">Multiple Transitions</a>
+        below for why:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter: { duration: 700, color: '#111', selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Or reconfigure it later, from any script that runs after
+        <code>shutter.js</code> has loaded:
+      </p>
+      <pre><code>Transitions.shutter.configure({ selector: '[data-t-transition="shutter"]' });</code></pre>
+      <p>
+        A single link can override duration, easing, or color for just its
+        own transition, leaving every other link on the page using the
+        default profile — this is how the
+        <a href="/transitions/shutter/index.html">demo's controls
+        panel</a> customizes only the Page One → Page Two link without
+        touching the site nav around it:
+      </p>
+      <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#555"&gt;
+  Enter Page Two
+&lt;/a&gt;</code></pre>
+      <p>
+        Whichever profile a click used — default or overridden — travels
+        to the next page in the same handoff that triggers its reveal, so
+        the two halves of the motion always match.
+      </p>
+
+      <h2 id="element-transitions">Element Transitions</h2>
+      <p>
+        Beyond whole-page navigation, Shutter can also transition any
+        element in place — cover it, swap what's inside, then reveal —
+        with no page load involved. Mark the element <code>class="t-el"</code>
+        (gives the cover a positioning context to size itself against)
+        and call <code>play</code>:
+      </p>
+      <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
+
+&lt;script&gt;
+  Transitions.shutter.play(document.getElementById('card'), {
+    swap: (el) =&gt; { el.textContent = 'New content'; },
+  });
+&lt;/script&gt;</code></pre>
+      <p>
+        <code>play(el, options)</code> covers <code>el</code>, calls
+        <code>options.swap(el)</code> once it's fully covered (waiting on
+        it first if it returns a promise), then reveals — one call for the
+        common case. <code>cover(el, options)</code> and
+        <code>reveal(el, options)</code> are also public on their own, for
+        anything that doesn't fit that cover→swap→reveal shape (e.g.
+        covering on one event and revealing on a separate later one). All
+        three take the same fields as the per-link <code>data-t-*</code>
+        attributes above, as a plain object, and return a promise that
+        resolves once that step finishes — they're the primitives
+        <code>play</code> is built from, not a separate flow.
+      </p>
+      <p>
+        Every element gets independent state: two different elements (or
+        the same element called repeatedly, e.g. to loop it) each animate
+        on their own, with nothing shared between them.
+      </p>
+      <pre><code>// Two cards, two independent covers, at the same time.
+Transitions.shutter.play(cardA);
+Transitions.shutter.play(cardB);
+
+// Looping the same element.
+(function loop() { Transitions.shutter.play(card).then(loop); })();</code></pre>
+      <p>
+        Not part of the navigation flow above — a navigating page's cover
+        has no same-document reveal to chain into (it navigates instead),
+        so that flow uses <code>cover</code>/<code>reveal</code> directly
+        rather than <code>play</code>.
+      </p>
+
+      <h2 id="multiple-transitions">Multiple Transitions</h2>
+      <p>
+        A page can load more than one transition effect at once,
+        each handling a different set of links. Every effect keeps its
+        public API, its config, and its arrival flag under its own slug —
+        <code>window.Transitions.shutter</code>,
+        <code>window.TransitionConfig.shutter</code>, and a
+        <code>sessionStorage</code> key of
+        <code>t-shutter-pending</code> — so a second, differently named
+        effect's script can register alongside this one without either
+        clobbering the other. This site's own layout does exactly that,
+        loading <a href="/docs/transitions/aperture.html">Aperture</a>
+        alongside Shutter on every page:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter:  { selector: '[data-t-transition="shutter"]' },
+    aperture: { selector: '[data-t-transition="aperture"]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;
+&lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Which link uses which effect is decided by the
+        <em>value</em> of <code>data-t-transition</code> — each script
+        only reacts to the name matching its own slug, so a given link
+        can only ever belong to one effect:
+      </p>
+      <pre><code>&lt;a href="/a" data-t-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
+&lt;a href="/b" data-t-transition="aperture"&gt;Uses Aperture&lt;/a&gt;</code></pre>
+      <p>
+        Neither script coordinates with the other. Arriving on the next
+        page, each one only checks whether its own
+        <code>sessionStorage</code> key was set — and since only one link
+        is ever clicked at a time, only one key is ever written, so only
+        that one effect's reveal plays.
+      </p>
+      <p>
+        Running the <em>same</em> effect configured differently in
+        different places is a separate case that doesn't need any of
+        this — see the per-link <code>data-t-duration</code>/
+        <code>-easing</code>/<code>-color</code> attributes above, which
+        already let one script handle any number of differently
+        configured links on one page.
+      </p>
+      <p>
+        That's a different multiplicity than
+        <a href="#element-transitions">Element Transitions</a>' concurrent
+        instances above — this section is about running <em>different</em>
+        named effects (Shutter, Aperture, …) on one page without them
+        colliding; that one is about running <em>this same</em> effect on
+        several elements (or the same element repeatedly) at once, which
+        works because each target keeps its own independent state rather
+        than sharing one page-wide profile.
+      </p>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>duration</code></td><td><code>550</code></td><td>ms for each half (cover or reveal) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'cubic-bezier(.65,0,.35,1)'</code></td><td>CSS easing applied to the transform transition</td></tr>
+          <tr><td><code>color</code></td><td><code>'#000'</code></td><td>Panel background color</td></tr>
+          <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are eligible for interception — navigation stays off until this is set</td></tr>
+        </tbody>
+      </table>
+      <p>Per-link attributes, checked on the clicked element at click time and overriding the options above for just that one transition:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Overrides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: with it set, clicking
+        a link navigates immediately with no cover, and an arrival never
+        plays a reveal; <code>cover</code>/<code>reveal</code>/<code>play</code>
+        resolve immediately the same way — <code>play</code>'s
+        <code>swap</code> still runs, just with no cover shown around it.
+        A back/forward (bfcache) restore also skips replaying anything —
+        <code>pageshow</code> with <code>event.persisted</code> resets
+        every still-active element straight to its clean, uncovered state
+        instead of replaying anything. Arrival state (for navigation) is
+        tracked with a short-lived <code>sessionStorage</code> flag rather
+        than anything in the URL, so it costs nothing to add and never
+        shows up as a query param or hash.
+      </p>
+      <p>
+        The cover overlay stacks above the target element's own content,
+        not above the whole page — for the navigation case (covering
+        <code>&lt;html&gt;</code>) that's already the top of everything,
+        but for an element target it's only as high as that element's own
+        stacking context allows. A descendant with its own higher
+        <code>z-index</code> can still paint above it.
+      </p>
+    </div>
+  </div>

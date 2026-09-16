@@ -43,25 +43,25 @@ const layoutSrc = `<!doctype html>
   <script src="/shared/docs-nav.js"></script>
   <script src="/shared/docs-copy.js"></script>
   <script>
-    // Sitewide defaults for every page-transition effect, keyed by its own
-    // slug (each effect's script reads window.PageTransitionConfig[slug]
-    // and registers itself at window.PageTransitions[slug], so multiple
+    // Sitewide defaults for every transition effect, keyed by its own
+    // slug (each effect's script reads window.TransitionConfig[slug]
+    // and registers itself at window.Transitions[slug], so multiple
     // effects can be loaded on the same page without colliding). Default
     // here is opt-in-only: an effect only triggers on a link explicitly
-    // tagged data-pt-transition="<slug>". Every page still loads every
+    // tagged data-t-transition="<slug>". Every page still loads every
     // effect's script regardless, so arriving here from a page that DID
     // trigger one (e.g. a demo page, which widens its own selector to
     // "a[href]") plays that effect's reveal.
     //
-    // Adding a new page-transition effect: add its slug/selector below,
+    // Adding a new transition effect: add its slug/selector below,
     // and its <script src> underneath the others.
-    window.PageTransitionConfig = {
-      shutter: { selector: '[data-pt-transition="shutter"]' },
-      aperture: { selector: '[data-pt-transition="aperture"]' },
+    window.TransitionConfig = {
+      shutter: { selector: '[data-t-transition="shutter"]' },
+      aperture: { selector: '[data-t-transition="aperture"]' },
     };
   </script>
-  <script src="/page-transitions/shutter/shutter.js"></script>
-  <script src="/page-transitions/aperture/aperture.js"></script>
+  <script src="/transitions/shutter/shutter.js"></script>
+  <script src="/transitions/aperture/aperture.js"></script>
 {{.Head}}</head>
 <body>
   <nav class="site-nav">

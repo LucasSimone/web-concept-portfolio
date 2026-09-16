@@ -6,14 +6,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const duration = document.getElementById('ptDuration');
   const durationVal = document.getElementById('ptDurationVal');
   const easing = document.getElementById('ptEasing');
-  const swatches = Array.from(document.querySelectorAll('.pt-swatch'));
+  const swatches = Array.from(document.querySelectorAll('.t-swatch'));
+
+  // The "Click me" box below the main link — a small live example of
+  // Shutter transitioning an element in place rather than a whole page.
+  // Toggles its own text back and forth, replaying the effect each time.
+  const elementDemo = document.getElementById('elementDemo');
+  let elementDemoShowingAlt = false;
+  function toggleElementDemo() {
+    const nextText = elementDemoShowingAlt ? 'Click me' : 'I can transition too';
+    elementDemoShowingAlt = !elementDemoShowingAlt;
+    Transitions.shutter.play(elementDemo, {
+      swap: (el) => { el.textContent = nextText; },
+    });
+  }
+  elementDemo.addEventListener('click', toggleElementDemo);
+  elementDemo.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    toggleElementDemo();
+  });
 
   // Remembers the last values chosen on EITHER demo page, so arriving on
   // the other one shows the same settings instead of resetting to
   // defaults. Separate from shutter.js's own pending-transition handoff —
   // that one is a single-use signal cleared the instant it's read; this
   // one just persists for the session, like any other UI preference.
-  const STORAGE_KEY = 'pt-shutter-demo-controls';
+  const STORAGE_KEY = 't-shutter-demo-controls';
 
   function loadSaved() {
     try {
@@ -28,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         duration: duration.value,
         easing: easing.value,
-        color: link.dataset.ptColor,
+        color: link.dataset.tColor,
       }));
     } catch (e) {}
   }
@@ -36,17 +55,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function selectSwatch(color) {
     const match = swatches.find((b) => b.dataset.color === color) || swatches[0];
     swatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
-    link.dataset.ptColor = match.dataset.color;
+    link.dataset.tColor = match.dataset.color;
   }
 
   function syncDuration() {
-    link.dataset.ptDuration = duration.value;
+    link.dataset.tDuration = duration.value;
     durationVal.textContent = `${duration.value}ms`;
     save();
   }
 
   function syncEasing() {
-    link.dataset.ptEasing = easing.value;
+    link.dataset.tEasing = easing.value;
     save();
   }
 

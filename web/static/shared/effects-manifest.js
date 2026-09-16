@@ -94,18 +94,18 @@
     {
       slug: 'shutter',
       name: 'Shutter',
-      category: 'page-transitions',
-      demoPath: '/page-transitions/shutter/index.html',
-      jsPath: '/page-transitions/shutter/shutter.js',
-      docsPath: '/docs/page-transitions/shutter.html',
+      category: 'transitions',
+      demoPath: '/transitions/shutter/index.html',
+      jsPath: '/transitions/shutter/shutter.js',
+      docsPath: '/docs/transitions/shutter.html',
     },
     {
       slug: 'aperture',
       name: 'Aperture',
-      category: 'page-transitions',
-      demoPath: '/page-transitions/aperture/index.html',
-      jsPath: '/page-transitions/aperture/aperture.js',
-      docsPath: '/docs/page-transitions/aperture.html',
+      category: 'transitions',
+      demoPath: '/transitions/aperture/index.html',
+      jsPath: '/transitions/aperture/aperture.js',
+      docsPath: '/docs/transitions/aperture.html',
     },
   ];
 })(window);

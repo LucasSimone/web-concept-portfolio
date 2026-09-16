@@ -1,4 +1,4 @@
-/* Page-specific styles for the Shutter page-transition demo.
+/* Page-specific styles for the Shutter transition demo.
    Base layout/nav comes from /shared/site.css. The shutter effect's own
    CSS ships inside ./shutter.js and is injected automatically. */
 
@@ -49,6 +49,39 @@
   display: inline-block;
   padding: 14px 28px;
   font-size: 14px;
+}
+
+/* `p` in the selector, not just the class, so this beats .shutter-hero p's
+   own margin (same specificity, declared earlier) instead of losing to it. */
+p.element-demo-hint {
+  font-size: 12px;
+  opacity: 0.55;
+  margin: 4rem 0 0.75rem;
+}
+
+.element-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 96px;
+  margin: 0 auto;
+  border: 1px solid #000;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.element-demo:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.element-demo:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
 }
 
 /* Page One reserves space for the controls panel; Page Two has none. */
@@ -116,12 +149,12 @@
   margin-bottom: 16px;
 }
 
-.pt-swatches {
+.t-swatches {
   display: flex;
   gap: 8px;
 }
 
-.pt-swatch {
+.t-swatch {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -129,7 +162,7 @@
   cursor: pointer;
 }
 
-.pt-swatch[aria-pressed="true"] {
+.t-swatch[aria-pressed="true"] {
   outline: 2px solid #000;
   outline-offset: 2px;
 }
