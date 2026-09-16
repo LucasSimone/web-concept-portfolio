@@ -40,9 +40,13 @@
 
   function currentEntry() {
     if (!window.EFFECTS_MANIFEST) return null;
-    var path = normalize(window.location.pathname);
+    var path = window.location.pathname;
     return window.EFFECTS_MANIFEST.find(function (entry) {
-      return normalize(entry.demoPath) === path;
+      // Prefix match on the effect's own folder, not just its demoPath
+      // exactly — a multi-page demo (e.g. Shutter's page-two.html) lives
+      // alongside index.html in that same folder and should get the same
+      // Download JS / View Docs buttons.
+      return path.indexOf(normalize(entry.demoPath)) === 0;
     }) || null;
   }
 

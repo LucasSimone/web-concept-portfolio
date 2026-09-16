@@ -1,0 +1,28 @@
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">550ms</span></label>
+      <input type="range" id="ptDuration" min="200" max="1500" step="50" value="550" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing</label>
+      <select id="ptEasing">
+        <option value="cubic-bezier(.65,0,.35,1)" selected>Default</option>
+        <option value="linear">Linear</option>
+        <option value="ease-in-out">Ease In Out</option>
+        <option value="cubic-bezier(.2,1,.1,1)">Punchy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Color</label>
+      <div class="pt-swatches" role="group" aria-label="Panel color">
+        <button type="button" class="pt-swatch" data-color="#000" style="background:#000" aria-pressed="true" aria-label="Black"></button>
+        <button type="button" class="pt-swatch" data-color="#555" style="background:#555" aria-pressed="false" aria-label="Gray"></button>
+        <button type="button" class="pt-swatch" data-color="#fff" style="background:#fff" aria-pressed="false" aria-label="White"></button>
+      </div>
+    </div>
+
+    <p class="hint">
+      These only change the Page Two → Page One transition below. Leaving
+      this demo for another page always plays the default profile.
+    </p>

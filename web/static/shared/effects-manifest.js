@@ -99,5 +99,13 @@
       jsPath: '/background/vacuum/vacuum.js',
       docsPath: '/docs/background/vacuum.html',
     },
+    {
+      slug: 'shutter',
+      name: 'Shutter',
+      category: 'page-transitions',
+      demoPath: '/page-transitions/shutter/index.html',
+      jsPath: '/page-transitions/shutter/shutter.js',
+      docsPath: '/docs/page-transitions/shutter.html',
+    },
   ];
 })(window);

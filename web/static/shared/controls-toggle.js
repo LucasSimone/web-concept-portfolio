@@ -5,16 +5,27 @@
  * its header, a fixed edge tab at the panel's left edge to close it from
  * anywhere (useful once you've scrolled down inside a tall panel), and a
  * fixed edge tab to pull it back out when hidden (see the shared rules in
- * site.css). Open by default on desktop, closed by default on mobile.
+ * site.css). Open by default on desktop, closed by default on mobile —
+ * unless the visitor already chose one or the other this session, in
+ * which case that choice follows them to another page in the same effect's
+ * folder too (e.g. the Shutter demo's Page One and Page Two). Scoped per
+ * folder rather than site-wide, so closing it on one demo doesn't also
+ * close it on an unrelated one.
  */
 (function () {
+  var STORAGE_KEY = 'controls-panel-open:' + window.location.pathname.replace(/[^/]*$/, '');
+
   document.addEventListener('DOMContentLoaded', function () {
     var controls = document.querySelector('.controls');
     if (!controls) return;
 
     if (!controls.id) controls.id = 'controls-panel';
 
-    var isOpen = !window.matchMedia('(max-width: 720px)').matches;
+    var saved = null;
+    try { saved = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
+    var isOpen = saved !== null
+      ? saved === '1'
+      : !window.matchMedia('(max-width: 720px)').matches;
 
     var closeBtn = document.createElement('button');
     closeBtn.type = 'button';
@@ -46,6 +57,7 @@
       closeBtn.setAttribute('aria-expanded', String(isOpen));
       openTab.setAttribute('aria-expanded', String(isOpen));
       closeTab.setAttribute('aria-expanded', String(isOpen));
+      try { sessionStorage.setItem(STORAGE_KEY, isOpen ? '1' : '0'); } catch (e) {}
     }
 
     closeBtn.addEventListener('click', function () {

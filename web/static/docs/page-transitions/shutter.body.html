@@ -1,0 +1,168 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Page Transition · Navigation</p>
+      <h1>Shutter</h1>
+      <p>
+        A full-screen black panel that rises from the bottom edge to cover
+        the viewport when a link is clicked, then recedes back down to
+        reveal the next page once it loads — one continuous vertical
+        motion, split across the navigation boundary.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/page-transitions/shutter/index.html">View Demo</a>
+        <a class="btn" href="/page-transitions/shutter/shutter.js" download>Download JS</a>
+      </div>
+
+      <h2>Install</h2>
+      <pre><code>&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Unlike the other effects on this site, this one belongs in
+        <code>&lt;head&gt;</code>, not next to the markup it affects — as a
+        plain, non-<code>async</code>/<code>defer</code> tag, on every page
+        that should take part. It has to run and register its CSS before
+        the page paints, so the initial cover (when arriving from another
+        transitioned page) shows with no flash of the page underneath.
+      </p>
+
+      <h2>Usage</h2>
+      <p>
+        There's no class to add and no elements to opt in — once it's on a
+        page, it listens for clicks on the whole document and intercepts
+        any left-click on a same-origin <code>&lt;a href&gt;</code> that
+        isn't a hash link, a <code>download</code> link, a
+        <code>target="_blank"</code> link, or opened with a modifier key
+        held. Clicking one plays the exit cover, then navigates once it
+        finishes.
+      </p>
+      <p>
+        The reveal only plays on the page that receives that navigation —
+        a direct load, refresh, or bookmarked visit never shows the
+        overlay at all, and if the destination page doesn't also load
+        <code>shutter.js</code>, the cover simply finishes and that page
+        appears underneath with no reveal of its own. To exempt a specific
+        link from interception without removing the script, add
+        <code>data-no-transition</code> to it:
+      </p>
+      <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      <p>
+        To change the timing, color, or which links it watches, configure
+        it before the script tag runs. Config and the script's own public
+        API are both keyed by <code>"shutter"</code> rather than a shared
+        name — see <a href="#multiple-transitions">Multiple Transitions</a>
+        below for why:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.PageTransitionConfig = {
+    shutter: { duration: 700, color: '#111', selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Or reconfigure it later, from any script that runs after
+        <code>shutter.js</code> has loaded:
+      </p>
+      <pre><code>PageTransitions.shutter.configure({ selector: '[data-pt-transition="shutter"]' });</code></pre>
+      <p>
+        A single link can override duration, easing, or color for just its
+        own transition, leaving every other link on the page using the
+        default profile — this is how the
+        <a href="/page-transitions/shutter/index.html">demo's controls
+        panel</a> customizes only the Page One → Page Two link without
+        touching the site nav around it:
+      </p>
+      <pre><code>&lt;a href="page-two.html" data-pt-duration="900" data-pt-color="#555"&gt;
+  Enter Page Two
+&lt;/a&gt;</code></pre>
+      <p>
+        Whichever profile a click used — default or overridden — travels
+        to the next page in the same handoff that triggers its reveal, so
+        the two halves of the motion always match.
+      </p>
+
+      <h2 id="multiple-transitions">Multiple Transitions</h2>
+      <p>
+        A page can load more than one page-transition effect at once,
+        each handling a different set of links. Every effect keeps its
+        public API, its config, and its arrival flag under its own slug —
+        <code>window.PageTransitions.shutter</code>,
+        <code>window.PageTransitionConfig.shutter</code>, and a
+        <code>sessionStorage</code> key of
+        <code>pt-shutter-pending</code> — so a second, differently named
+        effect's script can register alongside this one without either
+        clobbering the other:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.PageTransitionConfig = {
+    shutter: { selector: '[data-pt-transition="shutter"]' },
+    fade:    { selector: '[data-pt-transition="fade"]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;
+&lt;script src="fade.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        (<code>fade.js</code> here just stands in for whatever second
+        effect a site might run — this site currently only ships
+        Shutter.) Which link uses which effect is decided by the
+        <em>value</em> of <code>data-pt-transition</code> — each script
+        only reacts to the name matching its own slug, so a given link
+        can only ever belong to one effect:
+      </p>
+      <pre><code>&lt;a href="/a" data-pt-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
+&lt;a href="/b" data-pt-transition="fade"&gt;Uses the other effect&lt;/a&gt;</code></pre>
+      <p>
+        Neither script coordinates with the other. Arriving on the next
+        page, each one only checks whether its own
+        <code>sessionStorage</code> key was set — and since only one link
+        is ever clicked at a time, only one key is ever written, so only
+        that one effect's reveal plays.
+      </p>
+      <p>
+        Running the <em>same</em> effect configured differently in
+        different places is a separate case that doesn't need any of
+        this — see the per-link <code>data-pt-duration</code>/
+        <code>-easing</code>/<code>-color</code> attributes above, which
+        already let one script handle any number of differently
+        configured links on one page.
+      </p>
+
+      <h2>Options</h2>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>duration</code></td><td><code>550</code></td><td>ms for each half (cover or reveal) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'cubic-bezier(.65,0,.35,1)'</code></td><td>CSS easing applied to the transform transition</td></tr>
+          <tr><td><code>color</code></td><td><code>'#000'</code></td><td>Panel background color</td></tr>
+          <tr><td><code>selector</code></td><td><code>'a[href]'</code></td><td>Which links are eligible for interception</td></tr>
+        </tbody>
+      </table>
+      <p>Per-link attributes, checked on the clicked element at click time and overriding the options above for just that one transition:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Overrides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-pt-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-pt-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-pt-color</code></td><td><code>color</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Notes</h2>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: with it set, clicking
+        a link navigates immediately with no cover, and an arrival never
+        plays a reveal. A back/forward (bfcache) restore also skips
+        replaying anything — <code>pageshow</code> with
+        <code>event.persisted</code> resets straight to the clean, uncovered
+        state instead. Arrival state is tracked with a short-lived
+        <code>sessionStorage</code> flag rather than anything in the URL, so
+        it costs nothing to add and never shows up as a query param or hash.
+      </p>
+    </div>
+  </div>

@@ -28,7 +28,7 @@ function setupFilter(filterId, gridId, onChange) {
 
 const variationCarousel = new Carousel(document.getElementById('variationCarousel'));
 const conceptCarousel = new Carousel(document.getElementById('conceptCarousel'));
-new Carousel(document.getElementById('animationCarousel'));
+new Carousel(document.getElementById('transitionCarousel'));
 new Carousel(document.getElementById('backgroundCarousel'));
 
 setupFilter('typeFilter', 'variationGrid', () => variationCarousel.refresh());

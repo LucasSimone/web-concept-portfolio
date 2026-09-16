@@ -291,6 +291,12 @@
   100% { stroke-dashoffset: -900; }
 }
 
+.variation-card h2.shutter {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 34px;
+  line-height: 1;
+}
+
 /* Circuit Board: the real reusable background effect, applied to the
    whole card instead of just the title. */
 .variation-card.bg-circuit-board {
