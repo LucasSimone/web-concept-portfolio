@@ -79,6 +79,14 @@
   background: rgba(0, 0, 0, 0.85);
   z-index: 3;
   pointer-events: none;
+  /* Pins this to its own explicit depth in the card's 3D context (instead
+     of the implicit z=0 it'd share with a flap's rotation axis, which sits
+     exactly at this same line). Without it, z-index alone doesn't reliably
+     order a flat layer against a truly 3D-rotated one, and toggling a
+     flap's transform on/off at rest (see the transform-clearing above)
+     changes its layer promotion right at that shared depth — read as the
+     hinge line flickering in and out over the course of a fold. */
+  transform: translateZ(1px);
 }
 
 .rolodex__face--back {
@@ -108,6 +116,8 @@
     interval: 1400, // ms held on each word before flipping to the next
     flipDuration: 450, // ms spent mid-flip between two words
     rollbackSpeed: 900, // ms to rewind from the last word back to the first
+    scrollIdleDelay: 120, // ms of no scroll events before treating scroll as idle
+    snapStrength: 0.4, // 0-1, how fast the idle settle finishes a fold each frame — kept snappy so it doesn't dwell in the mid-flip "half old, half new" look
   };
 
   class Rolodex {
@@ -124,6 +134,10 @@
       this._contState = null;
       this._contSegment = 0;
       this._contStateStart = null;
+      this._scrollActive = false;
+      this._scrollIdleTimer = null;
+      this._scrollDirection = 0;
+      this._displaySegmentFloat = null;
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
@@ -146,6 +160,7 @@
       this._contState = null;
       this._contSegment = 0;
       this._contStateStart = null;
+      this._displaySegmentFloat = null;
 
       const size = this._measureCardSize();
       this._cardWidth = size.width;
@@ -241,32 +256,62 @@
 
       const rect = this.el.getBoundingClientRect();
       const range = global.innerHeight + rect.height;
-      this._progress = range > 0
+      const nextProgress = range > 0
         ? clamp((global.innerHeight - rect.top) / range, 0, 1)
         : 0.5;
+
+      // Remember which way scroll last actually moved (increasing progress
+      // folds forward, decreasing unfolds) — the idle settle below finishes
+      // a fold in this direction rather than toward whichever end happens
+      // to be numerically nearer, so it never reverses on its own.
+      if (nextProgress !== this._progress) {
+        this._scrollDirection = nextProgress > this._progress ? 1 : -1;
+      }
+      this._progress = nextProgress;
+
+      // Scroll is "active" from this event until scrollIdleDelay passes
+      // with no further ones — same idle-detection shape as the carousel's
+      // wheel handling. While active, _tick lets scroll push the display
+      // forward/backward (see there); once idle, it finishes any fold
+      // that's still underway instead of leaving it parked mid-flip.
+      this._scrollActive = true;
+      clearTimeout(this._scrollIdleTimer);
+      this._scrollIdleTimer = setTimeout(() => {
+        this._scrollActive = false;
+      }, this.options.scrollIdleDelay);
     }
 
-    // Maps 0-1 scroll progress onto (words.length - 1) flip transitions,
-    // then reshapes the local position inside that transition into a
-    // flip-t using `flipWidth` — the middle slice of the segment is the
-    // actual flip motion, the rest on either side holds on a fully formed
-    // word so consecutive flips don't run into each other.
-    _segmentForProgress(progress) {
-      const segments = Math.max(1, this._words.length - 1);
-      const segmentFloat = clamp(progress, 0, 1) * segments;
-      const segmentIndex = clamp(Math.floor(segmentFloat), 0, segments - 1);
-      const localT = segments > 0 ? segmentFloat - segmentIndex : 0;
-
+    // The [flipStart, flipEnd] slice of a segment's 0-1 local range where
+    // the actual flip motion happens — outside it, flipT is saturated at 0
+    // or 1 (a fully formed word, holding so consecutive flips don't run
+    // into each other).
+    _flipWindow() {
       const flipWidth = clamp(this.options.flipWidth, 1, 100) / 100;
       const holdEachSide = (1 - flipWidth) / 2;
-      const flipStart = holdEachSide;
-      const flipEnd = 1 - holdEachSide;
+      return { flipStart: holdEachSide, flipEnd: 1 - holdEachSide };
+    }
+
+    // Reshapes a continuous position along (words.length - 1) flip
+    // transitions into {segmentIndex, flipT} using the flip window above.
+    _segmentFromFloat(segmentFloat) {
+      const segments = Math.max(1, this._words.length - 1);
+      const clamped = clamp(segmentFloat, 0, segments);
+      const segmentIndex = clamp(Math.floor(clamped), 0, segments - 1);
+      const localT = segments > 0 ? clamped - segmentIndex : 0;
+
+      const { flipStart, flipEnd } = this._flipWindow();
       const rawFlipT = flipEnd > flipStart
         ? (localT - flipStart) / (flipEnd - flipStart)
         : localT;
       const flipT = smoothstep(clamp(rawFlipT, 0, 1));
 
       return { segmentIndex, flipT };
+    }
+
+    // Maps 0-1 scroll progress onto (words.length - 1) flip transitions.
+    _segmentForProgress(progress) {
+      const segments = Math.max(1, this._words.length - 1);
+      return this._segmentFromFloat(clamp(progress, 0, 1) * segments);
     }
 
     // Drives {segmentIndex, flipT} from a clock instead of scroll position:
@@ -341,9 +386,70 @@
       this._stage.style.perspective = `${this.options.perspective}px`;
 
       if (this._words.length >= 2) {
-        const { segmentIndex, flipT } = this.options.driveMode === 'continuous'
-          ? this._computeContinuous(performance.now())
-          : this._segmentForProgress(this._progress);
+        let segmentIndex, flipT;
+        if (this.options.driveMode === 'continuous') {
+          ({ segmentIndex, flipT } = this._computeContinuous(performance.now()));
+        } else {
+          const segments = Math.max(1, this._words.length - 1);
+          const rawSegmentFloat = clamp(this._progress, 0, 1) * segments;
+
+          if (this._displaySegmentFloat == null) {
+            this._displaySegmentFloat = rawSegmentFloat;
+          } else if (this._scrollActive) {
+            // Real scroll input: let it push the display in whichever
+            // direction it's moving, but never let it yank the display
+            // backward relative to that direction. Without this clamp,
+            // resuming a forward scroll right after an idle settle had
+            // already finished animating a fold forward would snap the
+            // display back down to match the (still catching-up) raw
+            // scroll position — visibly un-folding a flap that had
+            // already landed, while the user is still scrolling forward.
+            // Eased rather than assigned outright: a plain instant
+            // assignment feels fine for the ordinary case (raw already
+            // past the display in the direction of travel — this closes
+            // to ~raw within a frame or two), but is what causes the
+            // "just appears already flipped" pop when the display instead
+            // has a stale lead left over from an idle settle. Easing both
+            // cases the same way keeps ordinary tracking responsive while
+            // making that catch-up visibly animate.
+            const target = this._scrollDirection < 0
+              ? Math.min(this._displaySegmentFloat, rawSegmentFloat)
+              : Math.max(this._displaySegmentFloat, rawSegmentFloat);
+            this._displaySegmentFloat += (target - this._displaySegmentFloat) * this.options.snapStrength;
+            if (Math.abs(target - this._displaySegmentFloat) < 0.001) this._displaySegmentFloat = target;
+          } else {
+            // Idle: if genuinely mid-fold (the reshaped flipT — not just
+            // the raw scroll position — is strictly between the two hold
+            // zones), finish the fold in whichever direction it was already
+            // moving instead of leaving it parked mid-flip. Never toward
+            // whichever word is numerically nearer, so it only reverses
+            // when scroll actually reverses. A resting position (flipT
+            // already 0 or 1, fold not yet started or already landed) is
+            // deliberately excluded — dragging it further would still
+            // complete a flip just because the last nudge happened to be
+            // forward, even though nothing had visually started.
+            const resting = this._segmentFromFloat(this._displaySegmentFloat);
+            if (resting.flipT > 0 && resting.flipT < 1) {
+              // The target is the EDGE of the flip window, not the full
+              // segment integer: flipT is already saturated at 0/1 there,
+              // so landing any deeper serves no visual purpose — it only
+              // buries the display in dead "hold" territory that a later
+              // reversal has to travel all the way back out of before
+              // anything visibly moves again (read as "the fold up doesn't
+              // animate" for a small reverse nudge right after landing).
+              const { flipStart, flipEnd } = this._flipWindow();
+              const target = this._scrollDirection < 0
+                ? resting.segmentIndex + flipStart
+                : this._scrollDirection > 0
+                  ? resting.segmentIndex + flipEnd
+                  : resting.segmentIndex + (resting.flipT >= 0.5 ? flipEnd : flipStart);
+              this._displaySegmentFloat += (target - this._displaySegmentFloat) * this.options.snapStrength;
+              if (Math.abs(target - this._displaySegmentFloat) < 0.001) this._displaySegmentFloat = target;
+            }
+          }
+
+          ({ segmentIndex, flipT } = this._segmentFromFloat(this._displaySegmentFloat));
+        }
         this._applySegment(segmentIndex);
 
         const shading = clamp(this.options.shading, 0, 1);
@@ -384,10 +490,19 @@
           const topBrightness = 1 - shading * Math.sin((Math.abs(topAngle) * Math.PI) / 180);
           const bottomBrightness = 1 - shading * Math.sin((Math.abs(bottomAngle) * Math.PI) / 180);
 
-          this._refs.flapTop.style.transform = `rotateX(${topAngle.toFixed(2)}deg)`;
-          this._refs.flapTop.style.filter = `brightness(${topBrightness.toFixed(3)})`;
-          this._refs.flapBottom.style.transform = `rotateX(${bottomAngle.toFixed(2)}deg)`;
-          this._refs.flapBottom.style.filter = `brightness(${bottomBrightness.toFixed(3)})`;
+          // A flap lying perfectly flat (topPhase 0 or bottomPhase 1 — not
+          // rotated at all) is showing a real, held word, not mid-motion.
+          // Leaving `transform: rotateX(0deg)` and `filter: brightness(1)`
+          // on it in that state is a visual no-op but still promotes it to
+          // its own composited layer, which can rasterize/anti-alias its
+          // text at a subtly different subpixel offset than the plain,
+          // untransformed panel showing the other half of the same word —
+          // a persistent seam right at the hinge line. Clearing both to
+          // empty when flat removes that discrepancy.
+          this._refs.flapTop.style.transform = topPhase === 0 ? '' : `rotateX(${topAngle.toFixed(2)}deg)`;
+          this._refs.flapTop.style.filter = topPhase === 0 ? '' : `brightness(${topBrightness.toFixed(3)})`;
+          this._refs.flapBottom.style.transform = bottomPhase === 1 ? '' : `rotateX(${bottomAngle.toFixed(2)}deg)`;
+          this._refs.flapBottom.style.filter = bottomPhase === 1 ? '' : `brightness(${bottomBrightness.toFixed(3)})`;
           // backface-visibility:hidden should already hide a flap once it's
           // rotated past 90deg, but pinning it exactly AT 90deg for the
           // entire hold (rather than animating through it) leaves it right
@@ -414,6 +529,7 @@
         this._contSegment = 0;
         this._contStateStart = null;
         this._lastSegment = -1;
+        this._displaySegmentFloat = null;
         if (this.options.driveMode === 'scroll') this._onScroll();
       }
     }
@@ -426,6 +542,7 @@
 
     destroy() {
       cancelAnimationFrame(this._raf);
+      clearTimeout(this._scrollIdleTimer);
       global.removeEventListener('scroll', this._onScroll);
       global.removeEventListener('resize', this._onResize);
     }

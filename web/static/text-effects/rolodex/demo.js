@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // controls to known-good values, but each stays a normal editable
   // control afterward.
   const PROFILES = {
-    'split-flap': { mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05 },
+    'split-flap': { mode: 'split-flap', flipWidth: 50, perspective: 300, shading: 0.02 },
     'single-card': { mode: 'single-card', flipWidth: 95, perspective: 300, shading: 0 },
   };
 
