@@ -29,6 +29,30 @@
   overflow: hidden;
 }
 .variation-card:hover { background: #f5f5f5; }
+/* `transition` is a shorthand - whichever rule wins the cascade for this
+   element replaces the whole transition list, it doesn't merge with
+   another rule's. Aperture's own engine (aperture.js) declares its own
+   `transition: --t-aperture-progress ...` directly on whatever element
+   it's covering, via a class it toggles on the SAME element a card like
+   this one is - and since this stylesheet loads after aperture.js's
+   injected styles (this page's own <head> content lands after the shared
+   layout's <script> tags), this rule's plain `background` transition
+   would otherwise silently win and outright replace Aperture's, leaving
+   --t-aperture-progress un-transitioned - it'd just snap instantly on
+   every class change instead of animating, while still LOOKING like classes
+   were behaving correctly. Restating both together here, at higher
+   specificity than either single-class rule, keeps the hover fade and
+   Aperture's cover/reveal motion both working. Duration/easing are read
+   from the same custom properties applyProfile() already sets inline on
+   the element, so this stays in sync with whatever profile is active
+   instead of hardcoding Aperture's default. Shutter doesn't need the
+   same treatment - it animates transform on ::before/::after pseudo-
+   elements, a separate paint target from this element, so there's no
+   collision with this rule to begin with. */
+.variation-card.t-aperture-anim {
+  transition: background 0.15s ease,
+    --t-aperture-progress var(--t-aperture-duration, 600ms) var(--t-aperture-easing, cubic-bezier(.65, 0, .35, 1));
+}
 .variation-card .type {
   align-self: flex-start;
   font-size: 12px;

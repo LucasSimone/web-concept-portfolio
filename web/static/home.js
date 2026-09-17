@@ -242,3 +242,31 @@ GravityWell.initAll('.variation-card.bg-gravity-well', {
 Vacuum.initAll('.variation-card.bg-vacuum', {
   radius: 90, density: 8, maxParticles: 80,
 });
+
+// Transition Lab cards: loop each card's own engine (cover -> reveal, the
+// same cover/reveal the click-through demo pages use, minus any content
+// swap) directly on the card element instead of the whole page - a small
+// always-playing preview of what clicking through actually looks like,
+// same spirit as Intertwine's own looping card preview above. Skipped
+// under reduced motion: cover()/reveal() still resolve (near-)instantly in
+// that case (see shutter.js/aperture.js), which without this guard would
+// just spin the loop as fast as JS allows instead of showing anything.
+if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+  const TRANSITION_LOOP_MIN_PAUSE_MS = 1500;
+  const TRANSITION_LOOP_MAX_PAUSE_MS = 6000;
+  function randomTransitionPause() {
+    return TRANSITION_LOOP_MIN_PAUSE_MS + Math.random() * (TRANSITION_LOOP_MAX_PAUSE_MS - TRANSITION_LOOP_MIN_PAUSE_MS);
+  }
+  Array.from(document.querySelectorAll('#transitionGrid .variation-card[data-t-transition]')).forEach((card) => {
+    const engine = window.Transitions && window.Transitions[card.dataset.tTransition];
+    if (!engine) return;
+    card.classList.add('t-el');
+    // Each card re-rolls its own random pause after every cycle, so the
+    // cards drift in and out of sync with each other instead of the fixed
+    // lockstep a shared interval would give.
+    function cycle() {
+      engine.play(card).then(() => setTimeout(cycle, randomTransitionPause()));
+    }
+    setTimeout(cycle, randomTransitionPause());
+  });
+}

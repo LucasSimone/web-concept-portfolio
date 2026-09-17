@@ -311,22 +311,32 @@
   // transition); this loop just samples it every frame — off the
   // instance's own target, since each target's classes/properties are
   // independent — and rebuilds the blade geometry to match, since path
-  // data itself can't be CSS-transitioned. Runs for `durationMs` plus a
-  // small buffer, then stops on its own.
+  // data itself can't be CSS-transitioned. cover()/reveal() call this once
+  // they've decided the transition is over (see startRender below).
   function stopRender(inst) {
     if (inst.renderHandle) {
       cancelAnimationFrame(inst.renderHandle);
       inst.renderHandle = null;
     }
   }
+  // Runs until stopRender() is called - no self-imposed deadline. cover()/
+  // reveal() already have their own independent "are we done" signal (a
+  // transitionend listener on this same property, with a fallback timer);
+  // this used to guess its OWN separate duration+80 stop time instead of
+  // sharing that signal, and the two could disagree - if this loop's guess
+  // ran out before cover()/reveal() actually considered the transition
+  // finished, blade geometry would freeze mid-motion while the (still
+  // running) promise chain carried on, then cleanup would hide the overlay
+  // once IT finished - reading as "flashes to one frame, then disappears"
+  // instead of animating. Letting cover()/reveal() stop this loop
+  // themselves, at the exact moment they resolve, removes that mismatch.
   function startRender(inst, el, profile) {
     stopRender(inst);
-    var deadline = performance.now() + profile.duration + 80;
     function tick() {
       var raw = getComputedStyle(el).getPropertyValue(PROGRESS_PROP);
       var progress = parseFloat(raw);
       renderBlades(inst, profile, isFinite(progress) ? progress : 0);
-      inst.renderHandle = performance.now() < deadline ? requestAnimationFrame(tick) : null;
+      inst.renderHandle = requestAnimationFrame(tick);
     }
     inst.renderHandle = requestAnimationFrame(tick);
   }
@@ -425,17 +435,56 @@
       requestAnimationFrame(function () {
         if (myGen !== inst.gen) return;
         el.classList.add('t-aperture-anim');
-        requestAnimationFrame(function () {
-          if (myGen !== inst.gen) return;
-          el.classList.remove('t-aperture-open'); // animates progress 1 -> 0: seals shut
-          startRender(inst, el, profile);
-        });
+        // Force a synchronous style flush between enabling the transition
+        // and changing the value it transitions, instead of relying on a
+        // second rAF callback landing in a separate frame from this one -
+        // see the long comment on this same pattern in reveal() below for
+        // why the two-rAF version isn't reliable enough here.
+        void el.offsetHeight;
+        el.classList.remove('t-aperture-open'); // animates progress 1 -> 0: seals shut
+        startRender(inst, el, profile);
       });
 
       var resolved = false;
+      // Absolute backstop so a call that's still current but genuinely
+      // never settles (a real bug, a browser quirk) can't wait forever -
+      // well past any plausible delayed frame, not a tight bound.
+      var giveUpAt = performance.now() + profile.duration + 400;
       function finish() {
         if (resolved) return;
+        if (myGen === inst.gen) {
+          // duration+150 is a WALL-CLOCK guess at when the transition
+          // should be done; it doesn't verify the animated value actually
+          // got there. If a frame got delayed (the Carousel this card
+          // sits in restyles every card's transform on every frame,
+          // forever, so some contention here is normal) this timer can
+          // fire slightly ahead of the real transition settling. Handing
+          // off to reveal() at that moment starts a SECOND round of class
+          // changes on top of a still-mid-flight FIRST round, and the two
+          // interleave into combinations neither one alone would ever
+          // produce (e.g. 'open' present without 'active', which hides
+          // the overlay outright since only '.t-aperture-active
+          // .t-aperture-overlay' makes it visible) - reading as "flashes,
+          // then disappears" for no discernible reason. Confirming the
+          // real value before handing off removes the race instead of
+          // guessing around it.
+          var raw = parseFloat(getComputedStyle(el).getPropertyValue(PROGRESS_PROP));
+          var settled = !isFinite(raw) || Math.abs(raw) < 0.01;
+          if (!settled && performance.now() < giveUpAt) {
+            setTimeout(finish, 30);
+            return;
+          }
+        }
         resolved = true;
+        // Stop sampling now, at the same moment cover() itself considers
+        // the transition done, rather than leaving startRender() to guess
+        // when to give up on its own - and draw the exact sealed frame in
+        // case the last sampled tick lagged behind the real (now-finished)
+        // transition value.
+        if (myGen === inst.gen) {
+          stopRender(inst);
+          renderBlades(inst, profile, 0);
+        }
         resolve();
       }
       el.addEventListener('transitionend', function handler(e) {
@@ -476,17 +525,53 @@
       requestAnimationFrame(function () {
         if (myGen !== inst.gen) return;
         el.classList.add('t-aperture-anim');
-        requestAnimationFrame(function () {
-          if (myGen !== inst.gen) return;
-          el.classList.add('t-aperture-open');
-          startRender(inst, el, profile);
-        });
+        // Force a synchronous style flush here instead of waiting for a
+        // second requestAnimationFrame callback to land in a separate
+        // frame from this one. The two-rAF version assumes each
+        // requestAnimationFrame call gets its own distinct frame, which
+        // held for `transform` (see shutter.js, using the same two-rAF
+        // shape successfully) but not reliably for this registered
+        // `@property` custom property: whenever both callbacks' class
+        // changes ended up coalesced into the same style recalculation
+        // (busy main thread, a dropped frame, anything that made the
+        // second rAF fire back-to-back with the first instead of a frame
+        // apart), the browser saw "transition enabled AND value changed"
+        // as one atomic step with no prior style to transition FROM, so
+        // nothing animated - the progress value would just sit at its
+        // start value for the entire `duration`, then this cleanup timer
+        // below would strip the classes and hide the overlay right on
+        // schedule regardless, reading as "flashes to the start state,
+        // then disappears" instead of spiraling open. Reading a layout
+        // property forces the "transition enabled" style to actually be
+        // computed before the value change that follows it, so the
+        // transition reliably has something to animate from no matter how
+        // frames land.
+        void el.offsetHeight;
+        el.classList.add('t-aperture-open');
+        startRender(inst, el, profile);
       });
 
-      setTimeout(function () {
+      var revealResolved = false;
+      var revealGiveUpAt = performance.now() + profile.duration + 400;
+      function finishReveal() {
+        if (revealResolved) return;
+        if (myGen === inst.gen) {
+          // Same reasoning as cover()'s finish() above: confirm the
+          // animated value actually reached its target (1, wide open)
+          // before cleaning up, instead of trusting a blind wall-clock
+          // timer that can fire slightly ahead of a delayed frame.
+          var raw = parseFloat(getComputedStyle(el).getPropertyValue(PROGRESS_PROP));
+          var settled = !isFinite(raw) || Math.abs(raw - 1) < 0.01;
+          if (!settled && performance.now() < revealGiveUpAt) {
+            setTimeout(finishReveal, 30);
+            return;
+          }
+        }
+        revealResolved = true;
         if (myGen === inst.gen) cleanupEl(el);
         resolve();
-      }, profile.duration + 60);
+      }
+      setTimeout(finishReveal, profile.duration + 60);
     });
   }
 
