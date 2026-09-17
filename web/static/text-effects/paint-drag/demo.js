@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const primary = PaintDrag.get('#demoText');
 
+  // Sits below the sitewide nav (z-index: 20, shared/site.css) so the
+  // trail's fixed, page-level overlay canvas doesn't paint over it as the
+  // hero text scrolls past the top of the page (same fix as the home
+  // page's carousel-card usage - see home.js).
+  primary.update({ zIndex: 10 });
+
   // Presets for the sliders/toggles below. "size" is in vw, matching the
   // font-size range input; everything else maps straight onto PaintDrag
   // options.

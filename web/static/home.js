@@ -172,8 +172,13 @@ WaveForm.initAll('.variation-card h2.wave-form', {
 // Drag demo page) - blur is kept scaled down for this card's 28px title
 // rather than the preset's blur:10, since blur is an absolute pixel
 // value tuned for the demo's much larger headline text.
+// zIndex is pulled below the sitewide nav's z-index: 20 (shared/site.css)
+// so the trail's fixed, page-level overlay canvas - which sits directly on
+// document.body and so isn't contained by the carousel's own stacking
+// context - doesn't paint on top of the nav once the carousel scrolls
+// under it.
 PaintDrag.initAll('.variation-card h2.paint-drag', {
-  smearLength: 0, spread: 0, blur: 2, fadeTime: 0.1, density: 0,
+  smearLength: 0, spread: 0, blur: 2, fadeTime: 0.1, density: 0, zIndex: 10,
 });
 const [inFlightOutCard] = InFlightOut.initAll('.variation-card h2.in-flight-out', {
   scatter: 0.45, maxDistance: 60, rotation: 0.4, maxAngle: 40,

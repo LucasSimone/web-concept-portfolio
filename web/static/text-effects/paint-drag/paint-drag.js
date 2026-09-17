@@ -23,8 +23,9 @@
   user-select: none;
   color: var(--fg, #000);
   position: relative;
-  /* Sits one above the overlay's own max z-index below, so the live text
-     always stays crisp on top of its own trail (see the overlay rule). */
+  /* Fallback only - paint-drag.js sets this inline per-instance from the
+     zIndex option (one above the overlay), so it can be tuned below
+     page chrome like a fixed/sticky nav instead of always winning. */
   z-index: 2147483647;
   text-shadow:
     0 0 6px rgba(255, 255, 255, 0.85),
@@ -34,13 +35,11 @@
 .paint-drag__overlay {
   position: fixed;
   inset: 0;
-  /* Near-max z-index: this overlay must win against arbitrary host-page
-     content wherever it's dropped in, including elements with their own
-     aggressively high z-index (e.g. this repo's own home page carousel,
-     whose absolutely-positioned cards reach into the 900s for their own
-     wheel-layering) - a drop-in effect can't assume it knows every
-     z-index scheme on every page that might use it. One below max so the
-     .paint-drag text rule above can still out-rank it. */
+  /* Fallback only - paint-drag.js sets this inline from the highest
+     zIndex option among live instances. Defaults near-max so a
+     drop-in effect wins against arbitrary host-page content out of the
+     box, but pages with their own chrome (e.g. a fixed/sticky nav) can
+     pass a lower zIndex to sit underneath it. */
   z-index: 2147483646;
   pointer-events: none;
 }
@@ -62,6 +61,7 @@
     blur: 6,             // canvas shadow blur applied to each stamp (bristle softness)
     skew: true,          // slant stamps along the drag direction
     color: null,         // explicit trail color, defaults to the element's computed color
+    zIndex: 2147483646,  // stacking height of the shared trail canvas (live text sits one above it); lower this below any fixed/sticky page chrome (e.g. a nav bar) that should stay on top
   };
 
   const MAX_DT = 1 / 20; // clamp huge dt spikes (tab throttling, etc.)
@@ -77,6 +77,19 @@
   let cleared = true;
   let lastFadeTime = performance.now();
   let decayDebt = 0; // fractional alpha decay carried across frames (see _fade)
+
+  // Every instance shares one canvas, so its z-index has to be the max
+  // requested by any live instance - otherwise the last instance
+  // constructed/updated would silently override an earlier one's choice.
+  const liveInstances = new Set();
+  function updateOverlayZIndex() {
+    if (!sharedCanvas || liveInstances.size === 0) return;
+    let z = 0;
+    liveInstances.forEach((inst) => {
+      if (inst.options.zIndex > z) z = inst.options.zIndex;
+    });
+    sharedCanvas.style.zIndex = String(z);
+  }
 
   function getSharedCanvas() {
     if (sharedCanvas) return sharedCanvas;
@@ -121,6 +134,9 @@
 
       this._prepEl();
 
+      liveInstances.add(this);
+      updateOverlayZIndex();
+
       this._tick = this._tick.bind(this);
       this._raf = requestAnimationFrame(this._tick);
     }
@@ -130,7 +146,7 @@
       el.classList.add('paint-drag');
       const style = getComputedStyle(el);
       if (style.position === 'static') el.style.position = 'relative';
-      if (style.zIndex === 'auto') el.style.zIndex = '2';
+      el.style.zIndex = String(this.options.zIndex + 1);
       if (!el.dataset.text) el.dataset.text = el.textContent.trim();
     }
 
@@ -287,6 +303,10 @@
 
     update(options = {}) {
       Object.assign(this.options, options);
+      if ('zIndex' in options) {
+        this.el.style.zIndex = String(this.options.zIndex + 1);
+        updateOverlayZIndex();
+      }
     }
 
     setText(value) {
@@ -302,6 +322,8 @@
 
     destroy() {
       cancelAnimationFrame(this._raf);
+      liveInstances.delete(this);
+      updateOverlayZIndex();
     }
   }
 
