@@ -194,14 +194,20 @@ if (typePanCard) {
   window.removeEventListener('resize', typePanCard._onResize);
   bindCarouselProgressDriver(variationCarousel.root, typePanCard, { restProgress: 1 });
 }
-const [rolodexCard] = Rolodex.initAll('.variation-card h2.rolodex', {
+// Unlike the cards above, this doesn't need any custom carousel-progress
+// wiring: 'hover' driveMode is Rolodex's own built-in way to take input
+// from wheel/trackpad over some other element instead of page scroll (see
+// rolodex.js), and the carousel is tagged data-rolodex-hover="rolodexCardTitle"
+// in index.body.html to be that element. So this is otherwise a plain
+// Rolodex - loopScroll makes the word list circular (wheeling past the
+// last word flips straight into the first instead of stopping), loop
+// keeps it cycling on its own once the carousel goes idle - same as any
+// other page using the effect, just fed by the carousel instead of the
+// page scrolling.
+Rolodex.initAll('.variation-card h2.rolodex', {
   mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05,
+  driveMode: 'hover', loop: true, loopScroll: true,
 });
-if (rolodexCard) {
-  window.removeEventListener('scroll', rolodexCard._onScroll);
-  window.removeEventListener('resize', rolodexCard._onResize);
-  bindCarouselProgressDriver(variationCarousel.root, rolodexCard, { restProgress: 0.1 });
-}
 CircuitBoard.initAll('.variation-card.bg-circuit-board', {
   maxTraces: 30, cell: 20, speed: 30,
 });

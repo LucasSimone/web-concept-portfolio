@@ -19,18 +19,22 @@
       </div>
 
       <h2>Install</h2>
-      <pre><code>&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
+&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        Self-contained — it injects its own <code>&lt;style&gt;</code> tag
-        covering the 3D card/flap/panel structure on first use, so no
-        companion CSS file is required. Note the injected CSS hardcodes a
-        white background on card faces.
+        Injects its own <code>&lt;style&gt;</code> tag covering the 3D
+        card/flap/panel structure on first use, so no companion CSS file is
+        required (the injected CSS hardcodes a white background on card
+        faces). <code>hover-scroll-source.js</code> is a small shared
+        dependency ("static scroll" mode's wheel-target wiring, shared with
+        Type Pan) - it must load first.
       </p>
 
       <h2>Usage</h2>
       <pre><code>&lt;div class="rolodex" data-text="Rolodex flips through words one by one"&gt;
   Rolodex flips through words one by one
 &lt;/div&gt;
+&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
 &lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Reads <code>data-text</code> or trimmed <code>textContent</code>,
@@ -68,18 +72,35 @@
           <tr><td><code>flipWidth</code></td><td><code>55</code></td><td>% of each word's segment spent mid-flip (the rest holds on a settled word)</td></tr>
           <tr><td><code>perspective</code></td><td><code>900</code></td><td>CSS 3D perspective in px for the flip</td></tr>
           <tr><td><code>shading</code></td><td><code>0.55</code></td><td>0–1, how much a flap darkens as it turns edge-on</td></tr>
-          <tr><td><code>interval</code></td><td><code>1400</code></td><td>ms held on each word before flipping (continuous mode)</td></tr>
-          <tr><td><code>flipDuration</code></td><td><code>450</code></td><td>ms spent mid-flip between words (continuous mode)</td></tr>
-          <tr><td><code>rollbackSpeed</code></td><td><code>900</code></td><td>ms to rewind from the last word back to the first (continuous mode)</td></tr>
+          <tr><td><code>loopScroll</code></td><td><code>false</code></td><td>In <code>'scroll'</code>/<code>'hover'</code> driveMode only: makes the word list circular, so scrolling/wheeling past the last word flips straight on into the first (and past the first, back into the last) instead of stopping there. Independent of <code>loop</code> below - this is about active input continuing past the end, not what happens once input goes idle. Whatever feeds <code>pushProgress()</code> needs to pass values that aren't pre-clamped to 0–1 for this to have anything to work with (real page scroll can't - it's bounded by the page)</td></tr>
+          <tr><td><code>loop</code></td><td><code>false</code></td><td>In <code>'scroll'</code>/<code>'hover'</code> driveMode only: once input goes idle, keep flipping through the sentence on the same hold/flip/rollback clock <code>'continuous'</code> mode uses (picking up from whichever word it was left on) instead of just holding there until input resumes</td></tr>
+          <tr><td><code>interval</code></td><td><code>1400</code></td><td>ms held on each word before flipping (continuous mode, or <code>loop</code> once idle)</td></tr>
+          <tr><td><code>flipDuration</code></td><td><code>450</code></td><td>ms spent mid-flip between words (continuous mode, or <code>loop</code> once idle)</td></tr>
+          <tr><td><code>rollbackSpeed</code></td><td><code>900</code></td><td>ms to rewind from the last word back to the first (continuous mode, or <code>loop</code> once idle)</td></tr>
           <tr><td><code>hoverScrollDistance</code></td><td><code>1000</code></td><td>px-equivalent of wheel delta needed to sweep through the whole word list (hover mode)</td></tr>
+          <tr><td><code>scrollIdleDelay</code></td><td><code>120</code></td><td>ms of no scroll/wheel events before a fold-in-progress is treated as idle and settles instead of waiting for more input</td></tr>
+          <tr><td><code>snapStrength</code></td><td><code>0.4</code></td><td>0–1, how fast the idle settle finishes a fold each frame - higher snaps immediately, lower dwells longer mid-flip</td></tr>
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2>Methods</h2>
       <p>
         <code>.remeasure()</code> recomputes card size after a font change;
         <code>.setText(value)</code> replaces the sentence being flipped
-        through.
+        through. <code>.pushProgress(value)</code> feeds in a 0–1 scroll
+        position from any custom source, exactly as real page scroll and
+        hover-wheel input do internally - this is what the homepage's
+        carousel card uses instead of the page scrolling to drive its
+        Rolodex, and is the general escape hatch for tying the flip to
+        anything other than the page or an element tagged
+        <code>data-rolodex-hover</code>. With <code>loopScroll</code> on,
+        values aren't clamped to 0–1 first, so a source that just keeps
+        accumulating (like accumulated wheel delta) drives it around the
+        loop repeatedly instead of pinning at either end.
+        <code>Rolodex.get(elOrSelector)</code> /
+        <code>Rolodex.getAll(selector)</code> look up already-initialized
+        instances, and <code>.destroy()</code> tears one down (stops its
+        animation loop and removes all listeners).
       </p>
     </div>
   </div>

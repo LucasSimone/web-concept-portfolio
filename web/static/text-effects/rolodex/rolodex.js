@@ -111,7 +111,10 @@
     // behavior). 'continuous' ignores scroll and flips through the words on
     // its own clock: hold on a word for `interval`, flip to the next over
     // `flipDuration`, and once the last word is reached, rewind straight
-    // back to the first word over `rollbackSpeed` before repeating. 'hover'
+    // back to the first word over `rollbackSpeed` before repeating - unless
+    // `loopScroll` is also on, in which case the word list is already
+    // circular and that last flip just wraps forward into the first word
+    // like any other, with no rewind. 'hover'
     // keeps the element static on the page (no page scroll involved at
     // all) and instead drives the exact same scroll-position math as
     // 'scroll' mode from wheel/trackpad input, but only while the pointer
@@ -126,6 +129,25 @@
     hoverScrollDistance: 1000, // px-equivalent of wheel delta to sweep through the whole word list in 'hover' driveMode
     scrollIdleDelay: 120, // ms of no scroll/wheel events before treating scroll as idle
     snapStrength: 0.4, // 0-1, how fast the idle settle finishes a fold each frame — kept snappy so it doesn't dwell in the mid-flip "half old, half new" look
+    // Only meaningful in 'scroll'/'hover' driveMode ('continuous' already
+    // cycles on its own). Once real scroll/wheel input goes idle, keeps
+    // flipping through the sentence on its own using the same
+    // interval/flipDuration/rollbackSpeed clock as 'continuous' mode,
+    // picking up from whichever word scroll/hover last left it on, instead
+    // of just holding there until input resumes.
+    loop: false,
+    // Only meaningful in 'scroll'/'hover' driveMode. Normally the last word
+    // is the end of the line - scrolling/wheeling further just holds there.
+    // With this on, the word list is circular: scrolling/wheeling past the
+    // last word flips straight on into the first word again (and past the
+    // first, back into the last), so it keeps flipping for as long as input
+    // keeps coming instead of stopping. Independent of `loop` above - this
+    // is about active input continuing past the end, not about what
+    // happens once input goes idle. Requires whatever feeds pushProgress()
+    // to pass values that aren't pre-clamped to 0-1 (real page scroll can't
+    // - it's bounded by the page - but wheel/drag input, e.g. the homepage
+    // carousel, can).
+    loopScroll: false,
   };
 
   class Rolodex {
@@ -146,7 +168,6 @@
       this._scrollIdleTimer = null;
       this._scrollDirection = 0;
       this._displaySegmentFloat = null;
-      this._hoverTargets = [];
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
@@ -157,43 +178,19 @@
       this._onWheel = (event) => {
         if (this.options.driveMode !== 'hover') return;
         event.preventDefault();
-
-        const next = clamp(this._progress + event.deltaY / this.options.hoverScrollDistance, 0, 1);
-        if (next !== this._progress) this._scrollDirection = next > this._progress ? 1 : -1;
-        this._progress = next;
-
-        this._scrollActive = true;
-        clearTimeout(this._scrollIdleTimer);
-        this._scrollIdleTimer = setTimeout(() => {
-          this._scrollActive = false;
-        }, this.options.scrollIdleDelay);
+        this.pushProgress(this._progress + event.deltaY / this.options.hoverScrollDistance);
       };
 
       this._buildDOM();
-      this._bindHoverTargets();
+      // Requires shared/hover-scroll-source.js to also be loaded - lets
+      // wheel/trackpad input over this element, or over any other element
+      // tagged `data-rolodex-hover="<this element's id>"`, drive the flip
+      // in 'hover' driveMode (see _onWheel above).
+      this._hoverSource = bindHoverScrollSource(this.el, 'data-rolodex-hover', this._onWheel);
       global.addEventListener('scroll', this._onScroll, { passive: true });
       global.addEventListener('resize', this._onResize);
       this._onScroll();
       this._raf = requestAnimationFrame(this._tick);
-    }
-
-    // Hover targets are this element plus, if it has an `id`, any element
-    // anywhere on the page tagged `data-rolodex-hover="<that id>"` — lets a
-    // caller drive the flip by wheeling over a different element than the
-    // text itself (e.g. a surrounding card or button) without this
-    // instance needing to know about it up front.
-    _bindHoverTargets() {
-      const targets = [this.el];
-      const id = this.el.id;
-      if (id && global.CSS && typeof global.CSS.escape === 'function') {
-        document.querySelectorAll(`[data-rolodex-hover="${global.CSS.escape(id)}"]`).forEach((node) => {
-          if (!targets.includes(node)) targets.push(node);
-        });
-      }
-      this._hoverTargets = targets;
-      targets.forEach((target) => {
-        target.addEventListener('wheel', this._onWheel, { passive: false });
-      });
     }
 
     _buildDOM() {
@@ -306,21 +303,28 @@
       const nextProgress = range > 0
         ? clamp((global.innerHeight - rect.top) / range, 0, 1)
         : 0.5;
+      this.pushProgress(nextProgress);
+    }
 
-      // Remember which way scroll last actually moved (increasing progress
-      // folds forward, decreasing unfolds) — the idle settle below finishes
-      // a fold in this direction rather than toward whichever end happens
-      // to be numerically nearer, so it never reverses on its own.
-      if (nextProgress !== this._progress) {
-        this._scrollDirection = nextProgress > this._progress ? 1 : -1;
+    // Feeds a new 0-1 progress value in from whatever is driving the flip —
+    // real page scroll (_onScroll), wheel input in 'hover' driveMode
+    // (_onWheel), or an external driver standing in for scroll (e.g. the
+    // homepage carousel, which calls this directly). Shared so every
+    // source gets the same direction-tracking and active/idle bookkeeping
+    // _tick relies on to push the display forward/backward while driving
+    // is active, then finish any fold still underway once it goes idle
+    // instead of leaving it parked mid-flip.
+    pushProgress(value) {
+      const next = this.options.loopScroll ? value : clamp(value, 0, 1);
+      // Remember which way progress last actually moved (increasing folds
+      // forward, decreasing unfolds) — the idle settle below finishes a
+      // fold in this direction rather than toward whichever end happens to
+      // be numerically nearer, so it never reverses on its own.
+      if (next !== this._progress) {
+        this._scrollDirection = next > this._progress ? 1 : -1;
       }
-      this._progress = nextProgress;
+      this._progress = next;
 
-      // Scroll is "active" from this event until scrollIdleDelay passes
-      // with no further ones — same idle-detection shape as the carousel's
-      // wheel handling. While active, _tick lets scroll push the display
-      // forward/backward (see there); once idle, it finishes any fold
-      // that's still underway instead of leaving it parked mid-flip.
       this._scrollActive = true;
       clearTimeout(this._scrollIdleTimer);
       this._scrollIdleTimer = setTimeout(() => {
@@ -338,11 +342,26 @@
       return { flipStart: holdEachSide, flipEnd: 1 - holdEachSide };
     }
 
-    // Reshapes a continuous position along (words.length - 1) flip
+    // Number of flip transitions the word list is spread across. Normally
+    // (words.length - 1): a straight line from the first word to the last.
+    // With `loopScroll`, the list is circular instead - one extra
+    // transition bridges the last word back to the first - so it's the
+    // full words.length, and segment index `segments - 1` is that
+    // wrap-around transition.
+    _segmentCount() {
+      return this.options.loopScroll ? this._words.length : Math.max(1, this._words.length - 1);
+    }
+
+    // Reshapes a continuous position along this._segmentCount() flip
     // transitions into {segmentIndex, flipT} using the flip window above.
+    // Without `loopScroll`, segmentFloat is clamped to the line's two ends.
+    // With it, segmentFloat can be any real number (scrolling/wheeling
+    // indefinitely in either direction) and wraps via modulo instead - so
+    // running well past the last word's transition just keeps landing back
+    // on earlier ones, in order, forever.
     _segmentFromFloat(segmentFloat) {
-      const segments = Math.max(1, this._words.length - 1);
-      const clamped = clamp(segmentFloat, 0, segments);
+      const segments = this._segmentCount();
+      const clamped = this.options.loopScroll ? mod(segmentFloat, segments) : clamp(segmentFloat, 0, segments);
       const segmentIndex = clamp(Math.floor(clamped), 0, segments - 1);
       const localT = segments > 0 ? clamped - segmentIndex : 0;
 
@@ -355,19 +374,25 @@
       return { segmentIndex, flipT };
     }
 
-    // Maps 0-1 scroll progress onto (words.length - 1) flip transitions.
+    // Maps scroll progress onto this._segmentCount() flip transitions.
     _segmentForProgress(progress) {
-      const segments = Math.max(1, this._words.length - 1);
-      return this._segmentFromFloat(clamp(progress, 0, 1) * segments);
+      const segments = this._segmentCount();
+      const p = this.options.loopScroll ? progress : clamp(progress, 0, 1);
+      return this._segmentFromFloat(p * segments);
     }
 
     // Drives {segmentIndex, flipT} from a clock instead of scroll position:
     // hold on the current word for `interval`, flip to the next word over
-    // `flipDuration`, and once the last word is reached, rewind straight
-    // back to the first word over `rollbackSpeed` (eased, so it reads like a
-    // physical rolodex spinning back to start) before holding again.
+    // `flipDuration`. Without `loopScroll` the word list is a straight line,
+    // so once the last word is reached there's nowhere to flip on TO - it
+    // rewinds straight back to the first word over `rollbackSpeed` (eased,
+    // so it reads like a physical rolodex spinning back to start) before
+    // holding again. With `loopScroll` the list is already circular, so the
+    // "last" word's flip just wraps forward into the first word like any
+    // other transition - no rewind needed or wanted.
     _computeContinuous(now) {
-      const segments = Math.max(1, this._words.length - 1);
+      const { loopScroll } = this.options;
+      const segments = this._segmentCount();
       const { interval, flipDuration, rollbackSpeed } = this.options;
 
       if (this._contState == null) {
@@ -377,28 +402,29 @@
       }
 
       if (this._contState === 'hold') {
+        const atEnd = !loopScroll && this._contSegment >= segments;
         if (now - this._contStateStart >= interval) {
-          this._contState = this._contSegment >= segments ? 'rollback' : 'flip';
+          this._contState = atEnd ? 'rollback' : 'flip';
           this._contStateStart = now;
         }
-        const atEnd = this._contSegment >= segments;
         return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
       }
 
       if (this._contState === 'flip') {
         const t = flipDuration > 0 ? clamp((now - this._contStateStart) / flipDuration, 0, 1) : 1;
         if (t >= 1) {
-          this._contSegment += 1;
+          this._contSegment = loopScroll ? (this._contSegment + 1) % segments : this._contSegment + 1;
           this._contState = 'hold';
           this._contStateStart = now;
-          const atEnd = this._contSegment >= segments;
+          const atEnd = !loopScroll && this._contSegment >= segments;
           return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
         }
         return { segmentIndex: this._contSegment, flipT: smoothstep(t) };
       }
 
-      // rollback: sweep progress from 1 back to 0 across every segment in
-      // one continuous eased motion, then resume holding at the first word.
+      // rollback: only reached without `loopScroll`. Sweep progress from 1
+      // back to 0 across every segment in one continuous eased motion, then
+      // resume holding at the first word.
       const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
       if (t >= 1) {
         this._contState = 'hold';
@@ -415,8 +441,11 @@
     _applySegment(segmentIndex, force) {
       if (!this._refs || (!force && segmentIndex === this._lastSegment)) return;
       this._lastSegment = segmentIndex;
-      const sourceWord = this._words[segmentIndex];
-      const targetWord = this._words[segmentIndex + 1];
+      const wordCount = this._words.length;
+      const sourceWord = this.options.loopScroll ? this._words[segmentIndex % wordCount] : this._words[segmentIndex];
+      const targetWord = this.options.loopScroll
+        ? this._words[(segmentIndex + 1) % wordCount]
+        : this._words[segmentIndex + 1];
 
       if (this.options.mode === 'single-card') {
         this._refs.front.textContent = sourceWord;
@@ -441,12 +470,17 @@
           // (0-1) into the same easing/idle-settle logic below — 'scroll'
           // sets it from page scroll position (_onScroll), 'hover' sets it
           // from wheel input over the element (_onWheel).
-          const segments = Math.max(1, this._words.length - 1);
-          const rawSegmentFloat = clamp(this._progress, 0, 1) * segments;
+          const segments = this._segmentCount();
+          const rawSegmentFloat = (this.options.loopScroll ? this._progress : clamp(this._progress, 0, 1)) * segments;
+          let loopCont = null;
 
           if (this._displaySegmentFloat == null) {
             this._displaySegmentFloat = rawSegmentFloat;
           } else if (this._scrollActive) {
+            // Real input resumed - drop any idle auto-loop run so the next
+            // idle period reseeds fresh from wherever this leaves us,
+            // rather than resuming mid-cycle from an unrelated word.
+            this._contState = null;
             // Real scroll input: let it push the display in whichever
             // direction it's moving, but never let it yank the display
             // backward relative to that direction. Without this clamp,
@@ -468,6 +502,18 @@
               : Math.max(this._displaySegmentFloat, rawSegmentFloat);
             this._displaySegmentFloat += (target - this._displaySegmentFloat) * this.options.snapStrength;
             if (Math.abs(target - this._displaySegmentFloat) < 0.001) this._displaySegmentFloat = target;
+          } else if (this.options.loop && this._contState != null) {
+            // Idle and already mid auto-loop cycle from an earlier idle
+            // tick: keep driving it from its own clock every frame, exactly
+            // like 'continuous' driveMode does below. Deliberately skips
+            // re-deriving "resting" from _displaySegmentFloat the way the
+            // branch below does: that reshapes through the scroll
+            // flip-window, which would reinterpret an in-flight continuous
+            // flipT as "mid-fold" and hijack it into the snapping logic
+            // below instead of letting _computeContinuous keep driving it -
+            // stuttering the animation every frame instead of the smooth
+            // motion 'continuous' driveMode gets.
+            loopCont = this._computeContinuous(performance.now());
           } else {
             // Idle: if genuinely mid-fold (the reshaped flipT — not just
             // the raw scroll position — is strictly between the two hold
@@ -496,10 +542,56 @@
                   : resting.segmentIndex + (resting.flipT >= 0.5 ? flipEnd : flipStart);
               this._displaySegmentFloat += (target - this._displaySegmentFloat) * this.options.snapStrength;
               if (Math.abs(target - this._displaySegmentFloat) < 0.001) this._displaySegmentFloat = target;
+            } else if (this.options.loop) {
+              // Fully landed (not mid-fold) and idle: instead of just
+              // sitting on this word until scroll/hover input resumes, hand
+              // off to the same hold/flip[/rollback] clock 'continuous'
+              // driveMode uses (see _computeContinuous), seeded from the
+              // word we're already resting on so the handoff is invisible.
+              // `resting` is expressed in the outer segment space (already
+              // `_segmentCount()`, same as here), so it's the WORD index
+              // being rested on (wrapped back into range with mod, not just
+              // clamped) that carries over, not the segment index/flipT
+              // pairing itself - clamping the raw segment index straight in
+              // instead would misread "just wrapped onto word 0" (possible
+              // under `loopScroll`) as "at the line's end" and jump to the
+              // last word instead.
+              const wordCount = this._words.length;
+              const restingWordIndex = mod(
+                resting.flipT >= 1 ? resting.segmentIndex + 1 : resting.segmentIndex,
+                wordCount,
+              );
+              const contSegments = this._segmentCount();
+              this._contSegment = clamp(restingWordIndex, 0, contSegments);
+              this._contState = this._contSegment >= contSegments ? 'rollback' : 'hold';
+              this._contStateStart = performance.now();
+              // Used as-is below, bypassing _segmentFromFloat: see the
+              // comment on the branch above for why.
+              loopCont = this._computeContinuous(performance.now());
             }
           }
 
-          ({ segmentIndex, flipT } = this._segmentFromFloat(this._displaySegmentFloat));
+          if (loopCont) {
+            ({ segmentIndex, flipT } = loopCont);
+            this._displaySegmentFloat = loopCont.segmentIndex + loopCont.flipT;
+            // Keep `_progress` numerically aligned with the display while
+            // the idle auto-loop is driving it. Real scroll/hover input
+            // resuming (the `_scrollActive` branch above) computes its
+            // target from `this._progress`, not from `_displaySegmentFloat`
+            // directly - if `_progress` were left stale at wherever real
+            // input last set it, the loop could carry the display well
+            // away from that stale value (loop only ever advances forward),
+            // and the first bit of real input afterward - especially
+            // backward input, since `target = min(display, raw)` snaps
+            // straight to `raw` rather than easing away from `display` -
+            // would jump-cut to catch up to that stale spot instead of
+            // animating the fold.
+            this._progress = this.options.loopScroll
+              ? this._displaySegmentFloat / segments
+              : clamp(this._displaySegmentFloat / segments, 0, 1);
+          } else {
+            ({ segmentIndex, flipT } = this._segmentFromFloat(this._displaySegmentFloat));
+          }
         }
         this._applySegment(segmentIndex);
 
@@ -564,6 +656,24 @@
           // sliver regardless of the backface-visibility edge case.
           this._refs.flapTop.style.visibility = topPhase >= 1 ? 'hidden' : 'visible';
           this._refs.flapBottom.style.visibility = bottomPhase <= 0 ? 'hidden' : 'visible';
+          // Through most of the fold, the panel peeking out from behind its
+          // flap as the flap's foreshortened face shrinks IS the reveal -
+          // panelTop (holding the target word) must stay visible under the
+          // top flap the whole time it's rotating away, same for
+          // panelBottom (source word) as the bottom flap rotates in.
+          // The one pixel-exact exception is each flap's OWN un-rotated
+          // resting state - topPhase === 0 (hasn't started lifting yet) and
+          // bottomPhase === 1 (has fully landed) - where the flap is flat
+          // and *supposed* to be the only thing visible, fully covering a
+          // panel that's holding a different, stale word underneath. That
+          // covering is implicit (matching clip-path, opaque background)
+          // rather than enforced, and the same composited-layer
+          // rasterization mismatch as above could leave a faint stray
+          // fragment of the stale word peeking out around the edges.
+          // Hiding the panel outright at exactly that flat/resting instant
+          // removes the risk without touching the reveal itself.
+          this._refs.panelTop.style.visibility = topPhase === 0 ? 'hidden' : 'visible';
+          this._refs.panelBottom.style.visibility = bottomPhase === 1 ? 'hidden' : 'visible';
         }
       }
 
@@ -573,9 +683,15 @@
     update(options = {}) {
       const modeChanged = 'mode' in options && options.mode !== this.options.mode;
       const driveModeChanged = 'driveMode' in options && options.driveMode !== this.options.driveMode;
+      const loopChanged = 'loop' in options && options.loop !== this.options.loop;
+      const loopScrollChanged = 'loopScroll' in options && options.loopScroll !== this.options.loopScroll;
       Object.assign(this.options, options);
       if (modeChanged) this._buildDOM();
-      if (driveModeChanged) {
+      if (driveModeChanged || loopScrollChanged) {
+        // loopScroll changes the segment count itself (circular vs. a
+        // straight line), so a mid-flight _displaySegmentFloat/_progress
+        // from the old semantics can't just carry over - same full reset
+        // driveMode changes already do.
         this._contState = null;
         this._contSegment = 0;
         this._contStateStart = null;
@@ -586,11 +702,22 @@
         this._scrollDirection = 0;
         clearTimeout(this._scrollIdleTimer);
         if (this.options.driveMode === 'scroll') this._onScroll();
+      } else if (loopChanged) {
+        // Toggled mid-idle-loop or mid-hold: drop the auto-loop clock so
+        // turning it back on reseeds from wherever the display actually is
+        // instead of resuming an old, possibly now-unrelated cycle.
+        this._contState = null;
       }
     }
 
     setText(value) {
       this.el.dataset.text = value || '';
+      // _buildDOM() already resets the display/segment state below for the
+      // new word count, but not _progress - _onScroll() only overwrites it
+      // in 'scroll' driveMode, so 'hover'/'continuous' would otherwise
+      // carry over a stale value from the old sentence (particularly
+      // visible with `loopScroll`, where it can be arbitrarily large).
+      this._progress = 0;
       this._buildDOM();
       this._onScroll();
     }
@@ -600,14 +727,18 @@
       clearTimeout(this._scrollIdleTimer);
       global.removeEventListener('scroll', this._onScroll);
       global.removeEventListener('resize', this._onResize);
-      this._hoverTargets.forEach((target) => {
-        target.removeEventListener('wheel', this._onWheel);
-      });
+      this._hoverSource.destroy();
     }
   }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  // Always returns a value in [0, m), unlike JS's `%` which can return
+  // negative results for a negative `value`.
+  function mod(value, m) {
+    return ((value % m) + m) % m;
   }
 
   function smoothstep(value) {

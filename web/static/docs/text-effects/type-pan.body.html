@@ -19,17 +19,21 @@
       </div>
 
       <h2>Install</h2>
-      <pre><code>&lt;script src="type-pan.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
+&lt;script src="type-pan.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        Self-contained — it injects its own <code>&lt;style&gt;</code> tag
-        (layout height, viewport clipping, blink keyframes) on first use, so
-        no companion CSS file is required.
+        Injects its own <code>&lt;style&gt;</code> tag (layout height,
+        viewport clipping, blink keyframes) on first use, so no companion
+        CSS file is required. <code>hover-scroll-source.js</code> is a
+        small shared dependency ("static scroll" mode's wheel-target
+        wiring, shared with Rolodex) - it must load first.
       </p>
 
       <h2>Usage</h2>
       <pre><code>&lt;div class="type-pan" data-text="Scroll to reveal the whole headline"&gt;
   Scroll to reveal the whole headline
 &lt;/div&gt;
+&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
 &lt;script src="type-pan.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Reads <code>data-text</code> or trimmed <code>textContent</code>.
@@ -67,8 +71,21 @@
           <tr><td><code>typeDuration</code></td><td><code>2200</code></td><td>ms to type the full line (continuous mode)</td></tr>
           <tr><td><code>holdDuration</code></td><td><code>1000</code></td><td>ms held fully typed before erasing (continuous mode)</td></tr>
           <tr><td><code>rollbackSpeed</code></td><td><code>700</code></td><td>ms to erase back to empty (continuous mode)</td></tr>
+          <tr><td><code>stepSpeed</code></td><td><code>60</code></td><td>ms per character for <code>.nextChar()</code>/<code>.prevChar()</code>/<code>.nextWord()</code>/<code>.prevWord()</code> - a constant pace, so a word step just takes proportionally longer than a single-character one</td></tr>
         </tbody>
       </table>
+
+      <h2>Methods</h2>
+      <p>
+        <code>.nextChar()</code> / <code>.prevChar()</code> reveal or erase
+        one more character; <code>.nextWord()</code> / <code>.prevWord()</code>
+        do the same through to the next/previous word boundary. Both always
+        animate through every character in between at <code>stepSpeed</code>
+        - typing/backspacing, never an instant jump - and work alongside
+        <code>'scroll'</code>/<code>'hover'</code> driveMode: scrolling or
+        wheeling again immediately takes back over from wherever the step
+        landed.
+      </p>
 
       <h2>Notes</h2>
       <p>
@@ -76,7 +93,13 @@
         target) captures wheel events with <code>{ passive: false }</code>
         and calls <code>preventDefault()</code>, so the page won't scroll
         while the pointer is over it. Call <code>.reset()</code> on an
-        instance to reset hover-mode typing progress back to the start.
+        instance to reset hover-mode typing progress back to the start;
+        <code>.setText(value)</code> replaces the line being typed (rebuilds
+        the character spans and word boundaries, resetting progress).
+        <code>TypePan.get(elOrSelector)</code> /
+        <code>TypePan.getAll(selector)</code> look up already-initialized
+        instances, and <code>.destroy()</code> tears one down (stops its
+        animation loop and removes all listeners).
       </p>
     </div>
   </div>

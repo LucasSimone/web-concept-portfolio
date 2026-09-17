@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const controls = {
     driveMode: document.getElementById('driveModeSelect'),
+    loopScroll: document.getElementById('loopScrollCheckbox'),
+    loop: document.getElementById('loopCheckbox'),
     hoverScrollDistance: document.getElementById('hoverScrollDistanceRange'),
     interval: document.getElementById('intervalRange'),
     flipDuration: document.getElementById('flipDurationRange'),
@@ -64,6 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const driveMode = controls.driveMode.value;
     controlsPanel.dataset.driveMode = driveMode;
     instance.update({ driveMode });
+  });
+
+  controls.loopScroll.addEventListener('change', () => {
+    instance.update({ loopScroll: controls.loopScroll.checked });
+  });
+
+  controls.loop.addEventListener('change', () => {
+    controlsPanel.dataset.loop = controls.loop.checked;
+    instance.update({ loop: controls.loop.checked });
   });
 
   controls.hoverScrollDistance.addEventListener('input', () => {

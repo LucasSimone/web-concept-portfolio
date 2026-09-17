@@ -117,6 +117,13 @@
     typeDuration: 2200, // ms to type the full line
     holdDuration: 1000, // ms held fully typed before erasing
     rollbackSpeed: 700, // ms to erase back to empty
+    // ms per character for .nextChar()/.prevChar()/.nextWord()/.prevWord() -
+    // a constant pace (not a fixed step duration) so a step always reads as
+    // actual typing/backspacing, one letter at a time, rather than a
+    // smooth-but-instant reveal/erase - a word step just takes
+    // proportionally longer than a single-letter step, the same way a
+    // longer word takes a real typist longer.
+    stepSpeed: 60,
   };
 
   class TypePan {
@@ -134,7 +141,12 @@
       this._totalWidth = 0;
       this._contState = null;
       this._contStateStart = null;
-      this._hoverTargets = [];
+      this._wordBoundaries = []; // revealed-counts marking "just finished a word", for .nextWord()/.prevWord()
+      this._lastRevealedCount = 0;
+      this._stepState = null; // null | 'active' - see .nextChar()/.prevChar()/.nextWord()/.prevWord()
+      this._stepFrom = 0;
+      this._stepTo = 0;
+      this._stepStart = null;
 
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
@@ -146,6 +158,8 @@
       this._onWheel = (event) => {
         if (this.options.driveMode !== 'hover') return;
 
+        // Real input always wins over an in-flight step.
+        this._stepState = null;
         // Ordinary vertical wheel motion (plus any native horizontal
         // delta, e.g. trackpad swipes) is redirected into typing progress.
         const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
@@ -156,30 +170,16 @@
       };
 
       this._buildDOM();
-      this._bindHoverTargets();
+      // Requires shared/hover-scroll-source.js to also be loaded - lets
+      // wheel/trackpad input over this element, or over any other element
+      // tagged `data-type-pan-hover="<this element's id>"`, drive typing in
+      // 'hover' driveMode (see _onWheel above).
+      this._hoverSource = bindHoverScrollSource(this.el, 'data-type-pan-hover', this._onWheel);
       global.addEventListener('scroll', this._onScroll, { passive: true });
       global.addEventListener('resize', this._onResize);
       this._measure();
       this._onScroll();
       this._raf = requestAnimationFrame(this._tick);
-    }
-
-    // Hover targets are this element plus, if it has an `id`, any element
-    // anywhere on the page tagged `data-type-pan-hover="<that id>"` — lets
-    // a caller drive typing by wheeling over a different element than the
-    // text itself without this instance needing to know about it up front.
-    _bindHoverTargets() {
-      const targets = [this.el];
-      const id = this.el.id;
-      if (id && global.CSS && typeof global.CSS.escape === 'function') {
-        document.querySelectorAll(`[data-type-pan-hover="${global.CSS.escape(id)}"]`).forEach((node) => {
-          if (!targets.includes(node)) targets.push(node);
-        });
-      }
-      this._hoverTargets = targets;
-      targets.forEach((target) => {
-        target.addEventListener('wheel', this._onWheel, { passive: false });
-      });
     }
 
     _buildDOM() {
@@ -194,13 +194,21 @@
       const track = document.createElement('div');
       track.className = 'type-pan__track';
 
-      this._chars = Array.from(value).map((char) => {
+      const chars = Array.from(value);
+      this._chars = chars.map((char) => {
         const span = document.createElement('span');
         span.className = 'type-pan__char';
         span.textContent = char === ' ' ? ' ' : char;
         track.appendChild(span);
         return span;
       });
+      // Revealed-counts marking "just finished a word" - the character
+      // right before a run of whitespace, or the very last character -
+      // used by .nextWord()/.prevWord() to find the next/previous boundary
+      // relative to wherever the reveal currently sits.
+      this._wordBoundaries = chars
+        .map((char, i) => (!/\s/.test(char) && (i === chars.length - 1 || /\s/.test(chars[i + 1])) ? i + 1 : null))
+        .filter((boundary) => boundary != null);
 
       const cursor = document.createElement('span');
       cursor.className = 'type-pan__cursor';
@@ -219,6 +227,8 @@
       this._panX = 0;
       this._contState = null;
       this._contStateStart = null;
+      this._lastRevealedCount = 0;
+      this._stepState = null;
       this._applyCursorStyle();
     }
 
@@ -243,6 +253,8 @@
     _onScroll() {
       if (this.options.driveMode !== 'scroll') return;
 
+      // Real input always wins over an in-flight step.
+      this._stepState = null;
       const rect = this.el.getBoundingClientRect();
       const range = global.innerHeight + rect.height;
       this._progress = range > 0
@@ -288,11 +300,90 @@
       return 1 - t;
     }
 
+    // Starts (or redirects an already-running) step toward `targetCount`
+    // revealed characters, at a constant pace (`stepSpeed` ms/char) so it
+    // always reads as actually typing/backspacing rather than a
+    // smooth-but-instant reveal - a multi-character step (.nextWord()) is
+    // just several single-character steps (.nextChar()) run back to back,
+    // covered by the same interpolation.
+    _beginStep(targetCount) {
+      const total = this._chars.length;
+      const from = this._stepState === 'active' ? this._currentStepCount(performance.now(), total) : this._lastRevealedCount;
+      const to = clamp(targetCount, 0, total);
+      if (to === from) return;
+      this._stepFrom = from;
+      this._stepTo = to;
+      this._stepStart = performance.now();
+      this._stepState = 'active';
+    }
+
+    // The revealed-count a step is at right now, without mutating state -
+    // used both to render mid-step and, in _beginStep, to redirect a step
+    // that's already moving toward its next target from wherever it
+    // actually is instead of restarting from _stepTo.
+    _currentStepCount(now, total) {
+      const distance = Math.abs(this._stepTo - this._stepFrom);
+      const duration = distance * this.options.stepSpeed;
+      const t = duration > 0 ? clamp((now - this._stepStart) / duration, 0, 1) : 1;
+      return this._stepFrom + (this._stepTo - this._stepFrom) * t;
+    }
+
+    // Renders the current step and, once it lands, writes the result back
+    // into whichever accumulator the active driveMode reads from - without
+    // that, the instant the step ends control would fall back to the
+    // driveMode's own stale pre-step value and the reveal would visibly
+    // snap backward.
+    _advanceStep(now, total) {
+      const count = this._currentStepCount(now, total);
+      if (count === this._stepTo) {
+        this._stepState = null;
+        const settledFraction = total > 0 ? this._stepTo / total : 0;
+        if (this.options.driveMode === 'hover') {
+          this._typedPx = settledFraction * this._totalWidth;
+          this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
+        } else if (this.options.driveMode === 'scroll') {
+          this._progress = settledFraction;
+          this._maxProgress = Math.max(this._maxProgress, this._progress);
+        }
+      }
+      return total > 0 ? count / total : 0;
+    }
+
+    // Reveal one more/fewer character, animated at `stepSpeed`.
+    nextChar() {
+      this._beginStep(this._lastRevealedCount + 1);
+    }
+
+    prevChar() {
+      this._beginStep(this._lastRevealedCount - 1);
+    }
+
+    // Reveal/erase through to the next or previous word boundary (see
+    // _wordBoundaries in _buildDOM), animated one character at a time the
+    // same as nextChar()/prevChar() - just covering more distance.
+    nextWord() {
+      const current = this._stepState === 'active' ? this._stepTo : this._lastRevealedCount;
+      const boundary = this._wordBoundaries.find((b) => b > current);
+      this._beginStep(boundary != null ? boundary : this._chars.length);
+    }
+
+    prevWord() {
+      const current = this._stepState === 'active' ? this._stepTo : this._lastRevealedCount;
+      let boundary = 0;
+      for (const b of this._wordBoundaries) {
+        if (b >= current) break;
+        boundary = b;
+      }
+      this._beginStep(boundary);
+    }
+
     _tick() {
       const total = this._chars.length;
 
       let fraction;
-      if (this.options.driveMode === 'continuous') {
+      if (this._stepState === 'active') {
+        fraction = this._advanceStep(performance.now(), total);
+      } else if (this.options.driveMode === 'continuous') {
         fraction = this._advanceContinuous(performance.now());
       } else if (this.options.driveMode === 'hover') {
         this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
@@ -304,6 +395,7 @@
       }
 
       const revealedCount = clamp(Math.round(fraction * total), 0, total);
+      this._lastRevealedCount = revealedCount;
 
       this._chars.forEach((span, index) => {
         span.classList.toggle('type-pan__char--visible', index < revealedCount);
@@ -366,9 +458,7 @@
       cancelAnimationFrame(this._raf);
       global.removeEventListener('scroll', this._onScroll);
       global.removeEventListener('resize', this._onResize);
-      this._hoverTargets.forEach((target) => {
-        target.removeEventListener('wheel', this._onWheel);
-      });
+      this._hoverSource.destroy();
     }
   }
 

@@ -98,7 +98,11 @@ main {
   color: #fff;
 }
 
-.controls:not([data-drive-mode="continuous"]) [data-continuous-only] {
+/* Interval/flip-duration/rollback-speed govern the same hold/flip/rollback
+   clock 'continuous' driveMode runs on its own and 'loop' hands off to
+   once scroll/hover input goes idle - so they're relevant (and shown)
+   under either. */
+.controls:not([data-drive-mode="continuous"]):not([data-loop="true"]) [data-continuous-only] {
   display: none;
 }
 

@@ -15,6 +15,16 @@
       <div class="hint">Wheel/trackpad distance needed to flip through the whole sentence while hovering. Lower is faster.</div>
     </div>
 
+    <div class="control-row" data-scroll-only>
+      <label><input id="loopScrollCheckbox" type="checkbox" /> Loop past the end</label>
+      <div class="hint">Makes the word list circular: scrolling/wheeling past the last word flips straight on into the first (and past the first, back into the last) instead of stopping there. In Scroll mode this only goes as far as there's page left to scroll; try Static Scroll (hover) to wheel through it indefinitely.</div>
+    </div>
+
+    <div class="control-row" data-scroll-only>
+      <label><input id="loopCheckbox" type="checkbox" /> Loop when idle</label>
+      <div class="hint">Once scroll/hover input goes idle, keep flipping through the sentence on its own (using the flip interval/duration/rollback speed below) instead of just holding on the last word until input resumes. Independent of "Loop past the end" above - this is about what happens once input stops, not while it's still coming in.</div>
+    </div>
+
     <div class="control-row" data-continuous-only>
       <label>Flip interval <span id="intervalVal" class="value"></span></label>
       <input id="intervalRange" type="range" min="200" max="4000" step="100" value="1400" />
@@ -30,7 +40,7 @@
     <div class="control-row" data-continuous-only>
       <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
       <input id="rollbackSpeedRange" type="range" min="200" max="4000" step="100" value="900" />
-      <div class="hint">Once the last word is reached, how long it takes to spin straight back to the first word.</div>
+      <div class="hint">Once the last word is reached, how long it takes to spin straight back to the first word. Has no effect when "Loop past the end" is on - the list is already circular, so the last word just flips forward into the first instead of rewinding.</div>
     </div>
 
     <div class="control-row">

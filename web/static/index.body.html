@@ -17,7 +17,7 @@
     </select>
   </div>
 
-  <div class="carousel" id="variationCarousel">
+  <div class="carousel" id="variationCarousel" data-rolodex-hover="rolodexCardTitle">
   <div class="carousel-line" data-carousel-line="top"></div>
   <div class="carousel-line" data-carousel-line="bottom"></div>
   <div class="carousel-track" id="variationGrid">
@@ -53,7 +53,7 @@
     </a>
     <a class="variation-card" href="/text-effects/rolodex/index.html" data-type="scroll continuous">
       <div class="type">Scroll + Continuous</div>
-      <div class="title-wrap"><h2 class="rolodex" data-text="Rolodex flips through words">Rolodex flips through words</h2></div>
+      <div class="title-wrap"><h2 id="rolodexCardTitle" class="rolodex" data-text="Rolodex flips through words">Rolodex flips through words</h2></div>
       <div class="go">View →</div>
     </a>
   </div>
@@ -150,6 +150,7 @@
   <script src="/text-effects/wave-form/wave-form.js"></script>
   <script src="/text-effects/paint-drag/paint-drag.js"></script>
   <script src="/text-effects/in-flight-out/in-flight-out.js"></script>
+  <script src="/shared/hover-scroll-source.js"></script>
   <script src="/text-effects/type-pan/type-pan.js"></script>
   <script src="/text-effects/rolodex/rolodex.js"></script>
   <script src="/background/circuit-board/circuit-board.js"></script>
