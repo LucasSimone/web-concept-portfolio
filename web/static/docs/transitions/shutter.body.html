@@ -6,13 +6,13 @@
       <p class="docs-eyebrow">Transition · Navigation</p>
       <h1>Shutter</h1>
       <p>
-        Two full-screen black panels that close over the viewport from the
-        top and bottom edges, meeting in the middle, when a link is
-        clicked, then split back apart to reveal the next page once it
-        loads — one continuous vertical motion, split across the
-        navigation boundary. Set <code>variant: 'single'</code> for the
-        original single-panel version that rises from the bottom edge
-        instead.
+        Two full-screen white panels, each with a gray border on its
+        leading edge, that close over the viewport from the top and bottom
+        edges, meeting in the middle, when a link is clicked, then split
+        back apart to reveal the next page once it loads — one continuous
+        vertical motion, split across the navigation boundary. Set
+        <code>variant: 'single'</code> for the original single-panel
+        version that rises from the bottom edge instead.
       </p>
 
       <div class="docs-actions">
@@ -203,8 +203,9 @@ Transitions.shutter.play(cardB);
         <tbody>
           <tr><td><code>duration</code></td><td><code>550</code></td><td>ms for each half (cover or reveal) of the motion</td></tr>
           <tr><td><code>easing</code></td><td><code>'cubic-bezier(.65,0,.35,1)'</code></td><td>CSS easing applied to the transform transition</td></tr>
-          <tr><td><code>color</code></td><td><code>'#000'</code></td><td>Panel background color</td></tr>
+          <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Panel background color</td></tr>
           <tr><td><code>variant</code></td><td><code>'split'</code></td><td><code>'split'</code> (top + bottom panels meet in the middle) or <code>'single'</code> (one panel, rises from the bottom)</td></tr>
+          <tr><td><code>border</code></td><td><code>'2px solid #555'</code></td><td>CSS border shorthand drawn on each panel's leading edge only — the edge it advances from as it covers. Pass <code>null</code> to turn it off. Keeps the wipe reading as a moving edge instead of a flat color fading in, especially against a light page</td></tr>
           <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are eligible for interception — navigation stays off until this is set</td></tr>
         </tbody>
       </table>
@@ -218,6 +219,7 @@ Transitions.shutter.play(cardB);
           <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
           <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
           <tr><td><code>data-t-variant</code></td><td><code>variant</code></td></tr>
+          <tr><td><code>data-t-border</code></td><td><code>border</code></td></tr>
         </tbody>
       </table>
 

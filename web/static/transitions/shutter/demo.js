@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const durationVal = document.getElementById('ptDurationVal');
   const easing = document.getElementById('ptEasing');
   const variantButtons = Array.from(document.querySelectorAll('[data-variant-group] .t-style-btn'));
-  const swatches = Array.from(document.querySelectorAll('.t-swatch'));
+  const swatches = Array.from(document.querySelectorAll('[aria-label="Panel color"] .t-swatch'));
+  const border = document.getElementById('ptBorder');
+  const borderSwatches = Array.from(document.querySelectorAll('#ptBorderColor .t-swatch'));
 
   // The "Click me" box below the main link — a small live example of
   // Shutter transitioning an element in place rather than a whole page.
@@ -22,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
       easing: link.dataset.tEasing,
       color: link.dataset.tColor,
       variant: link.dataset.tVariant,
+      border: link.dataset.tBorder,
       swap: (el) => { el.textContent = nextText; },
     });
   }
@@ -54,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
         easing: easing.value,
         variant: link.dataset.tVariant,
         color: link.dataset.tColor,
+        border: border.checked,
+        borderColor: currentBorderColor(),
       }));
     } catch (e) {}
   }
@@ -70,6 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
     link.dataset.tVariant = match.dataset.variant;
   }
 
+  function currentBorderColor() {
+    const match = borderSwatches.find((b) => b.getAttribute('aria-pressed') === 'true') || borderSwatches[0];
+    return match.dataset.borderColor;
+  }
+
+  function selectBorderColor(color) {
+    const match = borderSwatches.find((b) => b.dataset.borderColor === color) || borderSwatches[0];
+    borderSwatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
+  }
+
+  function syncBorder() {
+    link.dataset.tBorder = border.checked ? `2px solid ${currentBorderColor()}` : '';
+    save();
+  }
+
   function syncDuration() {
     link.dataset.tDuration = duration.value;
     durationVal.textContent = `${duration.value}ms`;
@@ -83,6 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   duration.addEventListener('input', syncDuration);
   easing.addEventListener('change', syncEasing);
+  border.addEventListener('change', syncBorder);
+
+  borderSwatches.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectBorderColor(btn.dataset.borderColor);
+      syncBorder();
+    });
+  });
 
   swatches.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -104,10 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
     easing.value = saved.easing;
     selectVariant(saved.variant || 'split');
     selectSwatch(saved.color);
+    border.checked = !!saved.border;
+    selectBorderColor(saved.borderColor || '#000');
   } else {
     selectVariant(variantButtons.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.variant);
     selectSwatch(swatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color);
   }
   syncDuration();
   syncEasing();
+  syncBorder();
 });

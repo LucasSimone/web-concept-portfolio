@@ -146,9 +146,29 @@ p.element-demo-hint {
   margin-bottom: 16px;
 }
 
+.control-row .control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.control-checkbox input {
+  accent-color: #000;
+}
+
 .t-swatches {
   display: flex;
   gap: 8px;
+}
+
+#ptBorderColor {
+  margin: 10px 0;
+}
+
+.control-row:has(#ptBorder:not(:checked)) #ptBorderColor {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .t-swatch {

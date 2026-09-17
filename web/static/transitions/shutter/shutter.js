@@ -1,13 +1,15 @@
 /**
  * Shutter
  * -------
- * Two black panels — one anchored to the top edge, one to the bottom —
+ * Two white panels — one anchored to the top edge, one to the bottom —
  * close over whatever it's animating, meeting in the middle, then split
  * back apart to their edges to reveal what's underneath, once whatever
- * it's covering is ready. This is the default `split` variant; setting
- * `variant: 'single'` instead reverts to one panel rising from the
- * bottom edge to cover the whole target. Either way it's one continuous
- * motion split across the cover/reveal boundary.
+ * it's covering is ready. Each panel carries a gray border on its leading
+ * edge by default, so the wipe still reads as a moving edge rather than a
+ * flat color fading in — see `border` in Options. This is the default
+ * `split` variant; setting `variant: 'single'` instead reverts to one
+ * panel rising from the bottom edge to cover the whole target. Either way
+ * it's one continuous motion split across the cover/reveal boundary.
  *
  * Two ways to use it:
  *
@@ -39,9 +41,10 @@
  * effect's script can register alongside it without either clobbering
  * the other.
  *
- * A single call can override duration/easing/color/variant for just that
- * one transition, leaving every other link/call using the page's default
- * profile: a link's `data-t-duration`/`-easing`/`-color`/`-variant`
+ * A single call can override duration/easing/color/variant/border for just
+ * that one transition, leaving every other link/call using the page's
+ * default profile: a link's
+ * `data-t-duration`/`-easing`/`-color`/`-variant`/`-border`
  * attributes for navigation, or the same fields passed straight into
  * `cover`/`reveal`/`play` for elements. For navigation, the chosen profile
  * travels to the next page in the same one-shot sessionStorage handoff
@@ -61,8 +64,9 @@
   var DEFAULTS = {
     duration: 550, // ms for each half (cover or reveal) of the motion
     easing: 'cubic-bezier(.65,0,.35,1)',
-    color: '#000',
+    color: '#fff',
     variant: 'split', // 'split' (top + bottom panels meet in the middle) or 'single' (one panel, rises from the bottom)
+    border: '2px solid #555', // CSS border shorthand drawn on each panel's leading edge only — pass null to turn it off; keeps the wipe reading as a moving edge instead of a flat color fading in, especially against a light page
     selector: null, // which links this page intercepts — off until set
   };
   var pageConfig = (global.TransitionConfig && global.TransitionConfig[NAME]) || {};
@@ -107,17 +111,27 @@
       // edge, so scaleY(1) on both meets them exactly in the middle.
       '.t-shutter-active::before,.t-shutter-active::after{content:"";' +
       'position:var(--t-shutter-position,fixed);left:0;right:0;height:50%;' +
-      'background:var(--t-shutter-color,#000);z-index:2147483647;pointer-events:auto;' +
-      'transform:scaleY(1);}' +
-      '.t-shutter-active::before{top:0;transform-origin:top;}' +
-      '.t-shutter-active::after{bottom:0;transform-origin:bottom;}' +
+      'box-sizing:border-box;background:var(--t-shutter-color,#000);' +
+      'z-index:2147483647;pointer-events:auto;transform:scaleY(1);}' +
+      // Leading edge = the free edge each panel advances from as it
+      // covers (and retreats back toward as it reveals) — the top
+      // panel's bottom edge and the bottom panel's top edge, since both
+      // are anchored (transform-origin) at their *other* edge. Border
+      // lives on that edge only, so it reads as a moving line rather
+      // than framing the whole panel.
+      '.t-shutter-active::before{top:0;transform-origin:top;' +
+      'border-bottom:var(--t-shutter-border,none);}' +
+      '.t-shutter-active::after{bottom:0;transform-origin:bottom;' +
+      'border-top:var(--t-shutter-border,none);}' +
       '.t-shutter-anim::before,.t-shutter-anim::after{transition:transform ' +
       'var(--t-shutter-duration,550ms) var(--t-shutter-easing,cubic-bezier(.65,0,.35,1));}' +
       '.t-shutter-open::before,.t-shutter-open::after{transform:scaleY(0);}' +
       // `single` variant: one full-height panel rising from the bottom
       // edge — ::before takes over the whole target, ::after is unused.
+      // Its leading edge is now the top (the anchor moved to the bottom).
       '[data-t-shutter-variant="single"].t-shutter-active::before{' +
-      'top:auto;bottom:0;height:100%;transform-origin:bottom;}' +
+      'top:auto;bottom:0;height:100%;transform-origin:bottom;' +
+      'border-bottom:none;border-top:var(--t-shutter-border,none);}' +
       '[data-t-shutter-variant="single"].t-shutter-active::after{content:none;}';
     document.head.appendChild(style);
   }
@@ -126,6 +140,7 @@
     el.style.setProperty('--t-shutter-duration', profile.duration + 'ms');
     el.style.setProperty('--t-shutter-easing', profile.easing);
     el.style.setProperty('--t-shutter-color', profile.color);
+    el.style.setProperty('--t-shutter-border', profile.border || 'none');
     el.setAttribute('data-t-shutter-variant', profile.variant);
     // Viewport-relative for the page-nav target, container-relative
     // (against .t-el's position:relative) for everything else.
@@ -174,6 +189,7 @@
       easing: overrides.easing || options.easing,
       color: overrides.color || options.color,
       variant: overrides.variant || options.variant,
+      border: overrides.border !== undefined ? overrides.border : options.border,
     };
   }
 
@@ -184,6 +200,7 @@
       easing: ds.tEasing,
       color: ds.tColor,
       variant: ds.tVariant,
+      border: ds.tBorder,
     };
   }
 
