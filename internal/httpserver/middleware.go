@@ -18,6 +18,19 @@ func logging(next http.Handler) http.Handler {
 	})
 }
 
+// noCache tells the browser never to cache or revalidate a response,
+// forcing a fresh fetch on every request instead of the heuristic caching
+// browsers apply to any response that (like http.FileServerFS's) carries a
+// Last-Modified but no explicit Cache-Control - which is exactly what
+// otherwise serves a stale, pre-edit copy of a static file back after it's
+// changed on disk in dev mode.
+func noCache(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		next.ServeHTTP(w, r)
+	})
+}
+
 // recoverPanic turns a panic anywhere in next into a 500 response instead
 // of crashing the whole server process.
 func recoverPanic(next http.Handler) http.Handler {

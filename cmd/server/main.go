@@ -84,7 +84,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      httpserver.New(renderedFS, store),
+		Handler:      httpserver.New(renderedFS, store, dev),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
