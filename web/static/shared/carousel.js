@@ -75,6 +75,15 @@
       this._wheelIdleTimer = null;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
+      // Remembers the focused card per carousel (by element id) across page
+      // loads within the same tab, so navigating to an effect and back to
+      // the homepage doesn't dump you back at card 0. sessionStorage (not
+      // localStorage) so it fades once the tab/session ends rather than
+      // sticking around indefinitely. Restored once, on the first refresh()
+      // - later refresh() calls (e.g. from a type filter change) still
+      // reset to card 0 as before.
+      this._persistKey = root.id ? `carousel-pos:${root.id}` : null;
+      this._restored = false;
 
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
@@ -94,16 +103,47 @@
     }
 
     // Re-reads which cards are visible (e.g. after a filter change) and
-    // jumps back to the first one — call after hiding/showing cards.
+    // jumps back to the first one — call after hiding/showing cards. The
+    // very first call (from the constructor) instead restores whatever
+    // card was last focused, if one was persisted (see _persistKey).
     refresh() {
       this._cards = Array.from(this.track.children).filter((el) => !el.hidden);
       this._maxIndex = Math.max(0, this._cards.length - 1);
       this._measure();
-      this._pos = 0;
+
+      let startIndex = 0;
+      if (!this._restored) {
+        this._restored = true;
+        const stored = this._readStoredIndex();
+        if (stored !== null) startIndex = clamp(stored, 0, this._maxIndex);
+      }
+
+      this._pos = startIndex;
       this._velocity = 0;
       this._settledIndex = -1;
-      this._setSettledIndex(0);
+      this._setSettledIndex(startIndex);
       this._render();
+    }
+
+    _readStoredIndex() {
+      if (!this._persistKey) return null;
+      try {
+        const raw = sessionStorage.getItem(this._persistKey);
+        if (raw === null) return null;
+        const index = parseInt(raw, 10);
+        return Number.isFinite(index) ? index : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    _writeStoredIndex(index) {
+      if (!this._persistKey) return;
+      try {
+        sessionStorage.setItem(this._persistKey, String(index));
+      } catch (e) {
+        // Ignore (e.g. storage disabled/full) - just means it won't persist.
+      }
     }
 
     // Fires a 'carousel-settle' event (bubbling) on the card at `index`
@@ -115,6 +155,7 @@
     _setSettledIndex(index) {
       if (index === this._settledIndex) return;
       this._settledIndex = index;
+      this._writeStoredIndex(index);
       const card = this._cards[index];
       if (card) card.dispatchEvent(new CustomEvent('carousel-settle', { bubbles: true }));
     }

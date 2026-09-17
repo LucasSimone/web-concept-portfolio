@@ -275,3 +275,38 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     setTimeout(cycle, randomTransitionPause());
   });
 }
+
+// Remembers how far down the homepage the user had scrolled, so following a
+// card through to an effect page and then back via the nav's Home link
+// (a normal navigation, not a back-button one - the browser's own scroll
+// restoration doesn't apply here) doesn't dump them back at the top. Same
+// sessionStorage-per-tab approach as the carousel position caching in
+// carousel.js - fades once the tab/session ends rather than sticking around
+// indefinitely. Restored here at the end of the script, after every card
+// preview above has finished initializing, so nothing still to come can
+// shift the page's height out from under the restored position.
+const HOME_SCROLL_KEY = 'home-scroll-y';
+
+try {
+  const raw = sessionStorage.getItem(HOME_SCROLL_KEY);
+  const storedScrollY = raw === null ? null : parseFloat(raw);
+  if (Number.isFinite(storedScrollY)) window.scrollTo(0, storedScrollY);
+} catch (e) {
+  // Ignore (e.g. storage disabled) - just starts at the top as before.
+}
+
+let scrollSaveScheduled = false;
+function saveHomeScrollY() {
+  scrollSaveScheduled = false;
+  try {
+    sessionStorage.setItem(HOME_SCROLL_KEY, String(window.scrollY));
+  } catch (e) {
+    // Ignore (e.g. storage disabled/full) - just means it won't persist.
+  }
+}
+window.addEventListener('scroll', () => {
+  if (scrollSaveScheduled) return;
+  scrollSaveScheduled = true;
+  requestAnimationFrame(saveHomeScrollY);
+}, { passive: true });
+window.addEventListener('pagehide', saveHomeScrollY);
