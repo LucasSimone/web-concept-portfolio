@@ -266,13 +266,42 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     const engine = window.Transitions && window.Transitions[card.dataset.tTransition];
     if (!engine) return;
     card.classList.add('t-el');
+    // Hovering commandeers the card's own cover()/reveal() calls rather
+    // than reaching into shutter.js/aperture.js: cover()/reveal() are
+    // built so a newer call on the same target supersedes an in-flight one
+    // instead of fighting it (see their "gen" comments) - the CSS
+    // transition just retargets from wherever it currently sits. So
+    // mouseenter's cover() closes it (or, mid-reveal, reverses it closed
+    // from wherever it got to) and holds it there since nothing schedules
+    // a follow-up reveal while hovering; mouseleave's reveal() reopens it
+    // and hands the loop its next cycle.
+    let hovering = false;
+    let pendingCycle = null;
     // Each card re-rolls its own random pause after every cycle, so the
     // cards drift in and out of sync with each other instead of the fixed
     // lockstep a shared interval would give.
-    function cycle() {
-      engine.play(card).then(() => setTimeout(cycle, randomTransitionPause()));
+    function scheduleCycle() {
+      pendingCycle = setTimeout(cycle, randomTransitionPause());
     }
-    setTimeout(cycle, randomTransitionPause());
+    function cycle() {
+      if (hovering) return;
+      engine.cover(card)
+        .then(() => { if (!hovering) return engine.reveal(card); })
+        .then(() => { if (!hovering) scheduleCycle(); });
+    }
+    card.addEventListener('mouseenter', () => {
+      hovering = true;
+      if (pendingCycle) {
+        clearTimeout(pendingCycle);
+        pendingCycle = null;
+      }
+      engine.cover(card);
+    });
+    card.addEventListener('mouseleave', () => {
+      hovering = false;
+      engine.reveal(card).then(scheduleCycle);
+    });
+    scheduleCycle();
   });
 }
 
