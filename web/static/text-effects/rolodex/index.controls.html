@@ -1,80 +1,55 @@
 
     <div class="control-row">
-      <label>Animation mode</label>
+      <label>Animation mode
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-driveMode">?<span class="hint" role="tooltip" id="hint-driveMode">Scroll tracks scroll position. Continuous flips through the sentence on its own clock. Static Scroll keeps the page from scrolling — instead, scroll (mouse wheel/trackpad) while hovering the text (or an element elsewhere on the page tagged <code>data-rolodex-hover="demoText"</code>) to flip through the words directly.</span></span>
+      </label>
       <select id="driveModeSelect">
         <option value="scroll" selected>Scroll</option>
         <option value="continuous">Continuous</option>
         <option value="hover">Static Scroll (hover)</option>
       </select>
-      <div class="hint">Scroll tracks scroll position. Continuous flips through the sentence on its own clock. Static Scroll keeps the page from scrolling — instead, scroll (mouse wheel/trackpad) while hovering the text (or an element elsewhere on the page tagged <code>data-rolodex-hover="demoText"</code>) to flip through the words directly.</div>
     </div>
 
     <div class="control-row" data-hover-only>
-      <label>Scroll speed <span id="hoverScrollDistanceVal" class="value"></span></label>
+      <label><span class="label-text">Scroll speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-hoverScrollDistance">?<span class="hint" role="tooltip" id="hint-hoverScrollDistance">Wheel/trackpad distance needed to flip through the whole sentence while hovering. Lower is faster.</span></span></span><span id="hoverScrollDistanceVal" class="value"></span></label>
       <input id="hoverScrollDistanceRange" type="range" min="100" max="2000" step="50" value="1000" />
-      <div class="hint">Wheel/trackpad distance needed to flip through the whole sentence while hovering. Lower is faster.</div>
-    </div>
-
-    <div class="control-row">
-      <label>Step</label>
-      <button id="prevButton" class="toggle-button" type="button">← Prev word</button>
-    </div>
-    <div class="control-row">
-      <button id="nextButton" class="toggle-button" type="button">Next word →</button>
-      <div class="hint">Flips one word back/forward, animated. Try clicking rapidly to see how "Step policy" below handles a burst of clicks.</div>
-    </div>
-
-    <div class="control-row">
-      <label>Step policy</label>
-      <select id="stepPolicySelect">
-        <option value="redirect" selected>Redirect</option>
-        <option value="rateLimit">Rate limit</option>
-        <option value="queue">Queue</option>
-      </select>
-      <div class="hint">What Prev/Next (or code calling <code>.next()</code>/<code>.prev()</code>/<code>.goTo()</code>) does if clicked again before the current flip lands. Redirect: retargets immediately from wherever the flip visually is - fast clicks blur past words instead of visiting each one. Rate limit: ignores a click that arrives too soon after the last accepted one. Queue: lets the current flip finish, then plays every queued click back-to-back in order.</div>
-    </div>
-
-    <div class="control-row" data-rate-limit-only>
-      <label>Min step interval <span id="minStepIntervalVal" class="value"></span></label>
-      <input id="minStepIntervalRange" type="range" min="50" max="2000" step="50" value="450" />
-      <div class="hint">How soon another click is accepted after the last one, under "Rate limit".</div>
     </div>
 
     <div class="control-row" data-scroll-only>
-      <label><input id="loopScrollCheckbox" type="checkbox" /> Loop past the end</label>
-      <div class="hint">Makes the word list circular: scrolling/wheeling past the last word flips straight on into the first (and past the first, back into the last) instead of stopping there. In Scroll mode this only goes as far as there's page left to scroll; try Static Scroll (hover) to wheel through it indefinitely.</div>
+      <label><span class="label-text"><input id="loopScrollCheckbox" type="checkbox" /><span>Loop around</span></span>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-loopScroll">?<span class="hint" role="tooltip" id="hint-loopScroll">Makes the word list circular: scrolling/wheeling past the last word flips straight on into the first (and past the first, back into the last) instead of stopping there. In Scroll mode this only goes as far as there's page left to scroll; try Static Scroll (hover) to wheel through it indefinitely.</span></span>
+      </label>
     </div>
 
     <div class="control-row" data-scroll-only>
-      <label><input id="loopCheckbox" type="checkbox" /> Loop when idle</label>
-      <div class="hint">Once scroll/hover input goes idle, keep flipping through the sentence on its own (using the flip interval/duration/rollback speed below) instead of just holding on the last word until input resumes. Independent of "Loop past the end" above - this is about what happens once input stops, not while it's still coming in.</div>
+      <label><span class="label-text"><input id="loopCheckbox" type="checkbox" /><span>Play when idle</span></span>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-loopIdle">?<span class="hint" role="tooltip" id="hint-loopIdle">Once scroll/hover input goes idle, keep flipping through the sentence on its own (using the flip interval/duration/rollback speed below) instead of just holding on the last word until input resumes. Independent of "Loop past the end" above - this is about what happens once input stops, not while it's still coming in.</span></span>
+      </label>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Flip interval <span id="intervalVal" class="value"></span></label>
+      <label><span class="label-text">Flip interval <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-interval">?<span class="hint" role="tooltip" id="hint-interval">How long each word holds before flipping to the next.</span></span></span><span id="intervalVal" class="value"></span></label>
       <input id="intervalRange" type="range" min="200" max="4000" step="100" value="1400" />
-      <div class="hint">How long each word holds before flipping to the next.</div>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Flip duration <span id="flipDurationVal" class="value"></span></label>
+      <label><span class="label-text">Flip duration <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-flipDuration">?<span class="hint" role="tooltip" id="hint-flipDuration">How long the flip motion itself takes between two words.</span></span></span><span id="flipDurationVal" class="value"></span></label>
       <input id="flipDurationRange" type="range" min="100" max="1500" step="50" value="450" />
-      <div class="hint">How long the flip motion itself takes between two words.</div>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <label><span class="label-text">Rollback speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-rollbackSpeed">?<span class="hint" role="tooltip" id="hint-rollbackSpeed">Once the last word is reached, how long it takes to spin straight back to the first word. Has no effect when "Loop past the end" is on - the list is already circular, so the last word just flips forward into the first instead of rewinding.</span></span></span><span id="rollbackSpeedVal" class="value"></span></label>
       <input id="rollbackSpeedRange" type="range" min="200" max="4000" step="100" value="900" />
-      <div class="hint">Once the last word is reached, how long it takes to spin straight back to the first word. Has no effect when "Loop past the end" is on - the list is already circular, so the last word just flips forward into the first instead of rewinding.</div>
     </div>
 
     <div class="control-row">
-      <label>Profile</label>
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the flip style, flip width, and perspective below. Adjusting any control afterward just tweaks that preset.</span></span>
+      </label>
       <select id="profileSelect">
         <option value="split-flap" selected>Split-Flap</option>
         <option value="single-card">Single Card</option>
       </select>
-      <div class="hint">Quick presets for the flip style, flip width, and perspective below. Adjusting any control afterward just tweaks that preset.</div>
     </div>
     <div class="control-row">
       <label>Font</label>
@@ -91,30 +66,27 @@
       <input id="textInput" type="text" value="Rolodex flips through words one by one" />
     </div>
     <div class="control-row">
-      <label>Flip style</label>
+      <label>Flip style
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-flipStyle">?<span class="hint" role="tooltip" id="hint-flipStyle">Split-flap: the card is cut in half by a hinge — the top flips away first, then the bottom flips in, like a real flip clock. Single-card: the whole word rotates as one card with the next word on its back.</span></span>
+      </label>
       <select id="modeSelect">
         <option value="split-flap" selected>Split-flap (top &amp; bottom flaps)</option>
         <option value="single-card">Single-card (whole word flips)</option>
       </select>
-      <div class="hint">Split-flap: the card is cut in half by a hinge — the top flips away first, then the bottom flips in, like a real flip clock. Single-card: the whole word rotates as one card with the next word on its back.</div>
     </div>
     <div class="control-row" data-scroll-only>
-      <label>Flip width <span id="flipWidthVal" class="value"></span></label>
+      <label><span class="label-text">Flip width <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-flipWidth">?<span class="hint" role="tooltip" id="hint-flipWidth">How much of each word's scroll segment is spent mid-flip vs. holding on the fully-formed word.</span></span></span><span id="flipWidthVal" class="value"></span></label>
       <input id="flipWidthRange" type="range" min="10" max="95" step="1" value="55" />
-      <div class="hint">How much of each word's scroll segment is spent mid-flip vs. holding on the fully-formed word.</div>
     </div>
     <div class="control-row" data-scroll-only>
-      <label>Catch-up speed <span id="snapStrengthVal" class="value"></span></label>
+      <label><span class="label-text">Catch-up speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-snapStrength">?<span class="hint" role="tooltip" id="hint-snapStrength">How fast the display catches up to scroll/hover position - every frame it closes this fraction of the remaining gap. Higher snaps almost instantly; lower lags behind and settles more slowly, most visible right after a fast scroll or a big jump in a custom <code>pushProgress()</code> value.</span></span></span><span id="snapStrengthVal" class="value"></span></label>
       <input id="snapStrengthRange" type="range" min="0.02" max="1" step="0.01" value="0.4" />
-      <div class="hint">How fast the display catches up to scroll/hover position - every frame it closes this fraction of the remaining gap. Higher snaps almost instantly; lower lags behind and settles more slowly, most visible right after a fast scroll or a big jump in a custom <code>pushProgress()</code> value.</div>
     </div>
     <div class="control-row">
-      <label>Perspective <span id="perspectiveVal" class="value"></span></label>
+      <label><span class="label-text">Perspective <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-perspective">?<span class="hint" role="tooltip" id="hint-perspective">3D depth of the flip. Lower values exaggerate the foreshortening as a flap turns edge-on.</span></span></span><span id="perspectiveVal" class="value"></span></label>
       <input id="perspectiveRange" type="range" min="300" max="2400" step="20" value="900" />
-      <div class="hint">3D depth of the flip. Lower values exaggerate the foreshortening as a flap turns edge-on.</div>
     </div>
     <div class="control-row">
-      <label>Shading <span id="shadingVal" class="value"></span></label>
+      <label><span class="label-text">Shading <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shading">?<span class="hint" role="tooltip" id="hint-shading">How much a flap darkens as it turns edge-on, simulating light falloff.</span></span></span><span id="shadingVal" class="value"></span></label>
       <input id="shadingRange" type="range" min="0" max="1" step="0.01" value="0.55" />
-      <div class="hint">How much a flap darkens as it turns edge-on, simulating light falloff.</div>
     </div>

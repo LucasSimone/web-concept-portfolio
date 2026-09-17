@@ -1,29 +1,27 @@
 
     <div class="control-row">
-      <label>Grid size <span id="cellVal" class="value"></span></label>
+      <label><span class="label-text">Grid size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cell">?<span class="hint" role="tooltip" id="hint-cell">Spacing between grid points, in px.</span></span></span><span id="cellVal" class="value"></span></label>
       <input type="range" id="cellRange" min="4" max="80" step="2" value="16" />
-      <div class="hint">Spacing between grid points, in px.</div>
     </div>
 
     <div class="control-row">
-      <label>Radius <span id="radiusVal" class="value"></span></label>
+      <label><span class="label-text">Radius <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-radius">?<span class="hint" role="tooltip" id="hint-radius">How far from the cursor the pull reaches.</span></span></span><span id="radiusVal" class="value"></span></label>
       <input type="range" id="radiusRange" min="60" max="500" step="10" value="90" />
-      <div class="hint">How far from the cursor the pull reaches.</div>
     </div>
 
     <div class="control-row">
-      <label>Strength <span id="strengthVal" class="value"></span></label>
+      <label><span class="label-text">Strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-strength">?<span class="hint" role="tooltip" id="hint-strength">Maximum distance a grid point gets pulled, in px.</span></span></span><span id="strengthVal" class="value"></span></label>
       <input type="range" id="strengthRange" min="10" max="200" step="5" value="45" />
-      <div class="hint">Maximum distance a grid point gets pulled, in px.</div>
     </div>
 
     <div class="control-row">
-      <label>Trail <span id="easeVal" class="value"></span></label>
+      <label><span class="label-text">Trail <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-ease">?<span class="hint" role="tooltip" id="hint-ease">How quickly the pull point catches up to the cursor. Lower feels heavier.</span></span></span><span id="easeVal" class="value"></span></label>
       <input type="range" id="easeRange" min="0.03" max="0.5" step="0.01" value="0.18" />
-      <div class="hint">How quickly the pull point catches up to the cursor. Lower feels heavier.</div>
     </div>
 
     <div class="control-row">
-      <button id="modeToggle" type="button" class="toggle-button" aria-pressed="false">View: Grid</button>
-      <div class="hint">Grid draws the mesh lines; dots shows only the vertices.</div>
+      <div class="control-inline">
+        <button id="modeToggle" type="button" class="toggle-button" aria-pressed="false">View: Grid</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-mode">?<span class="hint" role="tooltip" id="hint-mode">Grid draws the mesh lines; dots shows only the vertices.</span></span>
+      </div>
     </div>

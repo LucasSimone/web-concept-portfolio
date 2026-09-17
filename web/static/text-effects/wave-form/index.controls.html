@@ -31,21 +31,20 @@
     </div>
 
     <div class="control-row">
-      <label>Spread <span id="spreadVal" class="value"></span></label>
+      <label><span class="label-text">Spread <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-spread">?<span class="hint" role="tooltip" id="hint-spread">How much phase offset each letter gets from its neighbor. Higher values make the wave ripple across the word rather than moving in unison.</span></span></span><span id="spreadVal" class="value"></span></label>
       <input id="spreadRange" type="range" min="0.4" max="2.2" step="0.05" value="1.2" />
-      <div class="hint">How much phase offset each letter gets from its neighbor. Higher values make the wave ripple across the word rather than moving in unison.</div>
     </div>
 
     <div class="control-row">
-      <label>Drift <span id="driftVal" class="value"></span></label>
+      <label><span class="label-text">Drift <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-drift">?<span class="hint" role="tooltip" id="hint-drift">Adds a slower secondary wobble on top of the base wave, giving the motion a looser, less mechanical feel.</span></span></span><span id="driftVal" class="value"></span></label>
       <input id="driftRange" type="range" min="0" max="1.5" step="0.05" value="0.7" />
-      <div class="hint">Adds a slower secondary wobble on top of the base wave, giving the motion a looser, less mechanical feel.</div>
     </div>
 
     <div class="control-row">
-      <label>Color fade</label>
+      <label>Color fade
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fade">?<span class="hint" role="tooltip" id="hint-fade">Toggle off to keep letters at full opacity instead of pulsing lighter and darker.</span></span>
+      </label>
       <button id="fadeButton" class="toggle-button" type="button" aria-pressed="true">
         Fading on
       </button>
-      <div class="hint">Toggle off to keep letters at full opacity instead of pulsing lighter and darker.</div>
     </div>

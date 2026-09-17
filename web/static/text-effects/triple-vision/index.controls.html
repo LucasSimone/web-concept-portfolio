@@ -1,10 +1,11 @@
 
     <div class="control-row">
-      <label>Animation mode</label>
+      <label>Animation mode
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-mode">?<span class="hint" role="tooltip" id="hint-mode">Continuous keeps the text in place and repeats the animation on its own instead of tracking scroll position.</span></span>
+      </label>
       <button id="modeButton" class="toggle-button" type="button" aria-pressed="false">
         Scroll
       </button>
-      <div class="hint">Continuous keeps the text in place and repeats the animation on its own instead of tracking scroll position.</div>
     </div>
 
     <div class="control-row" data-scroll-only>
@@ -24,9 +25,8 @@
     </div>
 
     <div class="control-row" data-continuous-only data-vibrate-only>
-      <label>Vibrate interval <span id="intervalVal" class="value"></span></label>
+      <label><span class="label-text">Vibrate interval <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-interval">?<span class="hint" role="tooltip" id="hint-interval">Rest time before the next pulse. 0 vibrates continuously with no pause.</span></span></span><span id="intervalVal" class="value"></span></label>
       <input id="intervalRange" type="range" min="0" max="10" step="0.5" value="3" />
-      <div class="hint">Rest time before the next pulse. 0 vibrates continuously with no pause.</div>
     </div>
 
     <div class="control-row" data-continuous-only data-rotate-only>
@@ -68,15 +68,13 @@
     </div>
 
     <div class="control-row" data-hide-rotate>
-      <label>Lag (return speed) <span id="lagVal" class="value"></span></label>
+      <label><span class="label-text">Lag (return speed) <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lag">?<span class="hint" role="tooltip" id="hint-lag">How quickly the red/cyan channels snap back together after scrolling stops.</span></span></span><span id="lagVal" class="value"></span></label>
       <input id="lagRange" type="range" min="0.01" max="0.3" step="0.005" value="0.15" />
-      <div class="hint">How quickly the red/cyan channels snap back together after scrolling stops.</div>
     </div>
 
     <div class="control-row" data-hide-rotate>
-      <label>Rebound <span id="reboundVal" class="value"></span></label>
+      <label><span class="label-text">Rebound <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-rebound">?<span class="hint" role="tooltip" id="hint-rebound">Adds springy overshoot as the channels converge back to center.</span></span></span><span id="reboundVal" class="value"></span></label>
       <input id="reboundRange" type="range" min="0" max="2" step="0.05" value="0" />
-      <div class="hint">Adds springy overshoot as the channels converge back to center.</div>
     </div>
 
     <div class="control-row" data-scroll-only>
@@ -105,9 +103,10 @@
     </div>
 
     <div class="control-row">
-      <label>Channel direction</label>
+      <label>Channel direction
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-invert">?<span class="hint" role="tooltip" id="hint-invert">Swaps which channel leads the scroll direction, like flipping a pair of 3D glasses.</span></span>
+      </label>
       <button id="invertButton" class="toggle-button" type="button" aria-pressed="false">
         Red leads
       </button>
-      <div class="hint">Swaps which channel leads the scroll direction, like flipping a pair of 3D glasses.</div>
     </div>

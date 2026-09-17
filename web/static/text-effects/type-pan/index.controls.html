@@ -1,61 +1,33 @@
 
     <div class="control-row">
-      <label>Animation mode</label>
+      <label>Animation mode
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-driveMode">?<span class="hint" role="tooltip" id="hint-driveMode">Scroll types from real page scroll position. Continuous types and erases the line on its own clock. Static Scroll keeps the page from scrolling — instead, scroll (mouse wheel/trackpad) while hovering the text (or an element elsewhere on the page tagged <code>data-type-pan-hover="demoText"</code>) to type it out directly.</span></span>
+      </label>
       <select id="driveModeSelect">
         <option value="scroll" selected>Scroll</option>
         <option value="continuous">Continuous</option>
         <option value="hover">Static Scroll (hover)</option>
       </select>
-      <div class="hint">Scroll types from real page scroll position. Continuous types and erases the line on its own clock. Static Scroll keeps the page from scrolling — instead, scroll (mouse wheel/trackpad) while hovering the text (or an element elsewhere on the page tagged <code>data-type-pan-hover="demoText"</code>) to type it out directly.</div>
     </div>
 
     <div class="control-row" data-hover-only>
-      <label>Scroll speed <span id="sensitivityVal" class="value"></span></label>
+      <label><span class="label-text">Scroll speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sensitivity">?<span class="hint" role="tooltip" id="hint-sensitivity">Multiplier applied to wheel input while hovering. Higher is faster.</span></span></span><span id="sensitivityVal" class="value"></span></label>
       <input id="sensitivityRange" type="range" min="0.2" max="5" step="0.1" value="1" />
-      <div class="hint">Multiplier applied to wheel input while hovering. Higher is faster.</div>
-    </div>
-
-    <div class="control-row">
-      <label>Step</label>
-      <button id="prevWordButton" class="toggle-button" type="button">← Prev word</button>
-    </div>
-    <div class="control-row">
-      <button id="nextWordButton" class="toggle-button" type="button">Next word →</button>
-      <div class="hint">Types/erases one word, animated. Try clicking rapidly to see how "Step policy" below handles a burst of clicks.</div>
-    </div>
-
-    <div class="control-row">
-      <label>Step policy</label>
-      <select id="stepPolicySelect">
-        <option value="redirect" selected>Redirect</option>
-        <option value="rateLimit">Rate limit</option>
-        <option value="queue">Queue</option>
-      </select>
-      <div class="hint">What Prev/Next word (or code calling <code>.nextChar()</code>/<code>.nextWord()</code>/<code>.goTo()</code>, etc.) does if clicked again before the current step lands. Redirect: retargets immediately from wherever the reveal visually is - fast clicks blur past characters instead of visiting each one. Rate limit: ignores a click that arrives too soon after the last accepted one. Queue: lets the current step finish, then plays every queued click back-to-back in order.</div>
-    </div>
-
-    <div class="control-row" data-rate-limit-only>
-      <label>Min step interval <span id="minStepIntervalVal" class="value"></span></label>
-      <input id="minStepIntervalRange" type="range" min="50" max="1000" step="25" value="150" />
-      <div class="hint">How soon another click is accepted after the last one, under "Rate limit".</div>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Type duration <span id="typeDurationVal" class="value"></span></label>
+      <label><span class="label-text">Type duration <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-typeDuration">?<span class="hint" role="tooltip" id="hint-typeDuration">How long it takes to type the whole line.</span></span></span><span id="typeDurationVal" class="value"></span></label>
       <input id="typeDurationRange" type="range" min="500" max="6000" step="100" value="2200" />
-      <div class="hint">How long it takes to type the whole line.</div>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Hold duration <span id="holdDurationVal" class="value"></span></label>
+      <label><span class="label-text">Hold duration <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-holdDuration">?<span class="hint" role="tooltip" id="hint-holdDuration">How long the fully-typed line holds before erasing.</span></span></span><span id="holdDurationVal" class="value"></span></label>
       <input id="holdDurationRange" type="range" min="0" max="4000" step="100" value="1000" />
-      <div class="hint">How long the fully-typed line holds before erasing.</div>
     </div>
 
     <div class="control-row" data-continuous-only>
-      <label>Rollback speed <span id="rollbackSpeedVal" class="value"></span></label>
+      <label><span class="label-text">Rollback speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-rollbackSpeed">?<span class="hint" role="tooltip" id="hint-rollbackSpeed">How long it takes to erase back to empty before typing starts again.</span></span></span><span id="rollbackSpeedVal" class="value"></span></label>
       <input id="rollbackSpeedRange" type="range" min="100" max="3000" step="100" value="700" />
-      <div class="hint">How long it takes to erase back to empty before typing starts again.</div>
     </div>
 
     <div class="control-row">
@@ -82,23 +54,22 @@
     </div>
 
     <div class="control-row">
-      <label>Pan pin position <span id="panVal" class="value"></span></label>
+      <label><span class="label-text">Pan pin position <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-pan">?<span class="hint" role="tooltip" id="hint-pan">Where the caret pins horizontally in the element once the line overflows it — the caret always sits right after the last typed character, and new characters reveal to its right as you scroll.</span></span></span><span id="panVal" class="value"></span></label>
       <input id="panRange" type="range" min="0.15" max="0.85" step="0.02" value="0.65" />
-      <div class="hint">Where the caret pins horizontally in the element once the line overflows it — the caret always sits right after the last typed character, and new characters reveal to its right as you scroll.</div>
     </div>
 
     <div class="control-row">
-      <label>Pan smoothing <span id="lagVal" class="value"></span></label>
+      <label><span class="label-text">Pan smoothing <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lag">?<span class="hint" role="tooltip" id="hint-lag">How quickly the element catches up to the caret. Lower = a softer, trailing pan; higher = an instant, snappy one.</span></span></span><span id="lagVal" class="value"></span></label>
       <input id="lagRange" type="range" min="0.02" max="1" step="0.02" value="0.18" />
-      <div class="hint">How quickly the element catches up to the caret. Lower = a softer, trailing pan; higher = an instant, snappy one.</div>
     </div>
 
     <div class="control-row" data-scroll-only>
-      <label>Reverse scroll behavior</label>
+      <label>Reverse scroll behavior
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-erase">?<span class="hint" role="tooltip" id="hint-erase">On: scrolling back erases already-typed characters, like undoing the typing. Off: typed text is kept permanently and reverse scroll just rewinds the camera across it.</span></span>
+      </label>
       <button id="eraseButton" class="toggle-button" type="button" aria-pressed="true">
         Erasing on scroll back
       </button>
-      <div class="hint">On: scrolling back erases already-typed characters, like undoing the typing. Off: typed text is kept permanently and reverse scroll just rewinds the camera across it.</div>
     </div>
 
     <div class="control-row">

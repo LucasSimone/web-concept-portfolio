@@ -40,6 +40,7 @@ const layoutSrc = `<!doctype html>
   <script src="/shared/effects-manifest.js"></script>
   <script src="/shared/nav.js"></script>
   <script src="/shared/controls-toggle.js"></script>
+  <script src="/shared/hint-position.js"></script>
   <script src="/shared/docs-nav.js"></script>
   <script src="/shared/docs-copy.js"></script>
   <script>

@@ -1,40 +1,39 @@
 
     <div class="control-row">
-      <label>Max traces <span id="maxTracesVal" class="value"></span></label>
+      <label><span class="label-text">Max traces <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxTraces">?<span class="hint" role="tooltip" id="hint-maxTraces">The most traces that can be lit up and moving at once.</span></span></span><span id="maxTracesVal" class="value"></span></label>
       <input type="range" id="maxTracesRange" min="2" max="250" step="1" value="80" />
-      <div class="hint">The most traces that can be lit up and moving at once.</div>
     </div>
 
     <div class="control-row">
-      <label>Grid size <span id="cellVal" class="value"></span></label>
+      <label><span class="label-text">Grid size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cell">?<span class="hint" role="tooltip" id="hint-cell">Spacing between the grid points traces bend at.</span></span></span><span id="cellVal" class="value"></span></label>
       <input type="range" id="cellRange" min="18" max="60" step="2" value="34" />
-      <div class="hint">Spacing between the grid points traces bend at.</div>
     </div>
 
     <div class="control-row">
-      <label>Max length <span id="maxLengthVal" class="value"></span></label>
+      <label><span class="label-text">Max length <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxLength">?<span class="hint" role="tooltip" id="hint-maxLength">The longest a trace can randomly grow, in grid steps.</span></span></span><span id="maxLengthVal" class="value"></span></label>
       <input type="range" id="maxLengthRange" min="6" max="60" step="1" value="30" />
-      <div class="hint">The longest a trace can randomly grow, in grid steps.</div>
     </div>
 
     <div class="control-row">
-      <label>Speed <span id="speedVal" class="value"></span></label>
+      <label><span class="label-text">Speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-speed">?<span class="hint" role="tooltip" id="hint-speed">How fast each dot travels along its trace.</span></span></span><span id="speedVal" class="value"></span></label>
       <input type="range" id="speedRange" min="10" max="200" step="5" value="20" />
-      <div class="hint">How fast each dot travels along its trace.</div>
     </div>
 
     <div class="control-row">
-      <label>Fade out <span id="fadeDurationVal" class="value"></span></label>
+      <label><span class="label-text">Fade out <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fadeDuration">?<span class="hint" role="tooltip" id="hint-fadeDuration">How long a finished trace takes to disappear before a new one appears elsewhere.</span></span></span><span id="fadeDurationVal" class="value"></span></label>
       <input type="range" id="fadeDurationRange" min="0.5" max="4" step="0.1" value="0.5" />
-      <div class="hint">How long a finished trace takes to disappear before a new one appears elsewhere.</div>
     </div>
 
     <div class="control-row">
-      <button id="overlapToggle" type="button" class="toggle-button" aria-pressed="false">Overlap: Off</button>
-      <div class="hint">On lets new traces cross existing ones; off keeps every trace self-contained.</div>
+      <div class="control-inline">
+        <button id="overlapToggle" type="button" class="toggle-button" aria-pressed="false">Overlap: Off</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-overlap">?<span class="hint" role="tooltip" id="hint-overlap">On lets new traces cross existing ones; off keeps every trace self-contained.</span></span>
+      </div>
     </div>
 
     <div class="control-row">
-      <button id="randomizeButton" type="button">Randomize traces</button>
-      <div class="hint">Instantly retires every trace on the board and starts fresh ones.</div>
+      <div class="control-inline">
+        <button id="randomizeButton" type="button">Randomize traces</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-randomize">?<span class="hint" role="tooltip" id="hint-randomize">Instantly retires every trace on the board and starts fresh ones.</span></span>
+      </div>
     </div>
