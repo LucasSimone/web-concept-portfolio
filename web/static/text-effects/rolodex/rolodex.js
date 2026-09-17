@@ -12,6 +12,10 @@
  * auto-initializes every matching element on load.
  */
 (function (global) {
+  // Requires shared/sequence-stepper.js to already be loaded.
+  const clamp = global.SequenceStepper.clamp;
+  const smoothstep = global.SequenceStepper.smoothstep;
+
   const STYLE_ID = 'rolodex-styles';
   const CSS = `
 .rolodex {
@@ -148,6 +152,20 @@
     // - it's bounded by the page - but wheel/drag input, e.g. the homepage
     // carousel, can).
     loopScroll: false,
+    // What happens when .next()/.prev()/.goTo() is called again before the
+    // previous call has finished flipping - a real concern for a button a
+    // user might mash. 'redirect' immediately retargets the flip from
+    // wherever it visually is (responsive, but a fast burst blurs past
+    // every word in between instead of visiting each one). 'rateLimit'
+    // drops a call arriving less than `minStepInterval` after the last one
+    // that was accepted, so every accepted flip finishes before the next
+    // is even considered. 'queue' lets the current flip finish, then plays
+    // queued calls back-to-back in order, so every call is eventually
+    // honored (a big burst queues up a correspondingly long visible run).
+    // See shared/sequence-stepper.js.
+    stepPolicy: 'redirect',
+    // ms - only meaningful with stepPolicy: 'rateLimit'.
+    minStepInterval: 450,
   };
 
   class Rolodex {
@@ -162,8 +180,17 @@
       this._lastSegment = -1;
       this._measureCtx = null;
       this._contState = null;
-      this._contSegment = 0;
       this._contStateStart = null;
+      // Shared animated-position engine: drives both the manual
+      // .next()/.prev()/.goTo() flips and, below, 'continuous' driveMode's
+      // hold/flip/rollback clock - see shared/sequence-stepper.js. Rolodex
+      // always steps eased (a physical card flip), unlike Type Pan's
+      // constant-pace typing, so it sets its own default easing.
+      this._stepper = new global.SequenceStepper({
+        ease: global.SequenceStepper.smoothstep,
+        stepPolicy: this.options.stepPolicy,
+        minStepIntervalMs: this.options.minStepInterval,
+      });
       this._scrollActive = false;
       this._scrollIdleTimer = null;
       this._scrollDirection = 0;
@@ -202,8 +229,8 @@
       this.el.innerHTML = '';
       this._lastSegment = -1;
       this._contState = null;
-      this._contSegment = 0;
       this._contStateStart = null;
+      this._stepper.jumpTo(0);
       this._displaySegmentFloat = null;
 
       const size = this._measureCardSize();
@@ -297,13 +324,7 @@
 
     _onScroll() {
       if (this.options.driveMode !== 'scroll') return;
-
-      const rect = this.el.getBoundingClientRect();
-      const range = global.innerHeight + rect.height;
-      const nextProgress = range > 0
-        ? clamp((global.innerHeight - rect.top) / range, 0, 1)
-        : 0.5;
-      this.pushProgress(nextProgress);
+      this.pushProgress(viewportProgress(this.el));
     }
 
     // Feeds a new 0-1 progress value in from whatever is driving the flip —
@@ -315,6 +336,14 @@
     // is active, then finish any fold still underway once it goes idle
     // instead of leaving it parked mid-flip.
     pushProgress(value) {
+      // Real input always wins over an in-flight .next()/.prev()/.goTo()
+      // step - cancel it and seed the display from wherever it visually
+      // was, so the catch-up logic below resumes from there instead of
+      // this call being silently ignored until the step lands on its own.
+      if (this._stepper.isStepping) {
+        this._displaySegmentFloat = this._stepper.value;
+        this._stepper.jumpTo(this._stepper.value);
+      }
       const next = this.options.loopScroll ? value : clamp(value, 0, 1);
       // Remember which way progress last actually moved (increasing folds
       // forward, decreasing unfolds) — the idle settle below finishes a
@@ -381,61 +410,129 @@
       return this._segmentFromFloat(p * segments);
     }
 
+    // Converts the stepper's raw running position into {segmentIndex,
+    // flipT} for 'continuous' driveMode and manual .next()/.prev() steps -
+    // the fractional part of the position directly IS flipT, since the
+    // stepper's own easing already shapes the motion in time (unlike
+    // _segmentFromFloat above, which shapes a scroll-paced position
+    // spatially through the flip-window). The one edge case: sitting
+    // exactly at (or, without `loopScroll`, past) the last segment reads as
+    // "fully landed on the last word" (flipT 1), not "0% into a segment
+    // that doesn't exist".
+    _continuousSegmentFromValue(value) {
+      const segments = this._segmentCount();
+      if (!this.options.loopScroll && value >= segments) {
+        return { segmentIndex: Math.max(0, segments - 1), flipT: 1 };
+      }
+      const wrapped = this.options.loopScroll ? mod(value, segments) : clamp(value, 0, segments);
+      const segmentIndex = clamp(Math.floor(wrapped), 0, segments - 1);
+      return { segmentIndex, flipT: wrapped - segmentIndex };
+    }
+
     // Drives {segmentIndex, flipT} from a clock instead of scroll position:
     // hold on the current word for `interval`, flip to the next word over
-    // `flipDuration`. Without `loopScroll` the word list is a straight line,
-    // so once the last word is reached there's nowhere to flip on TO - it
-    // rewinds straight back to the first word over `rollbackSpeed` (eased,
-    // so it reads like a physical rolodex spinning back to start) before
-    // holding again. With `loopScroll` the list is already circular, so the
-    // "last" word's flip just wraps forward into the first word like any
-    // other transition - no rewind needed or wanted.
+    // `flipDuration` (a single stepTo() on the shared stepper - see
+    // shared/sequence-stepper.js). Without `loopScroll` the word list is a
+    // straight line, so once the last word is reached there's nowhere to
+    // flip on TO - it rewinds straight back to the first word over
+    // `rollbackSpeed` (eased, so it reads like a physical rolodex spinning
+    // back to start) before holding again. With `loopScroll` the list is
+    // already circular, so the "last" word's flip just wraps forward into
+    // the first word like any other transition - no rewind needed or
+    // wanted, and the stepper's position just keeps climbing forever
+    // (_continuousSegmentFromValue above wraps it for rendering).
     _computeContinuous(now) {
-      const { loopScroll } = this.options;
+      const { loopScroll, interval, flipDuration, rollbackSpeed } = this.options;
       const segments = this._segmentCount();
-      const { interval, flipDuration, rollbackSpeed } = this.options;
 
       if (this._contState == null) {
         this._contState = 'hold';
-        this._contSegment = 0;
+        this._stepper.jumpTo(0);
         this._contStateStart = now;
       }
 
       if (this._contState === 'hold') {
-        const atEnd = !loopScroll && this._contSegment >= segments;
         if (now - this._contStateStart >= interval) {
+          const atEnd = !loopScroll && this._stepper.value >= segments;
           this._contState = atEnd ? 'rollback' : 'flip';
-          this._contStateStart = now;
+          // stepToDirect, not stepTo: this is the automatic clock's own
+          // step, which must never be rate-limited or queued behind
+          // stepPolicy (that governs manual .next()/.prev()/.goTo() calls a
+          // person might mash, not the effect's own internal animation) -
+          // see the comment on stepToDirect in sequence-stepper.js.
+          this._stepper.stepToDirect(
+            atEnd ? 0 : this._stepper.value + 1,
+            { duration: atEnd ? rollbackSpeed : flipDuration },
+          );
         }
-        return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
-      }
-
-      if (this._contState === 'flip') {
-        const t = flipDuration > 0 ? clamp((now - this._contStateStart) / flipDuration, 0, 1) : 1;
-        if (t >= 1) {
-          this._contSegment = loopScroll ? (this._contSegment + 1) % segments : this._contSegment + 1;
-          this._contState = 'hold';
-          this._contStateStart = now;
-          const atEnd = !loopScroll && this._contSegment >= segments;
-          return { segmentIndex: clamp(this._contSegment, 0, segments - 1), flipT: atEnd ? 1 : 0 };
-        }
-        return { segmentIndex: this._contSegment, flipT: smoothstep(t) };
-      }
-
-      // rollback: only reached without `loopScroll`. Sweep progress from 1
-      // back to 0 across every segment in one continuous eased motion, then
-      // resume holding at the first word.
-      const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
-      if (t >= 1) {
+      } else if (!this._stepper.isStepping) {
+        // The flip or rollback step just landed.
         this._contState = 'hold';
-        this._contSegment = 0;
         this._contStateStart = now;
-        return { segmentIndex: 0, flipT: 0 };
       }
-      const progress = 1 - smoothstep(t);
-      const segmentFloat = progress * segments;
-      const segmentIndex = clamp(Math.floor(segmentFloat), 0, segments - 1);
-      return { segmentIndex, flipT: segmentFloat - segmentIndex };
+
+      return this._continuousSegmentFromValue(this._stepper.tick(now));
+    }
+
+    // Seeds the stepper from the currently displayed position if it isn't
+    // already mid-step (or mid-queue - see stepPolicy), so a fresh
+    // .next()/.prev()/.goTo() call always starts from where the flip
+    // visually is, not wherever the stepper was last left, since
+    // scroll/hover driving in between doesn't touch it.
+    _seedStepIfIdle() {
+      if (!this._stepper.isStepping) {
+        this._stepper.jumpTo(this._displaySegmentFloat != null ? this._displaySegmentFloat : 0);
+      }
+    }
+
+    // Starts (or, per stepPolicy, redirects/rate-limits/queues) a step to
+    // the next/previous word, animated like a single 'continuous'-mode
+    // flip. Intended for 'scroll'/'hover' driveMode, the same scope as
+    // .pushProgress() - in 'continuous' driveMode the automatic
+    // hold/flip/rollback clock is already stepping the same shared stepper
+    // and may override a manual call once its own hold timer next elapses.
+    _beginStep(delta, options) {
+      this._seedStepIfIdle();
+      const segments = this._segmentCount();
+      const rawTarget = Math.round(this._stepper.target) + delta;
+      const target = this.options.loopScroll ? rawTarget : clamp(rawTarget, 0, segments);
+      this._stepper.stepTo(target, { duration: this.options.flipDuration, ...options });
+    }
+
+    // Flip forward/back one word, animated over `flipDuration`.
+    next(options) {
+      this._beginStep(1, options);
+    }
+
+    prev(options) {
+      this._beginStep(-1, options);
+    }
+
+    // Flip directly to word `wordIndex`, at the same per-word pace as a
+    // single next()/prev() flip (`flipDuration` ms/word) rather than a
+    // fixed total duration - so a multi-word jump visibly flips through
+    // every word in between at a normal pace instead of racing through
+    // them. Pass `duration` in `options` to override that with a fixed
+    // total time regardless of distance instead.
+    goTo(wordIndex, options) {
+      this._seedStepIfIdle();
+      const segments = this._segmentCount();
+      let target;
+      if (this.options.loopScroll) {
+        // The raw position can have wrapped many times over by now (e.g.
+        // after a while idle-cycling via `loop`), so `wordIndex` itself
+        // could be a long way behind it. Every multiple of `segments`
+        // added to `wordIndex` is an equally valid stand-in for the same
+        // word once wrapping - jump to whichever one is actually nearest
+        // the current position instead of always sweeping literally back
+        // to `wordIndex`.
+        const from = this._stepper.target;
+        const k = Math.round((from - wordIndex) / segments);
+        target = wordIndex + k * segments;
+      } else {
+        target = clamp(wordIndex, 0, segments);
+      }
+      this._stepper.stepTo(target, { paceMs: this.options.flipDuration, ...options });
     }
 
     _applySegment(segmentIndex, force) {
@@ -465,6 +562,21 @@
         let segmentIndex, flipT;
         if (this.options.driveMode === 'continuous') {
           ({ segmentIndex, flipT } = this._computeContinuous(performance.now()));
+        } else if (this._stepper.isStepping) {
+          // A manual .next()/.prev() step is in flight (only reachable in
+          // 'scroll'/'hover' driveMode - 'continuous' is handled above).
+          ({ segmentIndex, flipT } = this._continuousSegmentFromValue(this._stepper.tick(performance.now())));
+          if (!this._stepper.isStepping) {
+            // Just landed - write the settled position back into the
+            // display/progress scroll/hover input reads from, so it
+            // resumes from here instead of snapping to a stale value.
+            const segments = this._segmentCount();
+            this._displaySegmentFloat = this._stepper.value;
+            this._contState = null;
+            this._progress = this.options.loopScroll
+              ? this._displaySegmentFloat / segments
+              : clamp(this._displaySegmentFloat / segments, 0, 1);
+          }
         } else {
           // Shared by 'scroll' and 'hover': both just feed `this._progress`
           // (0-1) into the same easing/idle-settle logic below — 'scroll'
@@ -562,8 +674,23 @@
                 wordCount,
               );
               const contSegments = this._segmentCount();
-              this._contSegment = clamp(restingWordIndex, 0, contSegments);
-              this._contState = this._contSegment >= contSegments ? 'rollback' : 'hold';
+              const seedValue = clamp(restingWordIndex, 0, contSegments);
+              const atEnd = seedValue >= contSegments;
+              this._stepper.jumpTo(seedValue);
+              if (atEnd) {
+                // Already resting right at the line's end: start the
+                // rewind immediately rather than holding there for a full
+                // `interval` first (unlike the ordinary hold-then-rollback
+                // the automatic clock does elsewhere) - it was already
+                // sitting idle on the last word for however long input had
+                // stopped, so an extra hold here would just be a second,
+                // redundant pause.
+                this._contState = 'rollback';
+                // stepToDirect: see the comment in _computeContinuous above.
+                this._stepper.stepToDirect(0, { duration: this.options.rollbackSpeed });
+              } else {
+                this._contState = 'hold';
+              }
               this._contStateStart = performance.now();
               // Used as-is below, bypassing _segmentFromFloat: see the
               // comment on the branch above for why.
@@ -685,15 +812,19 @@
       const driveModeChanged = 'driveMode' in options && options.driveMode !== this.options.driveMode;
       const loopChanged = 'loop' in options && options.loop !== this.options.loop;
       const loopScrollChanged = 'loopScroll' in options && options.loopScroll !== this.options.loopScroll;
+      const stepPolicyChanged = 'stepPolicy' in options || 'minStepInterval' in options;
       Object.assign(this.options, options);
       if (modeChanged) this._buildDOM();
+      if (stepPolicyChanged) {
+        this._stepper.setPolicy({ stepPolicy: this.options.stepPolicy, minStepIntervalMs: this.options.minStepInterval });
+      }
       if (driveModeChanged || loopScrollChanged) {
         // loopScroll changes the segment count itself (circular vs. a
         // straight line), so a mid-flight _displaySegmentFloat/_progress
         // from the old semantics can't just carry over - same full reset
         // driveMode changes already do.
         this._contState = null;
-        this._contSegment = 0;
+        this._stepper.jumpTo(0);
         this._contStateStart = null;
         this._lastSegment = -1;
         this._displaySegmentFloat = null;
@@ -731,19 +862,10 @@
     }
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
   // Always returns a value in [0, m), unlike JS's `%` which can return
   // negative results for a negative `value`.
   function mod(value, m) {
     return ((value % m) + m) % m;
-  }
-
-  function smoothstep(value) {
-    const t = clamp(value, 0, 1);
-    return t * t * (3 - 2 * t);
   }
 
   function toDegrees(radians) {

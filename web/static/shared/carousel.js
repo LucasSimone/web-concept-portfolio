@@ -32,6 +32,11 @@
  * Wheel input is only captured while there's room left to move — at either
  * boundary the event is left alone so normal page scroll continues past
  * the carousel instead of trapping the cursor.
+ *
+ * Once a card actually comes to rest in the focus position (not just
+ * passed through while moving), it gets a bubbling 'carousel-settle'
+ * event - lets a page react to "this card just became the focused one"
+ * without reaching into the carousel's own position tracking.
  */
 (function (global) {
   const DEFAULTS = {
@@ -68,6 +73,8 @@
       this._dragPrevPos = 0;
       this._wheelActive = false;
       this._wheelIdleTimer = null;
+      // -1 so the very first settle (including index 0) always fires.
+      this._settledIndex = -1;
 
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
@@ -94,7 +101,22 @@
       this._measure();
       this._pos = 0;
       this._velocity = 0;
+      this._settledIndex = -1;
+      this._setSettledIndex(0);
       this._render();
+    }
+
+    // Fires a 'carousel-settle' event (bubbling) on the card at `index`
+    // once it's the one actually at rest in the focus position - not on
+    // every card passed through while moving. Lets a page react to "this
+    // specific card just became the focused one" (e.g. resetting a
+    // preview's animation) without reaching into the carousel's own
+    // position tracking.
+    _setSettledIndex(index) {
+      if (index === this._settledIndex) return;
+      this._settledIndex = index;
+      const card = this._cards[index];
+      if (card) card.dispatchEvent(new CustomEvent('carousel-settle', { bubbles: true }));
     }
 
     _onResize() {
@@ -185,6 +207,7 @@
         if (Math.abs(this._velocity) < 0.0004 && Math.abs(snapTarget - this._pos) < 0.0004) {
           this._velocity = 0;
           this._pos = snapTarget;
+          this._setSettledIndex(snapTarget);
         } else {
           this._pos = clamp(this._pos + this._velocity, 0, this._maxIndex);
         }

@@ -122,6 +122,10 @@ main {
   display: none;
 }
 
+.controls:not([data-step-policy="rateLimit"]) [data-rate-limit-only] {
+  display: none;
+}
+
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;

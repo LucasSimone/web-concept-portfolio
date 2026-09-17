@@ -33,6 +33,9 @@
  * auto-initializes every matching element on load.
  */
 (function (global) {
+  // Requires shared/sequence-stepper.js to already be loaded.
+  const clamp = global.SequenceStepper.clamp;
+
   const STYLE_ID = 'type-pan-styles';
   const CSS = `
 .type-pan {
@@ -124,6 +127,21 @@
     // proportionally longer than a single-letter step, the same way a
     // longer word takes a real typist longer.
     stepSpeed: 60,
+    // What happens when .nextChar()/.prevChar()/.nextWord()/.prevWord()/
+    // .goTo() is called again before the previous call has finished typing
+    // - a real concern for a button a user might mash. 'redirect'
+    // immediately retargets from wherever the reveal visually is
+    // (responsive, but a fast burst blurs past every character in between
+    // instead of visiting each one). 'rateLimit' drops a call arriving
+    // less than `minStepInterval` after the last one that was accepted, so
+    // every accepted step finishes before the next is even considered.
+    // 'queue' lets the current step finish, then plays queued calls
+    // back-to-back in order, so every call is eventually honored (a big
+    // burst queues up a correspondingly long visible run). See
+    // shared/sequence-stepper.js.
+    stepPolicy: 'redirect',
+    // ms - only meaningful with stepPolicy: 'rateLimit'.
+    minStepInterval: 150,
   };
 
   class TypePan {
@@ -133,9 +151,10 @@
 
       this.el = el;
       this.options = { ...DEFAULTS, ...options };
-      this._typedPx = 0; // virtual "scroll" accumulator, driven by wheel input in 'hover' mode
-      this._maxTypedPx = 0;
-      this._progress = 0; // 0-1, driven by real page scroll in 'scroll' mode
+      // 0-1 reveal fraction, fed by real page scroll (_onScroll), wheel
+      // input in 'hover' driveMode (_onWheel), or any external source via
+      // .pushProgress() - all three funnel through the same field.
+      this._progress = 0;
       this._maxProgress = 0;
       this._panX = 0;
       this._totalWidth = 0;
@@ -143,10 +162,15 @@
       this._contStateStart = null;
       this._wordBoundaries = []; // revealed-counts marking "just finished a word", for .nextWord()/.prevWord()
       this._lastRevealedCount = 0;
-      this._stepState = null; // null | 'active' - see .nextChar()/.prevChar()/.nextWord()/.prevWord()
-      this._stepFrom = 0;
-      this._stepTo = 0;
-      this._stepStart = null;
+      // Shared animated-position engine: drives both the manual
+      // .nextChar()/.prevChar()/.nextWord()/.prevWord() steps and, below,
+      // 'continuous' driveMode's type/hold/erase clock - see
+      // shared/sequence-stepper.js.
+      this._stepper = new global.SequenceStepper({
+        paceMs: this.options.stepSpeed,
+        stepPolicy: this.options.stepPolicy,
+        minStepIntervalMs: this.options.minStepInterval,
+      });
 
       this._onScroll = this._onScroll.bind(this);
       this._onResize = this._onResize.bind(this);
@@ -158,15 +182,15 @@
       this._onWheel = (event) => {
         if (this.options.driveMode !== 'hover') return;
 
-        // Real input always wins over an in-flight step.
-        this._stepState = null;
         // Ordinary vertical wheel motion (plus any native horizontal
         // delta, e.g. trackpad swipes) is redirected into typing progress.
+        // Converted from a pixel delta into a 0-1 fraction of the line's
+        // rendered width, the same unit pushProgress() itself takes.
         const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
         event.preventDefault();
 
-        const next = this._typedPx + delta * this.options.sensitivity;
-        this._typedPx = clamp(next, 0, this._totalWidth);
+        const deltaFraction = this._totalWidth > 0 ? (delta * this.options.sensitivity) / this._totalWidth : 0;
+        this.pushProgress(this._progress + deltaFraction);
       };
 
       this._buildDOM();
@@ -220,15 +244,13 @@
       this.viewportEl = viewport;
       this.trackEl = track;
       this.cursorEl = cursor;
-      this._typedPx = 0;
-      this._maxTypedPx = 0;
       this._progress = 0;
       this._maxProgress = 0;
       this._panX = 0;
       this._contState = null;
       this._contStateStart = null;
       this._lastRevealedCount = 0;
-      this._stepState = null;
+      this._stepper.jumpTo(0);
       this._applyCursorStyle();
     }
 
@@ -252,52 +274,59 @@
 
     _onScroll() {
       if (this.options.driveMode !== 'scroll') return;
+      this.pushProgress(viewportProgress(this.el));
+    }
 
+    // Feeds a new 0-1 reveal fraction in from whatever is driving typing -
+    // real page scroll (_onScroll) and wheel input in 'hover' driveMode
+    // (_onWheel) both go through this; it's also the general escape hatch
+    // for tying typing to anything else, e.g. the homepage carousel, which
+    // calls this directly instead of the page scrolling.
+    pushProgress(value) {
       // Real input always wins over an in-flight step.
-      this._stepState = null;
-      const rect = this.el.getBoundingClientRect();
-      const range = global.innerHeight + rect.height;
-      this._progress = range > 0
-        ? clamp((global.innerHeight - rect.top) / range, 0, 1)
-        : 0;
+      if (this._stepper.isStepping) this._stepper.jumpTo(this._stepper.value);
+      this._progress = clamp(value, 0, 1);
+      this._maxProgress = Math.max(this._maxProgress, this._progress);
     }
 
     // Drives a 0-1 reveal fraction from a clock instead of scroll/wheel
     // input: type the full line over `typeDuration`, hold fully typed for
     // `holdDuration`, erase back to empty over `rollbackSpeed`, then loop
-    // back into typing.
-    _advanceContinuous(now) {
+    // back into typing. Built on the same SequenceStepper as the manual
+    // step methods below - "type the whole line" is just a stepTo() over
+    // the whole character count, at a fixed total duration instead of a
+    // per-character pace.
+    _advanceContinuous(now, total) {
       const { typeDuration, holdDuration, rollbackSpeed } = this.options;
 
+      // stepToDirect, not stepTo, throughout this method: this is the
+      // automatic clock's own step, which must never be rate-limited or
+      // queued behind stepPolicy (that governs manual .nextChar()/.goTo()
+      // calls a person might mash, not the effect's own internal animation)
+      // - see the comment on stepToDirect in sequence-stepper.js.
       if (this._contState == null) {
         this._contState = 'type';
-        this._contStateStart = now;
-      }
-
-      if (this._contState === 'type') {
-        const t = typeDuration > 0 ? clamp((now - this._contStateStart) / typeDuration, 0, 1) : 1;
-        if (t >= 1) {
-          this._contState = 'hold';
-          this._contStateStart = now;
-        }
-        return t;
+        this._stepper.jumpTo(0);
+        this._stepper.stepToDirect(total, { duration: typeDuration });
       }
 
       if (this._contState === 'hold') {
         if (now - this._contStateStart >= holdDuration) {
           this._contState = 'erase';
-          this._contStateStart = now;
+          this._stepper.stepToDirect(0, { duration: rollbackSpeed });
         }
-        return 1;
+      } else if (!this._stepper.isStepping) {
+        // A 'type' or 'erase' step just landed.
+        this._contState = this._contState === 'type' ? 'hold' : 'type';
+        if (this._contState === 'hold') {
+          this._contStateStart = now;
+        } else {
+          this._stepper.stepToDirect(total, { duration: typeDuration });
+        }
       }
 
-      // erase
-      const t = rollbackSpeed > 0 ? clamp((now - this._contStateStart) / rollbackSpeed, 0, 1) : 1;
-      if (t >= 1) {
-        this._contState = 'type';
-        this._contStateStart = now;
-      }
-      return 1 - t;
+      const count = this._stepper.tick(now);
+      return total > 0 ? count / total : 0;
     }
 
     // Starts (or redirects an already-running) step toward `targetCount`
@@ -305,70 +334,38 @@
     // always reads as actually typing/backspacing rather than a
     // smooth-but-instant reveal - a multi-character step (.nextWord()) is
     // just several single-character steps (.nextChar()) run back to back,
-    // covered by the same interpolation.
-    _beginStep(targetCount) {
+    // covered by the same interpolation. A fresh step (the stepper isn't
+    // already mid-step) seeds from the last rendered count rather than
+    // wherever the stepper was last left, since scroll/hover driving in
+    // between doesn't touch it.
+    _beginStep(targetCount, options) {
       const total = this._chars.length;
-      const from = this._stepState === 'active' ? this._currentStepCount(performance.now(), total) : this._lastRevealedCount;
-      const to = clamp(targetCount, 0, total);
-      if (to === from) return;
-      this._stepFrom = from;
-      this._stepTo = to;
-      this._stepStart = performance.now();
-      this._stepState = 'active';
-    }
-
-    // The revealed-count a step is at right now, without mutating state -
-    // used both to render mid-step and, in _beginStep, to redirect a step
-    // that's already moving toward its next target from wherever it
-    // actually is instead of restarting from _stepTo.
-    _currentStepCount(now, total) {
-      const distance = Math.abs(this._stepTo - this._stepFrom);
-      const duration = distance * this.options.stepSpeed;
-      const t = duration > 0 ? clamp((now - this._stepStart) / duration, 0, 1) : 1;
-      return this._stepFrom + (this._stepTo - this._stepFrom) * t;
-    }
-
-    // Renders the current step and, once it lands, writes the result back
-    // into whichever accumulator the active driveMode reads from - without
-    // that, the instant the step ends control would fall back to the
-    // driveMode's own stale pre-step value and the reveal would visibly
-    // snap backward.
-    _advanceStep(now, total) {
-      const count = this._currentStepCount(now, total);
-      if (count === this._stepTo) {
-        this._stepState = null;
-        const settledFraction = total > 0 ? this._stepTo / total : 0;
-        if (this.options.driveMode === 'hover') {
-          this._typedPx = settledFraction * this._totalWidth;
-          this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
-        } else if (this.options.driveMode === 'scroll') {
-          this._progress = settledFraction;
-          this._maxProgress = Math.max(this._maxProgress, this._progress);
-        }
-      }
-      return total > 0 ? count / total : 0;
+      if (!this._stepper.isStepping) this._stepper.jumpTo(this._lastRevealedCount);
+      this._stepper.stepTo(clamp(targetCount, 0, total), options);
     }
 
     // Reveal one more/fewer character, animated at `stepSpeed`.
     nextChar() {
-      this._beginStep(this._lastRevealedCount + 1);
+      const current = this._stepper.isStepping ? this._stepper.target : this._lastRevealedCount;
+      this._beginStep(current + 1);
     }
 
     prevChar() {
-      this._beginStep(this._lastRevealedCount - 1);
+      const current = this._stepper.isStepping ? this._stepper.target : this._lastRevealedCount;
+      this._beginStep(current - 1);
     }
 
     // Reveal/erase through to the next or previous word boundary (see
     // _wordBoundaries in _buildDOM), animated one character at a time the
     // same as nextChar()/prevChar() - just covering more distance.
     nextWord() {
-      const current = this._stepState === 'active' ? this._stepTo : this._lastRevealedCount;
+      const current = this._stepper.isStepping ? this._stepper.target : this._lastRevealedCount;
       const boundary = this._wordBoundaries.find((b) => b > current);
       this._beginStep(boundary != null ? boundary : this._chars.length);
     }
 
     prevWord() {
-      const current = this._stepState === 'active' ? this._stepTo : this._lastRevealedCount;
+      const current = this._stepper.isStepping ? this._stepper.target : this._lastRevealedCount;
       let boundary = 0;
       for (const b of this._wordBoundaries) {
         if (b >= current) break;
@@ -377,19 +374,36 @@
       this._beginStep(boundary);
     }
 
+    // Reveal (or erase back) directly to `targetCount` characters, at the
+    // same constant `stepSpeed` pace as a single nextChar()/prevChar() step
+    // rather than a fixed total duration - so a big jump visibly
+    // types/erases through every character in between at a normal pace
+    // instead of racing through them. Pass `duration` in `options` to
+    // override that with a fixed total time regardless of distance
+    // instead.
+    goTo(targetCount, options) {
+      this._beginStep(targetCount, options);
+    }
+
     _tick() {
       const total = this._chars.length;
 
       let fraction;
-      if (this._stepState === 'active') {
-        fraction = this._advanceStep(performance.now(), total);
-      } else if (this.options.driveMode === 'continuous') {
-        fraction = this._advanceContinuous(performance.now());
-      } else if (this.options.driveMode === 'hover') {
-        this._maxTypedPx = Math.max(this._maxTypedPx, this._typedPx);
-        const revealPx = this.options.eraseOnReverse ? this._typedPx : this._maxTypedPx;
-        fraction = this._totalWidth > 0 ? clamp(revealPx / this._totalWidth, 0, 1) : 0;
+      if (this.options.driveMode === 'continuous') {
+        fraction = this._advanceContinuous(performance.now(), total);
+      } else if (this._stepper.isStepping) {
+        const count = this._stepper.tick(performance.now());
+        fraction = total > 0 ? count / total : 0;
+        if (!this._stepper.isStepping) {
+          // Just landed - write the settled fraction back into _progress,
+          // so scroll/wheel resuming next picks up from here instead of
+          // snapping to a stale value.
+          this._progress = fraction;
+          this._maxProgress = Math.max(this._maxProgress, this._progress);
+        }
       } else {
+        // 'scroll' and 'hover' driveMode both just feed _progress (see
+        // pushProgress()) and read it back the same way here.
         this._maxProgress = Math.max(this._maxProgress, this._progress);
         fraction = this.options.eraseOnReverse ? this._progress : this._maxProgress;
       }
@@ -427,12 +441,15 @@
       Object.assign(this.options, options);
       this._applyCursorStyle();
       this._measure();
+      if ('stepSpeed' in options) this._stepper.defaultPaceMs = options.stepSpeed;
+      if ('stepPolicy' in options || 'minStepInterval' in options) {
+        this._stepper.setPolicy({ stepPolicy: this.options.stepPolicy, minStepIntervalMs: this.options.minStepInterval });
+      }
 
       if (driveModeChanged) {
         this._contState = null;
         this._contStateStart = null;
-        this._typedPx = 0;
-        this._maxTypedPx = 0;
+        this._stepper.jumpTo(0);
         this._progress = 0;
         this._maxProgress = 0;
         if (this.options.driveMode === 'scroll') this._onScroll();
@@ -450,8 +467,8 @@
     // — 'scroll' mode's progress is re-derived live from page scroll
     // position, and 'continuous' mode runs its own clock).
     reset() {
-      this._typedPx = 0;
-      this._maxTypedPx = 0;
+      this._progress = 0;
+      this._maxProgress = 0;
     }
 
     destroy() {
@@ -460,10 +477,6 @@
       global.removeEventListener('resize', this._onResize);
       this._hoverSource.destroy();
     }
-  }
-
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
   }
 
   TypePan.initAll = function (selector = '.type-pan', options = {}) {

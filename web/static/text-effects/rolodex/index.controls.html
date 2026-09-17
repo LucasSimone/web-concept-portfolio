@@ -15,6 +15,31 @@
       <div class="hint">Wheel/trackpad distance needed to flip through the whole sentence while hovering. Lower is faster.</div>
     </div>
 
+    <div class="control-row">
+      <label>Step</label>
+      <button id="prevButton" class="toggle-button" type="button">← Prev word</button>
+    </div>
+    <div class="control-row">
+      <button id="nextButton" class="toggle-button" type="button">Next word →</button>
+      <div class="hint">Flips one word back/forward, animated. Try clicking rapidly to see how "Step policy" below handles a burst of clicks.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Step policy</label>
+      <select id="stepPolicySelect">
+        <option value="redirect" selected>Redirect</option>
+        <option value="rateLimit">Rate limit</option>
+        <option value="queue">Queue</option>
+      </select>
+      <div class="hint">What Prev/Next (or code calling <code>.next()</code>/<code>.prev()</code>/<code>.goTo()</code>) does if clicked again before the current flip lands. Redirect: retargets immediately from wherever the flip visually is - fast clicks blur past words instead of visiting each one. Rate limit: ignores a click that arrives too soon after the last accepted one. Queue: lets the current flip finish, then plays every queued click back-to-back in order.</div>
+    </div>
+
+    <div class="control-row" data-rate-limit-only>
+      <label>Min step interval <span id="minStepIntervalVal" class="value"></span></label>
+      <input id="minStepIntervalRange" type="range" min="50" max="2000" step="50" value="450" />
+      <div class="hint">How soon another click is accepted after the last one, under "Rate limit".</div>
+    </div>
+
     <div class="control-row" data-scroll-only>
       <label><input id="loopScrollCheckbox" type="checkbox" /> Loop past the end</label>
       <div class="hint">Makes the word list circular: scrolling/wheeling past the last word flips straight on into the first (and past the first, back into the last) instead of stopping there. In Scroll mode this only goes as far as there's page left to scroll; try Static Scroll (hover) to wheel through it indefinitely.</div>
@@ -77,6 +102,11 @@
       <label>Flip width <span id="flipWidthVal" class="value"></span></label>
       <input id="flipWidthRange" type="range" min="10" max="95" step="1" value="55" />
       <div class="hint">How much of each word's scroll segment is spent mid-flip vs. holding on the fully-formed word.</div>
+    </div>
+    <div class="control-row" data-scroll-only>
+      <label>Catch-up speed <span id="snapStrengthVal" class="value"></span></label>
+      <input id="snapStrengthRange" type="range" min="0.02" max="1" step="0.01" value="0.4" />
+      <div class="hint">How fast the display catches up to scroll/hover position - every frame it closes this fraction of the remaining gap. Higher snaps almost instantly; lower lags behind and settles more slowly, most visible right after a fast scroll or a big jump in a custom <code>pushProgress()</code> value.</div>
     </div>
     <div class="control-row">
       <label>Perspective <span id="perspectiveVal" class="value"></span></label>

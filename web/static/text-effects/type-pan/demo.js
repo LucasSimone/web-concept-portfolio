@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const controls = {
     driveMode: document.getElementById('driveModeSelect'),
+    prevWordButton: document.getElementById('prevWordButton'),
+    nextWordButton: document.getElementById('nextWordButton'),
+    stepPolicy: document.getElementById('stepPolicySelect'),
+    minStepInterval: document.getElementById('minStepIntervalRange'),
     sensitivity: document.getElementById('sensitivityRange'),
     typeDuration: document.getElementById('typeDurationRange'),
     holdDuration: document.getElementById('holdDurationRange'),
@@ -19,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const labels = {
+    minStepInterval: document.getElementById('minStepIntervalVal'),
     sensitivity: document.getElementById('sensitivityVal'),
     typeDuration: document.getElementById('typeDurationVal'),
     holdDuration: document.getElementById('holdDurationVal'),
@@ -29,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function syncLabels() {
+    labels.minStepInterval.textContent = `${controls.minStepInterval.value}ms`;
     labels.sensitivity.textContent = `${controls.sensitivity.value}×`;
     labels.typeDuration.textContent = `${controls.typeDuration.value}ms`;
     labels.holdDuration.textContent = `${controls.holdDuration.value}ms`;
@@ -42,6 +48,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const driveMode = controls.driveMode.value;
     controlsPanel.dataset.driveMode = driveMode;
     typePan.update({ driveMode });
+  });
+
+  controls.prevWordButton.addEventListener('click', () => {
+    typePan.prevWord();
+  });
+
+  controls.nextWordButton.addEventListener('click', () => {
+    typePan.nextWord();
+  });
+
+  controls.stepPolicy.addEventListener('change', () => {
+    const stepPolicy = controls.stepPolicy.value;
+    controlsPanel.dataset.stepPolicy = stepPolicy;
+    typePan.update({ stepPolicy });
+  });
+
+  controls.minStepInterval.addEventListener('input', () => {
+    typePan.update({ minStepInterval: Number(controls.minStepInterval.value) });
+    syncLabels();
   });
 
   controls.sensitivity.addEventListener('input', () => {

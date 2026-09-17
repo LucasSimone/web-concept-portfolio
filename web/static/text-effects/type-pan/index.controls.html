@@ -15,6 +15,31 @@
       <div class="hint">Multiplier applied to wheel input while hovering. Higher is faster.</div>
     </div>
 
+    <div class="control-row">
+      <label>Step</label>
+      <button id="prevWordButton" class="toggle-button" type="button">← Prev word</button>
+    </div>
+    <div class="control-row">
+      <button id="nextWordButton" class="toggle-button" type="button">Next word →</button>
+      <div class="hint">Types/erases one word, animated. Try clicking rapidly to see how "Step policy" below handles a burst of clicks.</div>
+    </div>
+
+    <div class="control-row">
+      <label>Step policy</label>
+      <select id="stepPolicySelect">
+        <option value="redirect" selected>Redirect</option>
+        <option value="rateLimit">Rate limit</option>
+        <option value="queue">Queue</option>
+      </select>
+      <div class="hint">What Prev/Next word (or code calling <code>.nextChar()</code>/<code>.nextWord()</code>/<code>.goTo()</code>, etc.) does if clicked again before the current step lands. Redirect: retargets immediately from wherever the reveal visually is - fast clicks blur past characters instead of visiting each one. Rate limit: ignores a click that arrives too soon after the last accepted one. Queue: lets the current step finish, then plays every queued click back-to-back in order.</div>
+    </div>
+
+    <div class="control-row" data-rate-limit-only>
+      <label>Min step interval <span id="minStepIntervalVal" class="value"></span></label>
+      <input id="minStepIntervalRange" type="range" min="50" max="1000" step="25" value="150" />
+      <div class="hint">How soon another click is accepted after the last one, under "Rate limit".</div>
+    </div>
+
     <div class="control-row" data-continuous-only>
       <label>Type duration <span id="typeDurationVal" class="value"></span></label>
       <input id="typeDurationRange" type="range" min="500" max="6000" step="100" value="2200" />

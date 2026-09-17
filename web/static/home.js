@@ -34,6 +34,30 @@ new Carousel(document.getElementById('backgroundCarousel'));
 setupFilter('typeFilter', 'variationGrid', () => variationCarousel.refresh());
 setupFilter('conceptTypeFilter', 'conceptGrid', () => conceptCarousel.refresh());
 
+// Tracks a horizontal pointer drag starting on `carouselEl` and calls
+// `onDelta(dx)` with each frame's movement in px (negative = dragged
+// left) - the drag half of "wheel or drag over the carousel drives
+// whatever's currently on screen", shared by every carousel-driven card
+// below. pointermove/pointerup listen on window rather than carouselEl so
+// a drag keeps tracking even if the pointer slides off the carousel
+// mid-drag.
+function bindCarouselDrag(carouselEl, onDelta) {
+  let dragging = false;
+  let lastX = 0;
+
+  carouselEl.addEventListener('pointerdown', (event) => {
+    dragging = true;
+    lastX = event.clientX;
+  });
+  window.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    const dx = event.clientX - lastX;
+    lastX = event.clientX;
+    onDelta(dx);
+  });
+  window.addEventListener('pointerup', () => { dragging = false; });
+}
+
 // While scrolling the page normally, a card's lag effect uses its
 // default (vertical) profile, driven by the instance's own window-
 // scroll listener. While the user is actively wheeling/dragging the
@@ -46,8 +70,6 @@ function bindCarouselAxisSwitch(carouselEl, instance, verticalProfile, horizonta
   const IDLE_DELAY = 350;
   const maxOffset = horizontalProfile.offsetX || 0;
   let idleTimer = null;
-  let dragging = false;
-  let lastX = 0;
 
   function scheduleRevert() {
     clearTimeout(idleTimer);
@@ -68,17 +90,7 @@ function bindCarouselAxisSwitch(carouselEl, instance, verticalProfile, horizonta
     nudge(raw);
   }, { passive: true });
 
-  carouselEl.addEventListener('pointerdown', (event) => {
-    dragging = true;
-    lastX = event.clientX;
-  });
-  window.addEventListener('pointermove', (event) => {
-    if (!dragging) return;
-    const dx = event.clientX - lastX;
-    lastX = event.clientX;
-    nudge(-dx * DRAG_SCALE);
-  });
-  window.addEventListener('pointerup', () => { dragging = false; });
+  bindCarouselDrag(carouselEl, (dx) => nudge(-dx * DRAG_SCALE));
 }
 
 // In Flight Out and Type Pan Vertical normally derive their progress
@@ -99,8 +111,6 @@ function bindCarouselProgressDriver(carouselEl, instance, options = {}) {
   const setProgress = options.set || ((value) => { instance._progress = value; });
   let idleTimer = null;
   let revertRaf = null;
-  let dragging = false;
-  let lastX = 0;
 
   function stopRevert() {
     if (revertRaf) cancelAnimationFrame(revertRaf);
@@ -137,17 +147,7 @@ function bindCarouselProgressDriver(carouselEl, instance, options = {}) {
     nudge(raw * sensitivity);
   }, { passive: true });
 
-  carouselEl.addEventListener('pointerdown', (event) => {
-    dragging = true;
-    lastX = event.clientX;
-  });
-  window.addEventListener('pointermove', (event) => {
-    if (!dragging) return;
-    const dx = event.clientX - lastX;
-    lastX = event.clientX;
-    nudge(-dx * dragSensitivity);
-  });
-  window.addEventListener('pointerup', () => { dragging = false; });
+  bindCarouselDrag(carouselEl, (dx) => nudge(-dx * dragSensitivity));
 
   setProgress(restProgress);
 }
@@ -192,22 +192,47 @@ const [typePanCard] = TypePan.initAll('.variation-card h2.type-pan', {
 if (typePanCard) {
   window.removeEventListener('scroll', typePanCard._onScroll);
   window.removeEventListener('resize', typePanCard._onResize);
-  bindCarouselProgressDriver(variationCarousel.root, typePanCard, { restProgress: 1 });
+  // Drives it through the public pushProgress() entry point (same one
+  // real scroll/hover input feeds internally) rather than poking
+  // _progress directly, so an in-flight nextChar()/goTo() step still
+  // gets cancelled correctly and _maxProgress still tracks.
+  bindCarouselProgressDriver(variationCarousel.root, typePanCard, {
+    restProgress: 1,
+    set: (value) => typePanCard.pushProgress(value),
+  });
 }
-// Unlike the cards above, this doesn't need any custom carousel-progress
-// wiring: 'hover' driveMode is Rolodex's own built-in way to take input
-// from wheel/trackpad over some other element instead of page scroll (see
-// rolodex.js), and the carousel is tagged data-rolodex-hover="rolodexCardTitle"
-// in index.body.html to be that element. So this is otherwise a plain
-// Rolodex - loopScroll makes the word list circular (wheeling past the
-// last word flips straight into the first instead of stopping), loop
+// Wheel input needs no custom wiring at all: 'hover' driveMode is
+// Rolodex's own built-in way to take input from wheel/trackpad over some
+// other element instead of page scroll (see rolodex.js), and the carousel
+// is tagged data-rolodex-hover="rolodexCardTitle" in index.body.html to be
+// that element. loopScroll makes the word list circular (wheeling past
+// the last word flips straight into the first instead of stopping), loop
 // keeps it cycling on its own once the carousel goes idle - same as any
 // other page using the effect, just fed by the carousel instead of the
 // page scrolling.
-Rolodex.initAll('.variation-card h2.rolodex', {
+const [rolodexCard] = Rolodex.initAll('.variation-card h2.rolodex', {
   mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05,
   driveMode: 'hover', loop: true, loopScroll: true,
 });
+if (rolodexCard) {
+  // Drag has no built-in equivalent to 'hover' driveMode's wheel
+  // listening (see the In Flight Out/Type Pan cards above for the same
+  // gap), so it's the one piece of custom wiring this card still needs -
+  // same shape as those, just calling .pushProgress() directly since
+  // there's no separate get/set indirection to thread through here.
+  const ROLODEX_DRAG_DISTANCE = 400; // px of drag to sweep the whole word list
+  bindCarouselDrag(variationCarousel.root, (dx) => {
+    rolodexCard.pushProgress(rolodexCard._progress - dx / ROLODEX_DRAG_DISTANCE);
+  });
+
+  // Once this card settles into focus (see the 'carousel-settle' event on
+  // Carousel), flip it back to its opening word - so browsing away and
+  // back always finds it freshly reset rather than wherever a previous
+  // visit left it.
+  rolodexCard.el.closest('.variation-card').addEventListener('carousel-settle', () => {
+    rolodexCard.goTo(0);
+  });
+}
 CircuitBoard.initAll('.variation-card.bg-circuit-board', {
   maxTraces: 30, cell: 20, speed: 30,
 });

@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const controls = {
     driveMode: document.getElementById('driveModeSelect'),
+    prevButton: document.getElementById('prevButton'),
+    nextButton: document.getElementById('nextButton'),
+    stepPolicy: document.getElementById('stepPolicySelect'),
+    minStepInterval: document.getElementById('minStepIntervalRange'),
     loopScroll: document.getElementById('loopScrollCheckbox'),
     loop: document.getElementById('loopCheckbox'),
     hoverScrollDistance: document.getElementById('hoverScrollDistanceRange'),
@@ -25,11 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     text: document.getElementById('textInput'),
     mode: document.getElementById('modeSelect'),
     flipWidth: document.getElementById('flipWidthRange'),
+    snapStrength: document.getElementById('snapStrengthRange'),
     perspective: document.getElementById('perspectiveRange'),
     shading: document.getElementById('shadingRange'),
   };
 
   const labels = {
+    minStepInterval: document.getElementById('minStepIntervalVal'),
+    snapStrength: document.getElementById('snapStrengthVal'),
     hoverScrollDistance: document.getElementById('hoverScrollDistanceVal'),
     interval: document.getElementById('intervalVal'),
     flipDuration: document.getElementById('flipDurationVal'),
@@ -40,11 +47,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function syncLabels() {
+    labels.minStepInterval.textContent = `${controls.minStepInterval.value}ms`;
     labels.hoverScrollDistance.textContent = `${controls.hoverScrollDistance.value}px`;
     labels.interval.textContent = `${controls.interval.value}ms`;
     labels.flipDuration.textContent = `${controls.flipDuration.value}ms`;
     labels.rollbackSpeed.textContent = `${controls.rollbackSpeed.value}ms`;
     labels.flipWidth.textContent = `${controls.flipWidth.value}%`;
+    labels.snapStrength.textContent = controls.snapStrength.value;
     labels.perspective.textContent = `${controls.perspective.value}px`;
     labels.shading.textContent = controls.shading.value;
   }
@@ -66,6 +75,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const driveMode = controls.driveMode.value;
     controlsPanel.dataset.driveMode = driveMode;
     instance.update({ driveMode });
+  });
+
+  controls.prevButton.addEventListener('click', () => {
+    instance.prev();
+  });
+
+  controls.nextButton.addEventListener('click', () => {
+    instance.next();
+  });
+
+  controls.stepPolicy.addEventListener('change', () => {
+    const stepPolicy = controls.stepPolicy.value;
+    controlsPanel.dataset.stepPolicy = stepPolicy;
+    instance.update({ stepPolicy });
+  });
+
+  controls.minStepInterval.addEventListener('input', () => {
+    instance.update({ minStepInterval: Number(controls.minStepInterval.value) });
+    syncLabels();
   });
 
   controls.loopScroll.addEventListener('change', () => {
@@ -116,6 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   controls.flipWidth.addEventListener('input', () => {
     instance.update({ flipWidth: Number(controls.flipWidth.value) });
+    syncLabels();
+  });
+
+  controls.snapStrength.addEventListener('input', () => {
+    instance.update({ snapStrength: Number(controls.snapStrength.value) });
     syncLabels();
   });
 

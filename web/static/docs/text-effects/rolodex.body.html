@@ -19,22 +19,25 @@
       </div>
 
       <h2>Install</h2>
-      <pre><code>&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
-&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Injects its own <code>&lt;style&gt;</code> tag covering the 3D
         card/flap/panel structure on first use, so no companion CSS file is
         required (the injected CSS hardcodes a white background on card
-        faces). <code>hover-scroll-source.js</code> is a small shared
-        dependency ("static scroll" mode's wheel-target wiring, shared with
-        Type Pan) - it must load first.
+        faces). The downloaded file is self-contained - it bundles three
+        small shared dependencies: <code>hover-scroll-source.js</code>
+        ("static scroll" mode's wheel-target wiring),
+        <code>sequence-stepper.js</code> (the animated-step engine behind
+        <code>'continuous'</code> driveMode and <code>.next()</code>/
+        <code>.prev()</code> below), and <code>scroll-progress.js</code>
+        (the scroll-position math behind <code>'scroll'</code> driveMode),
+        all shared with Type Pan.
       </p>
 
       <h2>Usage</h2>
       <pre><code>&lt;div class="rolodex" data-text="Rolodex flips through words one by one"&gt;
   Rolodex flips through words one by one
 &lt;/div&gt;
-&lt;script src="hover-scroll-source.js"&gt;&lt;/script&gt;
 &lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Reads <code>data-text</code> or trimmed <code>textContent</code>,
@@ -79,11 +82,43 @@
           <tr><td><code>rollbackSpeed</code></td><td><code>900</code></td><td>ms to rewind from the last word back to the first (continuous mode, or <code>loop</code> once idle)</td></tr>
           <tr><td><code>hoverScrollDistance</code></td><td><code>1000</code></td><td>px-equivalent of wheel delta needed to sweep through the whole word list (hover mode)</td></tr>
           <tr><td><code>scrollIdleDelay</code></td><td><code>120</code></td><td>ms of no scroll/wheel events before a fold-in-progress is treated as idle and settles instead of waiting for more input</td></tr>
-          <tr><td><code>snapStrength</code></td><td><code>0.4</code></td><td>0–1, how fast the idle settle finishes a fold each frame - higher snaps immediately, lower dwells longer mid-flip</td></tr>
+          <tr><td><code>snapStrength</code></td><td><code>0.4</code></td><td>0–1, how fast the display catches up to scroll/hover position each frame - higher snaps almost instantly, lower lags behind and settles more slowly. Also governs the idle settle at the end of a fold. Try it live as "Catch-up speed" on the <a href="/text-effects/rolodex/index.html">demo page</a>.</td></tr>
+          <tr>
+            <td><code>stepPolicy</code></td>
+            <td><code>'redirect'</code></td>
+            <td>
+              What <code>.next()</code>/<code>.prev()</code>/<code>.goTo()</code>
+              do if called again before the current flip lands - see the
+              Methods section below.
+              <ul>
+                <li><code>'redirect'</code> — retargets immediately from wherever the flip visually is; a fast burst blurs past every word in between</li>
+                <li><code>'rateLimit'</code> — drops a call arriving less than <code>minStepInterval</code> after the last one accepted</li>
+                <li><code>'queue'</code> — lets the current flip finish, then plays queued calls back-to-back in order</li>
+              </ul>
+            </td>
+          </tr>
+          <tr><td><code>minStepInterval</code></td><td><code>450</code></td><td>ms - only meaningful with <code>stepPolicy: 'rateLimit'</code></td></tr>
         </tbody>
       </table>
 
       <h2>Methods</h2>
+      <p>
+        <code>.next()</code> / <code>.prev()</code> flip forward or back one
+        word; <code>.goTo(wordIndex)</code> flips directly to an arbitrary
+        word, at the same per-word pace as a single flip (pass
+        <code>{ duration }</code> to use a fixed total time instead, regardless
+        of distance). All three animate over <code>flipDuration</code> like a
+        single <code>'continuous'</code>-mode flip - never an instant jump -
+        so a multi-word <code>goTo()</code> visibly flips through every word
+        in between rather than blurring past them. Intended for
+        <code>'scroll'</code>/<code>'hover'</code> driveMode, the same scope
+        as <code>.pushProgress()</code> below: scrolling or wheeling again
+        immediately takes back over from wherever the flip landed. What
+        happens if one of these is called again before the last one finished
+        is governed by <code>stepPolicy</code> above - worth trying out on the
+        <a href="/text-effects/rolodex/index.html">demo page</a>, which has a
+        Next/Prev button and a live Step policy switch.
+      </p>
       <p>
         <code>.remeasure()</code> recomputes card size after a font change;
         <code>.setText(value)</code> replaces the sentence being flipped
