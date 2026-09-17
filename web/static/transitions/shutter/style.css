@@ -164,6 +164,26 @@ p.element-demo-hint {
   outline-offset: 2px;
 }
 
+.t-style-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.t-style-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.t-style-btn[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
 @media (max-width: 720px) {
   .shutter-demo--controls {
     margin-right: 0;

@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const duration = document.getElementById('ptDuration');
   const durationVal = document.getElementById('ptDurationVal');
   const easing = document.getElementById('ptEasing');
+  const variantButtons = Array.from(document.querySelectorAll('[data-variant-group] .t-style-btn'));
   const swatches = Array.from(document.querySelectorAll('.t-swatch'));
 
   // The "Click me" box below the main link — a small live example of
@@ -17,6 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextText = elementDemoShowingAlt ? 'Click me' : 'I can transition too';
     elementDemoShowingAlt = !elementDemoShowingAlt;
     Transitions.shutter.play(elementDemo, {
+      duration: Number(link.dataset.tDuration),
+      easing: link.dataset.tEasing,
+      color: link.dataset.tColor,
+      variant: link.dataset.tVariant,
       swap: (el) => { el.textContent = nextText; },
     });
   }
@@ -47,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
         duration: duration.value,
         easing: easing.value,
+        variant: link.dataset.tVariant,
         color: link.dataset.tColor,
       }));
     } catch (e) {}
@@ -56,6 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const match = swatches.find((b) => b.dataset.color === color) || swatches[0];
     swatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
     link.dataset.tColor = match.dataset.color;
+  }
+
+  function selectVariant(variant) {
+    const match = variantButtons.find((b) => b.dataset.variant === variant) || variantButtons[0];
+    variantButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
+    link.dataset.tVariant = match.dataset.variant;
   }
 
   function syncDuration() {
@@ -79,12 +91,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  variantButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectVariant(btn.dataset.variant);
+      save();
+    });
+  });
+
   const saved = loadSaved();
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
+    selectVariant(saved.variant || 'split');
     selectSwatch(saved.color);
   } else {
+    selectVariant(variantButtons.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.variant);
     selectSwatch(swatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color);
   }
   syncDuration();

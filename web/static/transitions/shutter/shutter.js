@@ -1,11 +1,13 @@
 /**
  * Shutter
  * -------
- * A black panel that rises from one edge to cover whatever it's animating
- * — the whole page during a navigation, or a single element in place —
- * then recedes back down to reveal what's underneath, once whatever it's
- * covering is ready. One continuous vertical motion split across the
- * cover/reveal boundary.
+ * Two black panels — one anchored to the top edge, one to the bottom —
+ * close over whatever it's animating, meeting in the middle, then split
+ * back apart to their edges to reveal what's underneath, once whatever
+ * it's covering is ready. This is the default `split` variant; setting
+ * `variant: 'single'` instead reverts to one panel rising from the
+ * bottom edge to cover the whole target. Either way it's one continuous
+ * motion split across the cover/reveal boundary.
  *
  * Two ways to use it:
  *
@@ -37,10 +39,10 @@
  * effect's script can register alongside it without either clobbering
  * the other.
  *
- * A single call can override duration/easing/color for just that one
- * transition, leaving every other link/call using the page's default
- * profile: a link's `data-t-duration`/`-easing`/`-color` attributes for
- * navigation, or the same fields passed straight into
+ * A single call can override duration/easing/color/variant for just that
+ * one transition, leaving every other link/call using the page's default
+ * profile: a link's `data-t-duration`/`-easing`/`-color`/`-variant`
+ * attributes for navigation, or the same fields passed straight into
  * `cover`/`reveal`/`play` for elements. For navigation, the chosen profile
  * travels to the next page in the same one-shot sessionStorage handoff
  * already used to trigger the reveal, so a customized cover and its
@@ -60,6 +62,7 @@
     duration: 550, // ms for each half (cover or reveal) of the motion
     easing: 'cubic-bezier(.65,0,.35,1)',
     color: '#000',
+    variant: 'split', // 'split' (top + bottom panels meet in the middle) or 'single' (one panel, rises from the bottom)
     selector: null, // which links this page intercepts — off until set
   };
   var pageConfig = (global.TransitionConfig && global.TransitionConfig[NAME]) || {};
@@ -99,12 +102,23 @@
       // applied to (or needed by) document.documentElement — a `fixed`
       // overlay is already viewport-relative regardless of its position.
       '.t-el{position:relative;}' +
-      '.t-shutter-active::before{content:"";position:var(--t-shutter-position,fixed);inset:0;' +
+      // Default (`split`) variant: ::before is the top panel, ::after the
+      // bottom one — each half the target's height, anchored to its own
+      // edge, so scaleY(1) on both meets them exactly in the middle.
+      '.t-shutter-active::before,.t-shutter-active::after{content:"";' +
+      'position:var(--t-shutter-position,fixed);left:0;right:0;height:50%;' +
       'background:var(--t-shutter-color,#000);z-index:2147483647;pointer-events:auto;' +
-      'transform:scaleY(1);transform-origin:bottom;}' +
-      '.t-shutter-anim::before{transition:transform var(--t-shutter-duration,550ms) ' +
-      'var(--t-shutter-easing,cubic-bezier(.65,0,.35,1));}' +
-      '.t-shutter-open::before{transform:scaleY(0);}';
+      'transform:scaleY(1);}' +
+      '.t-shutter-active::before{top:0;transform-origin:top;}' +
+      '.t-shutter-active::after{bottom:0;transform-origin:bottom;}' +
+      '.t-shutter-anim::before,.t-shutter-anim::after{transition:transform ' +
+      'var(--t-shutter-duration,550ms) var(--t-shutter-easing,cubic-bezier(.65,0,.35,1));}' +
+      '.t-shutter-open::before,.t-shutter-open::after{transform:scaleY(0);}' +
+      // `single` variant: one full-height panel rising from the bottom
+      // edge — ::before takes over the whole target, ::after is unused.
+      '[data-t-shutter-variant="single"].t-shutter-active::before{' +
+      'top:auto;bottom:0;height:100%;transform-origin:bottom;}' +
+      '[data-t-shutter-variant="single"].t-shutter-active::after{content:none;}';
     document.head.appendChild(style);
   }
 
@@ -112,6 +126,7 @@
     el.style.setProperty('--t-shutter-duration', profile.duration + 'ms');
     el.style.setProperty('--t-shutter-easing', profile.easing);
     el.style.setProperty('--t-shutter-color', profile.color);
+    el.setAttribute('data-t-shutter-variant', profile.variant);
     // Viewport-relative for the page-nav target, container-relative
     // (against .t-el's position:relative) for everything else.
     el.style.setProperty('--t-shutter-position', el === root ? 'fixed' : 'absolute');
@@ -158,6 +173,7 @@
       duration: (typeof duration === 'number' && isFinite(duration)) ? duration : options.duration,
       easing: overrides.easing || options.easing,
       color: overrides.color || options.color,
+      variant: overrides.variant || options.variant,
     };
   }
 
@@ -167,6 +183,7 @@
       duration: ds.tDuration ? Number(ds.tDuration) : undefined,
       easing: ds.tEasing,
       color: ds.tColor,
+      variant: ds.tVariant,
     };
   }
 

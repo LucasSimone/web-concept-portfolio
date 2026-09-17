@@ -6,10 +6,13 @@
       <p class="docs-eyebrow">Transition · Navigation</p>
       <h1>Shutter</h1>
       <p>
-        A full-screen black panel that rises from the bottom edge to cover
-        the viewport when a link is clicked, then recedes back down to
-        reveal the next page once it loads — one continuous vertical
-        motion, split across the navigation boundary.
+        Two full-screen black panels that close over the viewport from the
+        top and bottom edges, meeting in the middle, when a link is
+        clicked, then split back apart to reveal the next page once it
+        loads — one continuous vertical motion, split across the
+        navigation boundary. Set <code>variant: 'single'</code> for the
+        original single-panel version that rises from the bottom edge
+        instead.
       </p>
 
       <div class="docs-actions">
@@ -74,9 +77,9 @@
       </p>
       <pre><code>Transitions.shutter.configure({ selector: '[data-t-transition="shutter"]' });</code></pre>
       <p>
-        A single link can override duration, easing, or color for just its
-        own transition, leaving every other link on the page using the
-        default profile — this is how the
+        A single link can override duration, easing, color, or variant for
+        just its own transition, leaving every other link on the page
+        using the default profile — this is how the
         <a href="/transitions/shutter/index.html">demo's controls
         panel</a> customizes only the Page One → Page Two link without
         touching the site nav around it:
@@ -201,6 +204,7 @@ Transitions.shutter.play(cardB);
           <tr><td><code>duration</code></td><td><code>550</code></td><td>ms for each half (cover or reveal) of the motion</td></tr>
           <tr><td><code>easing</code></td><td><code>'cubic-bezier(.65,0,.35,1)'</code></td><td>CSS easing applied to the transform transition</td></tr>
           <tr><td><code>color</code></td><td><code>'#000'</code></td><td>Panel background color</td></tr>
+          <tr><td><code>variant</code></td><td><code>'split'</code></td><td><code>'split'</code> (top + bottom panels meet in the middle) or <code>'single'</code> (one panel, rises from the bottom)</td></tr>
           <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are eligible for interception — navigation stays off until this is set</td></tr>
         </tbody>
       </table>
@@ -213,6 +217,7 @@ Transitions.shutter.play(cardB);
           <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
           <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
           <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-variant</code></td><td><code>variant</code></td></tr>
         </tbody>
       </table>
 
