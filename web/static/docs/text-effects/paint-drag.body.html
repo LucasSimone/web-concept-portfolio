@@ -58,6 +58,17 @@
         </tbody>
       </table>
 
+      <h2>Methods</h2>
+      <p>
+        <code>.update(options)</code> merges new options in.
+        <code>.setText(value)</code> changes the text being stamped (updates
+        both <code>data-text</code> and the element's visible content).
+        <code>.clear()</code> wipes the shared canvas immediately instead of
+        waiting for <code>fadeTime</code> to elapse. <code>.destroy()</code>
+        stops the instance's animation loop (the shared canvas itself is
+        only removed when the page unloads).
+      </p>
+
       <h2>Notes</h2>
       <p>
         Implemented as a continuous <code>requestAnimationFrame</code> loop

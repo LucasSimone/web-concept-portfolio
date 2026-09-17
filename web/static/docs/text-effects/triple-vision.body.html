@@ -67,9 +67,17 @@
 
       <h2>Notes</h2>
       <p>
-        One of three effects in the lab with a scroll/continuous toggle —
-        here it's the <code>mode</code> option (Rolodex and Type Pan
-        Horizontal call the same idea <code>driveMode</code>).
+        One of several effects in the lab with a scroll/continuous toggle —
+        here it's the <code>mode</code> option (Rolodex and Type Pan call
+        the same idea <code>driveMode</code>).
+        <code>TripleVisionText.get(elOrSelector)</code> and
+        <code>TripleVisionText.getAll(selector)</code> retrieve existing
+        instances; each instance also exposes <code>.update(options)</code>
+        (switching <code>mode</code> or <code>continuousProfile</code>
+        resets the channels to rest first), <code>.setText(html)</code>
+        (replaces the front layer and both channels' content),
+        <code>.resync()</code> (resets the internal scroll reference to the
+        current position), and <code>.destroy()</code>.
       </p>
     </div>
   </div>

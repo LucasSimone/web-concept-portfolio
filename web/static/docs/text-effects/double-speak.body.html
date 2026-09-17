@@ -62,8 +62,12 @@
         Scroll-driven only — there's no continuous/time-based mode for this
         effect. <code>DoubleSpeak.get(elOrSelector)</code> and
         <code>DoubleSpeak.getAll(selector)</code> retrieve existing instances;
-        each instance also exposes <code>.update(options)</code> and
-        <code>.destroy()</code>.
+        each instance also exposes <code>.update(options)</code>,
+        <code>.setText(html)</code> (replaces both the front and ghost
+        layers' content), <code>.resync()</code> (resets the internal scroll
+        reference to the current position — useful after teleporting the
+        scroll source, e.g. an in-page anchor jump, so the next scroll delta
+        isn't computed against a stale position), and <code>.destroy()</code>.
       </p>
     </div>
   </div>

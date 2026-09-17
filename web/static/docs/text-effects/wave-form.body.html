@@ -58,6 +58,11 @@
         Continuous/time-driven only — a <code>requestAnimationFrame</code>
         loop keyed off <code>performance.now()</code>, with pointer position
         perturbing it. No scroll dependency and no mode toggle.
+        <code>WaveForm.get(elOrSelector)</code> and
+        <code>WaveForm.getAll(selector)</code> retrieve existing instances;
+        each instance also exposes <code>.update(options)</code>,
+        <code>.setText(value)</code> (re-splits into new character spans;
+        an empty/falsy value clears the element), and <code>.destroy()</code>.
       </p>
     </div>
   </div>
