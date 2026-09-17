@@ -18,14 +18,12 @@
 .shutter-hero .eyebrow {
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
   opacity: 0.6;
   margin-bottom: 1.5rem;
 }
 
 .shutter-hero h1 {
-  font-family: 'Archivo Black', sans-serif;
   font-size: clamp(40px, 9vw, 96px);
   line-height: 1;
   margin: 0 0 1.5rem;
@@ -68,7 +66,6 @@ p.element-demo-hint {
   margin: 0 auto;
   border: 1px solid #000;
   cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;

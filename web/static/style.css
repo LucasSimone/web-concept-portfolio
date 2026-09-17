@@ -51,7 +51,7 @@
 }
 .variation-card h2 {
   margin: 0;
-  font-size: 25px;
+  font-size: 30px;
 }
 .variation-card .go {
   font-size: 15px;
@@ -62,7 +62,7 @@
 /* --- Per-effect title styling, scaled down to card size --- */
 .variation-card h2.double-speak {
   font-family: 'Dancing Script', cursive;
-  font-size: 42px;
+  font-size: 46px;
   line-height: 1.1;
 }
 .variation-card .double-speak__front,
@@ -84,7 +84,7 @@
 
 .variation-card h2.triple-vision {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 34px;
+  font-size: 40px;
   line-height: 1.1;
 }
 .variation-card .triple-vision__front,
@@ -113,7 +113,7 @@
   gap: 0.01em;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 36px;
   line-height: 0.9;
   letter-spacing: -0.03em;
   cursor: pointer;
@@ -125,7 +125,7 @@
 
 .variation-card h2.paint-drag {
   font-family: 'Archivo Black', sans-serif;
-  font-size: 28px;
+  font-size: 34px;
   line-height: 1.1;
   position: relative;
   z-index: 2;
@@ -139,7 +139,7 @@
   flex-wrap: wrap;
   justify-content: center;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 34px;
+  font-size: 36px;
   line-height: 0.9;
   letter-spacing: -0.02em;
 }
@@ -150,9 +150,9 @@
 .variation-card h2.type-pan {
   position: relative;
   width: 100%;
-  height: 40px;
+  height: 48px;
   font-family: 'Archivo Black', sans-serif;
-  font-size: 18px;
+  font-size: 32px;
   line-height: 1;
   cursor: ns-resize;
 }
@@ -198,7 +198,7 @@
    /text-effects/rolodex/rolodex.js and is injected automatically.
    This card just scales the font down to fit. */
 .variation-card h2.rolodex {
-  --font-size: 30px;
+  --font-size: 36px;
   font-family: 'IBM Plex Mono', monospace;
 }
 
@@ -229,13 +229,6 @@
   0% { stroke-dashoffset: 900; }
   50% { stroke-dashoffset: 0; }
   100% { stroke-dashoffset: -900; }
-}
-
-.variation-card h2.shutter,
-.variation-card h2.aperture {
-  font-family: 'Archivo Black', sans-serif;
-  font-size: 34px;
-  line-height: 1;
 }
 
 /* Circuit Board: the real reusable background effect, applied to the
@@ -284,6 +277,13 @@
 
 .carousel {
   position: relative;
+  /* Establishes a stacking context so the focused card's z-index (up to
+     ~1000, to layer over its own neighbors - see carousel.js _render())
+     stays contained here instead of competing directly with the sitewide
+     nav's z-index (20, in shared/site.css) once the carousel scrolls
+     under it - without this, the focused card would paint on top of the
+     nav instead of being covered by it. */
+  z-index: 0;
   width: 100%;
   height: 240px;
   overflow: hidden;
