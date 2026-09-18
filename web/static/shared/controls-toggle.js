@@ -5,15 +5,17 @@
  * its header, a fixed edge tab at the panel's left edge to close it from
  * anywhere (useful once you've scrolled down inside a tall panel), and a
  * fixed edge tab to pull it back out when hidden (see the shared rules in
- * site.css). Open by default on desktop, closed by default on mobile.
- * On desktop, once the visitor chooses one or the other, that choice
- * follows them to another page in the same effect's folder too (e.g. the
- * Shutter demo's Page One and Page Two). Scoped per folder rather than
- * site-wide, so closing it on one demo doesn't also close it on an
- * unrelated one. On mobile the panel always starts closed and its state
- * is never persisted, so every visit (and every toggle) starts fresh.
+ * site.css). Open by default on desktop, closed by default on mobile -
+ * every visit, for every demo. The one exception: the two-page transition
+ * labs (Shutter, Aperture), where a desktop visitor's choice on Page One
+ * should still hold on Page Two rather than snapping back open. Everywhere
+ * else nothing is persisted, so a demo's controls always start fresh.
  */
 (function () {
+  var PERSISTED_FOLDERS = ['/transitions/shutter/', '/transitions/aperture/'];
+  var persistsAcrossPages = PERSISTED_FOLDERS.some(function (folder) {
+    return window.location.pathname.indexOf(folder) === 0;
+  });
   var STORAGE_KEY = 'controls-panel-open:' + window.location.pathname.replace(/[^/]*$/, '');
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -23,9 +25,10 @@
     if (!controls.id) controls.id = 'controls-panel';
 
     var isMobile = window.matchMedia('(max-width: 720px)').matches;
+    var canPersist = persistsAcrossPages && !isMobile;
 
     var saved = null;
-    if (!isMobile) {
+    if (canPersist) {
       try { saved = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
     }
     var isOpen = saved !== null ? saved === '1' : !isMobile;
@@ -60,7 +63,7 @@
       closeBtn.setAttribute('aria-expanded', String(isOpen));
       openTab.setAttribute('aria-expanded', String(isOpen));
       closeTab.setAttribute('aria-expanded', String(isOpen));
-      if (!isMobile) {
+      if (canPersist) {
         try { sessionStorage.setItem(STORAGE_KEY, isOpen ? '1' : '0'); } catch (e) {}
       }
     }
