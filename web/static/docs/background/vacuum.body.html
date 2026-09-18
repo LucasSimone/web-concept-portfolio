@@ -19,7 +19,17 @@
         <a class="btn" href="/background/vacuum/vacuum.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#dust-sources">Dust Sources</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="vacuum.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Injects its own <code>&lt;style&gt;</code> tag for the canvas overlay,
@@ -27,7 +37,7 @@
         its own height/content, since the injected CSS doesn't size it.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;section class="bg-vacuum"&gt;
   &lt;h1&gt;Some text&lt;/h1&gt;
   &lt;img src="photo.jpg" alt=""&gt;
@@ -45,7 +55,7 @@
   speed: 8,
 });</code></pre>
 
-      <h2>Where dust comes from</h2>
+      <h2 id="dust-sources">Where dust comes from</h2>
       <p>
         On every rebuild, the whole subtree is scanned for four kinds of
         sources, each colored differently:
@@ -67,8 +77,65 @@
         dust rather than sampling the wrong color.
       </p>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Wider, more dramatic pull</h3>
+        <p>
+          Dust starts shedding much further from the cursor, and each
+          particle reads larger — a bigger, showier radius of effect.
+        </p>
+        <pre><code>Vacuum.initAll('.bg-vacuum', {
+  radius: 220,
+  particleSize: 4,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Heavy dust</h3>
+        <p>
+          Slower-moving, larger particles that shed more readily and in
+          greater numbers — a thicker, more insistent cloud instead of a
+          light sprinkle.
+        </p>
+        <pre><code>Vacuum.initAll('.bg-vacuum', {
+  maxParticles: 600,
+  speed: 1.2,
+  particleSize: 4,
+  spawnChance: 0.8,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Sparse, subtle shimmer</h3>
+        <p>
+          Small, infrequent particles for a barely-there accent instead of
+          an obvious effect — good for a section that shouldn't compete
+          with its own content.
+        </p>
+        <pre><code>Vacuum.initAll('.bg-vacuum', {
+  spawnChance: 0.15,
+  cooldown: 400,
+  particleSize: 1.5,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Full-page background</h3>
+        <p>
+          Nothing special about page-scale usage — apply the class to a
+          large wrapping section instead of a small card. Just make sure
+          that section actually has content (text, images, borders, or a
+          background color) for dust to sample from.
+        </p>
+        <pre><code>&lt;section class="bg-vacuum" style="min-height: 100vh"&gt;
+  ...page content...
+&lt;/section&gt;
+&lt;script src="vacuum.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -85,7 +152,20 @@
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options into the instance (e.g. adjusting <code>radius</code> or <code>speed</code> live).</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize/mutation observers, removes the pointer listeners, and removes the canvas.</td></tr>
+          <tr><td><code>Vacuum.get(elOrSelector)</code></td><td>Looks up the already-initialized instance for one element/selector, or <code>null</code>.</td></tr>
+          <tr><td><code>Vacuum.getAll(selector)</code></td><td>Looks up every already-initialized instance matching a selector (default <code>.bg-vacuum</code>).</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
       <p>
         Points aren't consumed — a spot that's already shed dust can shed
         more once its cooldown passes, so hovering the same area repeatedly

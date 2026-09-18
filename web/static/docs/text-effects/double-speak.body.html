@@ -16,14 +16,23 @@
         <a class="btn" href="/text-effects/double-speak/double-speak.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="double-speak.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
         first use, so no companion CSS file is required.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;div class="double-speak"&gt;Double Speak&lt;/div&gt;
 &lt;script src="double-speak.js"&gt;&lt;/script&gt;</code></pre>
       <p>
@@ -38,8 +47,74 @@
   opacity: 0.4,
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Subtler, softer ghost</h3>
+        <p>
+          A quieter trail for body text or anywhere the full default
+          displacement feels too loud — smaller offset, lower opacity, and a
+          touch of blur so it reads as a soft smear rather than a sharp
+          duplicate.
+        </p>
+        <pre><code>DoubleSpeak.initAll('.double-speak', {
+  offsetY: 24,
+  opacity: 0.25,
+  blur: 1,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Horizontal-only drift</h3>
+        <p>
+          Setting <code>offsetY</code> to <code>0</code> disables vertical
+          movement entirely, leaving a sideways-only ghost — a different
+          read than the default vertical lag.
+        </p>
+        <pre><code>DoubleSpeak.initAll('.double-speak', {
+  offsetX: 30,
+  offsetY: 0,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Inverted — the real text lags</h3>
+        <p>
+          Flips which layer moves: the front (real) text trails behind while
+          the ghost stays put, instead of the default where the ghost is
+          the one lagging.
+        </p>
+        <pre><code>DoubleSpeak.initAll('.double-speak', {
+  inverted: true,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Spring/bounce instead of plain ease</h3>
+        <p>
+          <code>rebound</code> above <code>0</code> swaps the plain easing
+          for spring physics, so the ghost overshoots and settles instead of
+          smoothly catching up.
+        </p>
+        <pre><code>DoubleSpeak.initAll('.double-speak', {
+  rebound: 1,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Drive it from a custom scroll container</h3>
+        <p>
+          By default it listens on <code>window</code>. Point
+          <code>scrollSource</code> at any scrollable element instead to
+          tie the effect to that container's scroll position.
+        </p>
+        <pre><code>DoubleSpeak.initAll('.double-speak', {
+  scrollSource: document.querySelector('.scroll-panel'),
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -57,17 +132,24 @@
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options into the instance and re-applies opacity/blur/color immediately.</td></tr>
+          <tr><td><code>.setText(html)</code></td><td>Replaces both the front and ghost layers' content.</td></tr>
+          <tr><td><code>.resync()</code></td><td>Resets the internal scroll reference to the current position — useful after teleporting the scroll source, e.g. an in-page anchor jump, so the next scroll delta isn't computed against a stale position.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop and removes the scroll listener.</td></tr>
+          <tr><td><code>DoubleSpeak.get(elOrSelector)</code> / <code>DoubleSpeak.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
       <p>
         Scroll-driven only — there's no continuous/time-based mode for this
-        effect. <code>DoubleSpeak.get(elOrSelector)</code> and
-        <code>DoubleSpeak.getAll(selector)</code> retrieve existing instances;
-        each instance also exposes <code>.update(options)</code>,
-        <code>.setText(html)</code> (replaces both the front and ghost
-        layers' content), <code>.resync()</code> (resets the internal scroll
-        reference to the current position — useful after teleporting the
-        scroll source, e.g. an in-page anchor jump, so the next scroll delta
-        isn't computed against a stale position), and <code>.destroy()</code>.
+        effect.
       </p>
     </div>
   </div>

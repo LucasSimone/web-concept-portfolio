@@ -8,8 +8,7 @@
       <p>
         Splits text into per-character spans that continuously drift up and
         down on layered sine waves — a base wave plus a faster shimmer wave —
-        with pointer position adding directional drift, rotation, and
-        shimmer intensity.
+        with pointer position adding directional drift and rotation.
       </p>
 
       <div class="docs-actions">
@@ -17,14 +16,23 @@
         <a class="btn" href="/text-effects/wave-form/wave-form.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="wave-form.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
         first use, so no companion CSS file is required.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;div class="wave-form" data-text="Wave Form"&gt;Wave Form&lt;/div&gt;
 &lt;script src="wave-form.js"&gt;&lt;/script&gt;</code></pre>
       <p>
@@ -39,8 +47,60 @@
   drift: 0.6,
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Calm, ambient drift</h3>
+        <p>
+          Lower amplitude, frequency, and drift together for a slow, subtle
+          sway instead of the energetic default.
+        </p>
+        <pre><code>WaveForm.initAll('.wave-form', {
+  amplitude: 8,
+  frequency: 0.4,
+  drift: 0.3,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Ripple across the word</h3>
+        <p>
+          A higher <code>spread</code> offsets each character's phase
+          further from its neighbors, so the wave visibly ripples
+          left-to-right across the word instead of every character moving
+          in near-unison.
+        </p>
+        <pre><code>WaveForm.initAll('.wave-form', {
+  spread: 2.5,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>No shimmer, just drift</h3>
+        <p>
+          Turns off the opacity oscillation, leaving only the positional
+          movement — useful over a background where flickering opacity
+          reads as noisy.
+        </p>
+        <pre><code>WaveForm.initAll('.wave-form', {
+  fade: false,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Fast and energetic</h3>
+        <p>
+          Bigger amplitude and drift push both the displacement and the
+          perceived oscillation speed higher for a more frantic wave.
+        </p>
+        <pre><code>WaveForm.initAll('.wave-form', {
+  amplitude: 24,
+  drift: 1.4,
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -53,16 +113,24 @@
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options into the running instance.</td></tr>
+          <tr><td><code>.setText(value)</code></td><td>Re-splits into new character spans for the given text; an empty/falsy value clears the element.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop and removes the pointermove listener.</td></tr>
+          <tr><td><code>WaveForm.get(elOrSelector)</code> / <code>WaveForm.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
       <p>
         Continuous/time-driven only — a <code>requestAnimationFrame</code>
         loop keyed off <code>performance.now()</code>, with pointer position
         perturbing it. No scroll dependency and no mode toggle.
-        <code>WaveForm.get(elOrSelector)</code> and
-        <code>WaveForm.getAll(selector)</code> retrieve existing instances;
-        each instance also exposes <code>.update(options)</code>,
-        <code>.setText(value)</code> (re-splits into new character spans;
-        an empty/falsy value clears the element), and <code>.destroy()</code>.
       </p>
     </div>
   </div>

@@ -64,6 +64,39 @@ a { color: inherit; }
   margin-left: auto;
 }
 
+.docs-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.docs-nav-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.docs-nav-toggle:hover {
+  background: #000;
+  color: #fff;
+}
+
+.docs-sidebar-backdrop {
+  display: none;
+}
+
+.docs-sidebar-close {
+  display: none;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -109,20 +142,20 @@ a { color: inherit; }
 .docs-sidebar {
   position: sticky;
   top: 57px;
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
   height: calc(100vh - 57px);
   overflow-y: auto;
   padding: 32px 20px;
   border-right: 1px solid #000;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .docs-sidebar a {
   display: block;
-  padding: 4px 0;
+  padding: 7px 0;
   text-decoration: none;
-  opacity: 0.65;
+  opacity: 0.7;
 }
 
 .docs-sidebar a:hover,
@@ -132,8 +165,8 @@ a { color: inherit; }
 }
 
 .docs-sidebar-group h3 {
-  margin: 22px 0 6px;
-  font-size: 11px;
+  margin: 24px 0 8px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.5;
@@ -166,6 +199,16 @@ a { color: inherit; }
 .docs-content h2 {
   margin: 40px 0 12px;
   font-size: 18px;
+  scroll-margin-top: 73px;
+}
+
+.docs-content h3 {
+  margin: 28px 0 8px;
+  font-size: 14px;
+}
+
+.docs-content h2 + h3 {
+  margin-top: 4px;
 }
 
 .docs-content p {
@@ -178,6 +221,45 @@ a { color: inherit; }
   display: flex;
   gap: 10px;
   margin: 20px 0 8px;
+}
+
+.docs-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 32px 0 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #000;
+}
+
+.docs-toc a {
+  padding: 5px 10px;
+  border: 1px solid #000;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: #000;
+  opacity: 0.7;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.docs-toc a:hover {
+  background: #000;
+  color: #fff;
+  opacity: 1;
+}
+
+.docs-content .recipe {
+  margin: 0 0 28px;
+}
+
+.docs-content .recipe h3 {
+  margin: 0 0 6px;
+}
+
+.docs-content .recipe p {
+  margin: 0 0 10px;
 }
 
 .docs-content pre {
@@ -294,12 +376,137 @@ a { color: inherit; }
   .docs-layout {
     flex-direction: column;
   }
+  /* The sidebar becomes an off-canvas drawer instead of sitting inline
+     above the content - toggled by .docs-nav-toggle (the hamburger
+     button in the top nav) via a `docs-sidebar-open` class on <body>,
+     applied by docs-nav.js. Closed by default; nothing persists it
+     across page loads, matching the controls panel's mobile behavior
+     below. */
+  .docs-nav-toggle {
+    display: flex;
+  }
+
   .docs-sidebar {
-    position: static;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 30;
+    width: 85%;
+    max-width: 360px;
+    height: 100dvh;
+    margin: 0;
+    padding: 72px 24px 32px;
+    background: #fff;
+    border-right: 1px solid #000;
+    border-bottom: none;
+    font-size: 17px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  /* Bigger, higher-contrast, and easier to tap than the desktop sidebar's
+     compact list - this is now a full-screen menu, not a persistent
+     side-column, so it can afford the room. */
+  .docs-sidebar a {
+    padding: 11px 0;
+    opacity: 0.75;
+  }
+
+  .docs-sidebar-group h3 {
+    margin-top: 26px;
+    font-size: 12px;
+  }
+
+  body.docs-sidebar-open .docs-sidebar {
+    transform: translateX(0);
+  }
+
+  .docs-sidebar-close {
+    display: flex;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #000;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .docs-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  body.docs-sidebar-open .docs-sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body.docs-sidebar-open {
+    overflow: hidden;
+  }
+
+  /* .docs-layout switches main axis from row to column here, which
+     swaps what `flex: 1` on .docs-content governs - main-axis (height)
+     instead of width - so width falls back to align-items: flex-start's
+     fit-content sizing and gets forced wide by the least-breakable
+     content (e.g. the uppercase eyebrow line), overflowing the
+     viewport. Pin it explicitly instead. */
+  .docs-content {
     width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #000;
+  }
+
+  /* Tables stack into bordered cards instead of scrolling sideways -
+     the description column is the part worth reading and horizontal
+     scroll would just hide it off-screen. */
+  .docs-content table,
+  .docs-content tbody,
+  .docs-content tr,
+  .docs-content td {
+    display: block;
+    width: 100%;
+  }
+
+  .docs-content thead {
+    display: none;
+  }
+
+  .docs-content table {
+    border: none;
+  }
+
+  .docs-content tr {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #000;
+  }
+
+  .docs-content td {
+    padding: 5px 0;
+    border: none;
+  }
+
+  .docs-content td + td {
+    padding-top: 2px;
+  }
+
+  .docs-content .opts-table td:nth-child(2)::before {
+    content: "Default: ";
+    font-weight: 700;
+    opacity: 0.55;
   }
 }
 

@@ -18,14 +18,23 @@
         <a class="btn" href="/text-effects/triple-vision/triple-vision.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="triple-vision.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
         first use, so no companion CSS file is required.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;div class="triple-vision"&gt;Triple Vision&lt;/div&gt;
 &lt;script src="triple-vision.js"&gt;&lt;/script&gt;</code></pre>
       <p>
@@ -42,8 +51,76 @@
   opacity: 0.6,
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Continuous vibrate (periodic kicks)</h3>
+        <p>
+          Text stays in place; an X-axis kick fires, settles, waits out
+          <code>interval</code>, then fires again — no scroll needed.
+        </p>
+        <pre><code>TripleVisionText.initAll('.triple-vision', {
+  mode: 'continuous',
+  continuousProfile: 'vibrate',
+  offsetX: 12,
+  interval: 1200,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Continuous rotate (constant orbit)</h3>
+        <p>
+          Both channels continuously orbit the still text at a constant
+          rate instead of kicking and resting.
+        </p>
+        <pre><code>TripleVisionText.initAll('.triple-vision', {
+  mode: 'continuous',
+  continuousProfile: 'rotate',
+  offsetX: 8,
+  speed: 1,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Scroll-driven with spring/bounce</h3>
+        <p>
+          Keeps the default scroll-driven split, but replaces the plain
+          easing with spring physics via <code>rebound</code>, so the
+          channels overshoot and settle instead of just catching up.
+        </p>
+        <pre><code>TripleVisionText.initAll('.triple-vision', {
+  mode: 'scroll',
+  rebound: 1,
+  offsetX: 20,
+  offsetY: 40,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Inverted lead channel</h3>
+        <p>
+          Swaps which channel leads the split — like flipping a pair of 3D
+          glasses.
+        </p>
+        <pre><code>TripleVisionText.initAll('.triple-vision', {
+  inverted: true,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Custom channel colors</h3>
+        <p>
+          Overrides the default red/cyan tint on each channel.
+        </p>
+        <pre><code>TripleVisionText.initAll('.triple-vision', {
+  redColor: '#ff0055',
+  cyanColor: '#00ffcc',
+  opacity: 0.6,
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -65,19 +142,40 @@
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>.update(options)</code></td>
+            <td>Merges new options in. Switching <code>mode</code> or <code>continuousProfile</code> resets the channels to rest first.</td>
+          </tr>
+          <tr>
+            <td><code>.setText(html)</code></td>
+            <td>Replaces the front layer and both channels' content.</td>
+          </tr>
+          <tr>
+            <td><code>.resync()</code></td>
+            <td>Resets the internal scroll reference to the current position — useful after teleporting the scroll source (e.g. an in-page anchor jump), so the next scroll delta isn't computed against a stale position.</td>
+          </tr>
+          <tr>
+            <td><code>.destroy()</code></td>
+            <td>Tears an instance down - stops its animation loop and removes its scroll listener.</td>
+          </tr>
+          <tr>
+            <td><code>TripleVisionText.get(elOrSelector)</code> / <code>TripleVisionText.getAll(selector)</code></td>
+            <td>Static lookups for already-initialized instances, by element/selector.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
       <p>
         One of several effects in the lab with a scroll/continuous toggle —
         here it's the <code>mode</code> option (Rolodex and Type Pan call
         the same idea <code>driveMode</code>).
-        <code>TripleVisionText.get(elOrSelector)</code> and
-        <code>TripleVisionText.getAll(selector)</code> retrieve existing
-        instances; each instance also exposes <code>.update(options)</code>
-        (switching <code>mode</code> or <code>continuousProfile</code>
-        resets the channels to rest first), <code>.setText(html)</code>
-        (replaces the front layer and both channels' content),
-        <code>.resync()</code> (resets the internal scroll reference to the
-        current position), and <code>.destroy()</code>.
       </p>
     </div>
   </div>

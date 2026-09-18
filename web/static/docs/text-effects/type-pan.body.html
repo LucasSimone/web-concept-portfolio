@@ -18,7 +18,16 @@
         <a class="btn" href="/text-effects/type-pan/type-pan.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="type-pan.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Injects its own <code>&lt;style&gt;</code> tag (layout height,
@@ -34,7 +43,7 @@
         <code>'scroll'</code> driveMode), all shared with Rolodex.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;div class="type-pan" data-text="Scroll to reveal the whole headline"&gt;
   Scroll to reveal the whole headline
 &lt;/div&gt;
@@ -50,8 +59,91 @@
   driveMode: 'continuous',
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Continuous autoplay</h3>
+        <p>
+          No scroll involved — the line types itself out, holds, erases,
+          and repeats on its own clock.
+        </p>
+        <pre><code>TypePan.initAll('.type-pan', {
+  driveMode: 'continuous',
+  typeDuration: 2200,   // ms to type the full line
+  holdDuration: 1000,   // ms held fully typed before erasing
+  rollbackSpeed: 700,   // ms to erase back to empty
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Static scroll (hover-driven)</h3>
+        <p>
+          The element stays put on the page; wheel/trackpad input while
+          hovering it drives typing instead of scrolling the page. Point
+          <code>data-type-pan-hover</code> at a wrapper if you want a
+          bigger hover target than the line itself.
+        </p>
+        <pre><code>&lt;div id="wrap"&gt;
+  &lt;div class="type-pan" data-type-pan-hover="wrap"
+       data-text="Hover and scroll to type me"&gt;
+    Hover and scroll to type me
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  TypePan.initAll('.type-pan', {
+    driveMode: 'hover',
+    sensitivity: 1, // multiplier on wheel delta
+  });
+&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>No erase on reverse scroll</h3>
+        <p>
+          By default, scrolling/wheeling backward erases what's been
+          typed. Turn that off to make typing one-directional — reverse
+          input just does nothing once the line is fully typed, instead
+          of backspacing it.
+        </p>
+        <pre><code>TypePan.initAll('.type-pan', {
+  eraseOnReverse: false,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Drive it from your own scroll position</h3>
+        <p>
+          Skip real page scroll entirely and feed reveal progress in
+          yourself — from a custom scroll container, a drag gesture,
+          anything that produces a 0–1 value. This is how the homepage
+          carousel drives its card.
+        </p>
+        <pre><code>const typePan = new TypePan(document.querySelector('.type-pan'), {
+  driveMode: 'scroll',
+});
+
+myScrollSource.addEventListener('progress', (e) =&gt; {
+  typePan.pushProgress(e.value); // 0-1
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Step through with buttons</h3>
+        <p>
+          <code>.nextWord()</code>/<code>.prevWord()</code> work
+          standalone, no scroll or hover source required. Set
+          <code>stepPolicy</code> to control what happens if a button is
+          clicked again before the current step lands.
+        </p>
+        <pre><code>const typePan = TypePan.get('.type-pan');
+
+nextBtn.addEventListener('click', () =&gt; typePan.nextWord());
+prevBtn.addEventListener('click', () =&gt; typePan.prevWord());</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -94,52 +186,64 @@
         </tbody>
       </table>
 
-      <h2>Methods</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>.nextChar()</code> / <code>.prevChar()</code></td>
+            <td>Reveal or erase one more character, animated at <code>stepSpeed</code> - typing/backspacing, never an instant jump.</td>
+          </tr>
+          <tr>
+            <td><code>.nextWord()</code> / <code>.prevWord()</code></td>
+            <td>Same as above, through to the next/previous word boundary.</td>
+          </tr>
+          <tr>
+            <td><code>.goTo(targetCount, { duration }?)</code></td>
+            <td>Reveals (or erases back) directly to an arbitrary character count, at the same per-character pace as a single step by default (pass <code>{ duration }</code> for a fixed total time instead, regardless of distance). A big jump visibly types/erases through everything in between rather than blurring past it.</td>
+          </tr>
+          <tr>
+            <td><code>.pushProgress(value)</code></td>
+            <td>Feeds in a 0–1 reveal fraction from any custom source, exactly as real page scroll and hover-wheel input do internally - the general escape hatch for tying typing to anything other than the page or an element tagged <code>data-type-pan-hover</code>. Unlike Rolodex's <code>pushProgress()</code>, values are always clamped to 0–1 - there's no circular "loop past the end" for a single line of text.</td>
+          </tr>
+          <tr>
+            <td><code>.reset()</code></td>
+            <td>Resets hover-mode typing progress back to the start.</td>
+          </tr>
+          <tr>
+            <td><code>.setText(value)</code></td>
+            <td>Replaces the line being typed - rebuilds the character spans and word boundaries, resetting progress.</td>
+          </tr>
+          <tr>
+            <td><code>.destroy()</code></td>
+            <td>Tears an instance down - stops its animation loop and removes all listeners.</td>
+          </tr>
+          <tr>
+            <td><code>TypePan.get(elOrSelector)</code> / <code>TypePan.getAll(selector)</code></td>
+            <td>Static lookups for already-initialized instances, by element/selector.</td>
+          </tr>
+        </tbody>
+      </table>
       <p>
-        <code>.nextChar()</code> / <code>.prevChar()</code> reveal or erase
-        one more character; <code>.nextWord()</code> / <code>.prevWord()</code>
-        do the same through to the next/previous word boundary;
-        <code>.goTo(targetCount)</code> reveals (or erases back) directly to
-        an arbitrary character count. All animate through every character in
-        between at <code>stepSpeed</code> - typing/backspacing, never an
-        instant jump, so a big <code>goTo()</code> jump visibly types/erases
-        through everything in between rather than blurring past it (pass
-        <code>{ duration }</code> to use a fixed total time instead,
-        regardless of distance). They work alongside
-        <code>'scroll'</code>/<code>'hover'</code> driveMode: scrolling or
-        wheeling again immediately takes back over from wherever the step
-        landed. What happens if one of these is called again before the last
-        one finished is governed by <code>stepPolicy</code> above - worth
-        trying out on the
-        <a href="/text-effects/type-pan/index.html">demo page</a>, which has
-        a Next/Prev word button and a live Step policy switch.
+        <code>.nextChar()</code>, <code>.prevChar()</code>,
+        <code>.nextWord()</code>, <code>.prevWord()</code>, and
+        <code>.goTo()</code> work alongside <code>'scroll'</code>/<code>'hover'</code>
+        driveMode: scrolling or wheeling again immediately takes back over
+        from wherever the step landed. What happens if one of these is
+        called again before the last one finished is governed by
+        <code>stepPolicy</code> above - worth trying out on the
+        <a href="/text-effects/type-pan/index.html">demo page</a>, which
+        has a Next/Prev word button and a live Step policy switch.
       </p>
 
-      <p>
-        <code>.pushProgress(value)</code> feeds in a 0–1 reveal fraction
-        from any custom source, exactly as real page scroll and hover-wheel
-        input do internally - this is what the homepage's carousel card
-        uses instead of the page scrolling to drive its Type Pan, and is
-        the general escape hatch for tying typing to anything other than
-        the page or an element tagged <code>data-type-pan-hover</code>.
-        Unlike Rolodex's <code>pushProgress()</code>, values are always
-        clamped to 0–1 - there's no circular "loop past the end" for a
-        single line of text.
-      </p>
-
-      <h2>Notes</h2>
+      <h2 id="notes">Notes</h2>
       <p>
         In hover mode the element (or its <code>data-type-pan-hover</code>
         target) captures wheel events with <code>{ passive: false }</code>
         and calls <code>preventDefault()</code>, so the page won't scroll
-        while the pointer is over it. Call <code>.reset()</code> on an
-        instance to reset hover-mode typing progress back to the start;
-        <code>.setText(value)</code> replaces the line being typed (rebuilds
-        the character spans and word boundaries, resetting progress).
-        <code>TypePan.get(elOrSelector)</code> /
-        <code>TypePan.getAll(selector)</code> look up already-initialized
-        instances, and <code>.destroy()</code> tears one down (stops its
-        animation loop and removes all listeners).
+        while the pointer is over it.
       </p>
     </div>
   </div>

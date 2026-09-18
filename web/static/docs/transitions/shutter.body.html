@@ -20,7 +20,18 @@
         <a class="btn" href="/transitions/shutter/shutter.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#element-transitions">Element Transitions</a>
+        <a href="#multiple-transitions">Multiple Transitions</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Unlike the other effects on this site, this one belongs in
@@ -38,60 +49,83 @@
         for transitioning elements — just no link interception.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <p>
-        No class to add and no elements to opt in for navigation itself —
-        once you've turned it on with a <code>selector</code>, it listens
-        for clicks on the whole document and intercepts any left-click on
-        a same-origin <code>&lt;a href&gt;</code> that isn't a hash link, a
-        <code>download</code> link, a <code>target="_blank"</code> link,
-        or opened with a modifier key held. Clicking one plays the exit
-        cover, then navigates once it finishes.
-      </p>
-      <p>
-        The reveal only plays on the page that receives that navigation —
-        a direct load, refresh, or bookmarked visit never shows the
-        overlay at all, and if the destination page doesn't also load
-        <code>shutter.js</code>, the cover simply finishes and that page
-        appears underneath with no reveal of its own. To exempt a specific
-        link from interception without removing the script, add
-        <code>data-no-transition</code> to it:
-      </p>
-      <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
-      <p>
-        To change the timing, color, or which links it watches, configure
-        it before the script tag runs. Config and the script's own public
-        API are both keyed by <code>"shutter"</code> rather than a shared
-        name — see <a href="#multiple-transitions">Multiple Transitions</a>
-        below for why:
+        Turn on navigation interception by setting <code>selector</code>
+        before the script runs:
       </p>
       <pre><code>&lt;script&gt;
   window.TransitionConfig = {
-    shutter: { duration: 700, color: '#111', selector: 'a[href]' },
+    shutter: { selector: 'a[href]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        Or reconfigure it later, from any script that runs after
-        <code>shutter.js</code> has loaded:
+        No class to add and no elements to opt in beyond that — it now
+        listens for clicks on the whole document and intercepts any
+        left-click on a same-origin <code>&lt;a href&gt;</code> that isn't
+        a hash link, a <code>download</code> link, a
+        <code>target="_blank"</code> link, or opened with a modifier key
+        held. Clicking one plays the exit cover, then navigates once it
+        finishes. The reveal only plays on the page that receives that
+        navigation — a direct load, refresh, or bookmarked visit never
+        shows the overlay at all, and if the destination page doesn't also
+        load <code>shutter.js</code>, the cover simply finishes and that
+        page appears underneath with no reveal of its own.
       </p>
-      <pre><code>Transitions.shutter.configure({ selector: '[data-t-transition="shutter"]' });</code></pre>
-      <p>
-        A single link can override duration, easing, color, or variant for
-        just its own transition, leaving every other link on the page
-        using the default profile — this is how the
-        <a href="/transitions/shutter/index.html">demo's controls
-        panel</a> customizes only the Page One → Page Two link without
-        touching the site nav around it:
-      </p>
-      <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#555"&gt;
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Exempt a link from the transition</h3>
+        <p>
+          Keep navigation on for the page but skip interception for one
+          specific link, without removing the script.
+        </p>
+        <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Override one link's timing or color</h3>
+        <p>
+          A single link can override duration, easing, color, or variant
+          for just its own transition, leaving every other link on the
+          page using the default profile — this is how the
+          <a href="/transitions/shutter/index.html">demo's controls
+          panel</a> customizes only the Page One → Page Two link without
+          touching the site nav around it. Whichever profile a click
+          used — default or overridden — travels to the next page in the
+          same handoff that triggers its reveal, so the two halves of the
+          motion always match.
+        </p>
+        <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#555"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
-      <p>
-        Whichever profile a click used — default or overridden — travels
-        to the next page in the same handoff that triggers its reveal, so
-        the two halves of the motion always match.
-      </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Set the default timing, color, or variant</h3>
+        <p>
+          Configure the page-wide profile once, alongside turning on
+          <code>selector</code>:
+        </p>
+        <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter: { duration: 700, color: '#111', variant: 'single', selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Reconfigure after the script has already loaded</h3>
+        <p>
+          Useful for widening or changing <code>selector</code> from a
+          script that runs later, rather than setting
+          <code>window.TransitionConfig</code> up front.
+        </p>
+        <pre><code>Transitions.shutter.configure({ selector: '[data-t-transition="shutter"]' });</code></pre>
+      </div>
 
       <h2 id="element-transitions">Element Transitions</h2>
       <p>
@@ -195,8 +229,8 @@ Transitions.shutter.play(cardB);
         than sharing one page-wide profile.
       </p>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -223,7 +257,39 @@ Transitions.shutter.play(cardB);
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>configure(options)</code></td>
+            <td>Merges new options into the page-wide default profile - typically called just to widen/set <code>selector</code> from a script that runs after <code>shutter.js</code> has loaded.</td>
+          </tr>
+          <tr>
+            <td><code>cover(el, options)</code></td>
+            <td>Covers <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>), resolving once fully covered. Leaves <code>el</code> covered - pair with <code>reveal()</code>.</td>
+          </tr>
+          <tr>
+            <td><code>reveal(el, options)</code></td>
+            <td>Reveals <code>el</code>, resolving once fully revealed and cleaned up.</td>
+          </tr>
+          <tr>
+            <td><code>play(el, options)</code></td>
+            <td>Sugar for "transition this element's content in place": covers <code>el</code>, runs <code>options.swap(el)</code> (may return a promise) once covered, then reveals. Not part of the navigation flow - that has no same-document reveal to chain into, so it uses <code>cover</code>/<code>reveal</code> directly instead.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        All four are on <code>Transitions.shutter</code>. <code>cover</code>,
+        <code>reveal</code>, and <code>play</code> take the same fields as
+        the per-link <code>data-t-*</code> attributes above, as a plain
+        options object, and return a promise that resolves once that step
+        finishes.
+      </p>
+
+      <h2 id="notes">Notes</h2>
       <p>
         Respects <code>prefers-reduced-motion</code>: with it set, clicking
         a link navigates immediately with no cover, and an arrival never

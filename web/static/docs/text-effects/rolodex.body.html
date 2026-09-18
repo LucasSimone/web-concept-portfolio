@@ -18,7 +18,15 @@
         <a class="btn" href="/text-effects/rolodex/rolodex.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Injects its own <code>&lt;style&gt;</code> tag covering the 3D
@@ -34,17 +42,21 @@
         all shared with Type Pan.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
+      <p>
+        Reads <code>data-text</code> or trimmed <code>textContent</code>,
+        splitting on whitespace into words. Auto-initializes against every
+        <code>.rolodex</code> element — card size is measured via an
+        offscreen canvas based on the widest word and computed font. This is
+        all you need for the default scroll-driven split-flap:
+      </p>
       <pre><code>&lt;div class="rolodex" data-text="Rolodex flips through words one by one"&gt;
   Rolodex flips through words one by one
 &lt;/div&gt;
 &lt;script src="rolodex.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        Reads <code>data-text</code> or trimmed <code>textContent</code>,
-        splitting on whitespace into words. Auto-initializes against every
-        <code>.rolodex</code> element — card size is measured via an
-        offscreen canvas based on the widest word and computed font. To
-        switch drive mode and configure options:
+        To configure it, call <code>Rolodex.initAll</code> yourself instead
+        of relying on auto-init:
       </p>
       <pre><code>Rolodex.initAll('.rolodex', {
   mode: 'split-flap',
@@ -54,8 +66,98 @@
   shading: 0.05,
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Continuous autoplay</h3>
+        <p>
+          No scroll involved — the card flips through the sentence on its
+          own timed loop, then rewinds and repeats.
+        </p>
+        <pre><code>Rolodex.initAll('.rolodex', {
+  driveMode: 'continuous',
+  interval: 1400,      // ms held on each word
+  flipDuration: 450,    // ms spent mid-flip
+  rollbackSpeed: 900,   // ms to rewind last word -&gt; first
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Static scroll (hover-driven)</h3>
+        <p>
+          The element stays put on the page; wheel/trackpad input while
+          hovering it drives the flip instead of scrolling the page. Point
+          <code>data-rolodex-hover</code> at a wrapper if you want a bigger
+          hover target than the card itself.
+        </p>
+        <pre><code>&lt;div id="wrap"&gt;
+  &lt;div class="rolodex" data-rolodex-hover="wrap"
+       data-text="Hover and scroll to flip me"&gt;
+    Hover and scroll to flip me
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  Rolodex.initAll('.rolodex', {
+    driveMode: 'hover',
+    hoverScrollDistance: 1000, // wheel delta to sweep the whole sentence
+  });
+&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Keep flipping once scroll goes idle</h3>
+        <p>
+          Stays scroll-driven while the user is actively scrolling, but
+          picks up the continuous hold/flip/rewind loop from wherever it was
+          left as soon as input stops — instead of just sitting there.
+        </p>
+        <pre><code>Rolodex.initAll('.rolodex', {
+  driveMode: 'scroll',
+  loop: true,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Drive it from your own scroll position</h3>
+        <p>
+          Skip real page scroll entirely and feed progress in yourself —
+          from a custom scroll container, a drag gesture, anything that
+          produces a 0–1 (or, with <code>loopScroll</code>, unbounded)
+          value. This is how the homepage carousel drives its card.
+        </p>
+        <pre><code>const rolodex = new Rolodex(document.querySelector('.rolodex'), {
+  driveMode: 'scroll',
+});
+
+myScrollSource.addEventListener('progress', (e) =&gt; {
+  rolodex.pushProgress(e.value); // 0-1
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Step through with buttons</h3>
+        <p>
+          <code>.next()</code>/<code>.prev()</code> work standalone, no
+          scroll or hover source required. Set <code>stepPolicy</code> to
+          control what happens if a button is clicked again before the
+          current flip lands.
+        </p>
+        <pre><code>const rolodex = Rolodex.get('.rolodex');
+
+nextBtn.addEventListener('click', () =&gt; rolodex.next());
+prevBtn.addEventListener('click', () =&gt; rolodex.prev());</code></pre>
+      </div>
+
+      <p>
+        Running more than one instance on a page, each with its own
+        settings, is also simple — see
+        <a href="/docs/index.html#multiple-instances">Multiple Instances</a>
+        on the docs overview.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -101,41 +203,52 @@
         </tbody>
       </table>
 
-      <h2>Methods</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>.next()</code> / <code>.prev()</code></td>
+            <td>Flip forward or back one word, animated over <code>flipDuration</code> like a single <code>'continuous'</code>-mode flip - never an instant jump.</td>
+          </tr>
+          <tr>
+            <td><code>.goTo(wordIndex, { duration }?)</code></td>
+            <td>Flip directly to an arbitrary word, at the same per-word pace as a single flip by default (pass <code>{ duration }</code> to use a fixed total time instead, regardless of distance). A multi-word jump visibly flips through every word in between rather than blurring past them.</td>
+          </tr>
+          <tr>
+            <td><code>.pushProgress(value)</code></td>
+            <td>Feeds in a 0–1 scroll position from any custom source, exactly as real page scroll and hover-wheel input do internally - the general escape hatch for tying the flip to anything other than the page or an element tagged <code>data-rolodex-hover</code>. With <code>loopScroll</code> on, values aren't clamped to 0–1 first, so a source that just keeps accumulating (like accumulated wheel delta) drives it around the loop repeatedly instead of pinning at either end.</td>
+          </tr>
+          <tr>
+            <td><code>.remeasure()</code></td>
+            <td>Recomputes card size after a font change.</td>
+          </tr>
+          <tr>
+            <td><code>.setText(value)</code></td>
+            <td>Replaces the sentence being flipped through.</td>
+          </tr>
+          <tr>
+            <td><code>.destroy()</code></td>
+            <td>Tears an instance down - stops its animation loop and removes all listeners.</td>
+          </tr>
+          <tr>
+            <td><code>Rolodex.get(elOrSelector)</code> / <code>Rolodex.getAll(selector)</code></td>
+            <td>Static lookups for already-initialized instances, by element/selector.</td>
+          </tr>
+        </tbody>
+      </table>
       <p>
-        <code>.next()</code> / <code>.prev()</code> flip forward or back one
-        word; <code>.goTo(wordIndex)</code> flips directly to an arbitrary
-        word, at the same per-word pace as a single flip (pass
-        <code>{ duration }</code> to use a fixed total time instead, regardless
-        of distance). All three animate over <code>flipDuration</code> like a
-        single <code>'continuous'</code>-mode flip - never an instant jump -
-        so a multi-word <code>goTo()</code> visibly flips through every word
-        in between rather than blurring past them. Intended for
-        <code>'scroll'</code>/<code>'hover'</code> driveMode, the same scope
-        as <code>.pushProgress()</code> below: scrolling or wheeling again
-        immediately takes back over from wherever the flip landed. What
-        happens if one of these is called again before the last one finished
-        is governed by <code>stepPolicy</code> above - worth trying out on the
-        <a href="/text-effects/rolodex/index.html">demo page</a>, which has a
-        Next/Prev button and a live Step policy switch.
-      </p>
-      <p>
-        <code>.remeasure()</code> recomputes card size after a font change;
-        <code>.setText(value)</code> replaces the sentence being flipped
-        through. <code>.pushProgress(value)</code> feeds in a 0–1 scroll
-        position from any custom source, exactly as real page scroll and
-        hover-wheel input do internally - this is what the homepage's
-        carousel card uses instead of the page scrolling to drive its
-        Rolodex, and is the general escape hatch for tying the flip to
-        anything other than the page or an element tagged
-        <code>data-rolodex-hover</code>. With <code>loopScroll</code> on,
-        values aren't clamped to 0–1 first, so a source that just keeps
-        accumulating (like accumulated wheel delta) drives it around the
-        loop repeatedly instead of pinning at either end.
-        <code>Rolodex.get(elOrSelector)</code> /
-        <code>Rolodex.getAll(selector)</code> look up already-initialized
-        instances, and <code>.destroy()</code> tears one down (stops its
-        animation loop and removes all listeners).
+        <code>.next()</code>, <code>.prev()</code>, and <code>.goTo()</code>
+        are intended for <code>'scroll'</code>/<code>'hover'</code>
+        driveMode, the same scope as <code>.pushProgress()</code> above:
+        scrolling or wheeling again immediately takes back over from
+        wherever the flip landed. What happens if one of them is called
+        again before the last call finished is governed by
+        <code>stepPolicy</code> above - worth trying out on the
+        <a href="/text-effects/rolodex/index.html">demo page</a>, which has
+        a Next/Prev button and a live Step policy switch.
       </p>
     </div>
   </div>

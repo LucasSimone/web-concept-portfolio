@@ -17,14 +17,23 @@
         <a class="btn" href="/text-effects/in-flight-out/in-flight-out.js" download>Download JS</a>
       </div>
 
-      <h2>Install</h2>
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
       <pre><code>&lt;script src="in-flight-out.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Self-contained — it injects its own <code>&lt;style&gt;</code> tag on
         first use, so no companion CSS file is required.
       </p>
 
-      <h2>Usage</h2>
+      <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;div class="in-flight-out" data-text="In Flight Out"&gt;In Flight Out&lt;/div&gt;
 &lt;script src="in-flight-out.js"&gt;&lt;/script&gt;</code></pre>
       <p>
@@ -39,8 +48,66 @@
   maxAngle: 40,
 });</code></pre>
 
-      <h2>Options</h2>
-      <table>
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Scatter from every edge, not just top/bottom</h3>
+        <p>
+          The default <code>'linear'</code> path enters from below and
+          exits above, like scrolling credits. <code>'random'</code> gives
+          each letter its own independent off-screen edge — top, right,
+          bottom, or left — so the assembly looks scattered instead of a
+          single crawl direction.
+        </p>
+        <pre><code>InFlightOut.initAll('.in-flight-out', {
+  path: 'random',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Subtle, short-distance entrance</h3>
+        <p>
+          Pull the letters in from just off-frame instead of flinging them
+          across the whole viewport — a calmer assemble for body copy
+          rather than a big display headline.
+        </p>
+        <pre><code>InFlightOut.initAll('.in-flight-out', {
+  scatter: 0.3,
+  maxDistance: 50,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Heavy tumble</h3>
+        <p>
+          Push <code>rotation</code> toward 1 so nearly every letter spins
+          as it flies, and raise <code>maxAngle</code> for a full tumble
+          instead of a slight tilt.
+        </p>
+        <pre><code>InFlightOut.initAll('.in-flight-out', {
+  rotation: 0.9,
+  maxAngle: 120,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Longer hold, snappier entry/exit</h3>
+        <p>
+          <code>entryPercent</code>/<code>hangPercent</code>/<code>exitPercent</code>
+          split the scroll range into three phases. Shrinking the entry and
+          exit shares (and giving the difference to hang) makes the letters
+          snap together quickly, sit fully assembled for most of the
+          scroll, then snap apart just as fast.
+        </p>
+        <pre><code>InFlightOut.initAll('.in-flight-out', {
+  entryPercent: 20,
+  hangPercent: 60,
+  exitPercent: 20,
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
         <thead>
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
@@ -56,13 +123,23 @@
         </tbody>
       </table>
 
-      <h2>Notes</h2>
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in.</td></tr>
+          <tr><td><code>.reshuffle()</code></td><td>Re-rolls random entry/exit points and rotation without rebuilding the DOM or touching options.</td></tr>
+          <tr><td><code>.setText(value)</code></td><td>Replaces the text (rebuilds the per-character spans).</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the instance's animation loop and removes its scroll/resize listeners.</td></tr>
+          <tr><td><code>InFlightOut.get(elOrSelector)</code> / <code>InFlightOut.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
       <p>
-        Call <code>.reshuffle()</code> on an instance to re-roll random
-        entry/exit points and rotation without rebuilding the DOM or
-        touching options. <code>.setText(value)</code> replaces the text
-        (rebuilds the per-character spans). Scroll-driven only — no
-        continuous mode.
+        Scroll-driven only — no continuous mode.
       </p>
     </div>
   </div>
