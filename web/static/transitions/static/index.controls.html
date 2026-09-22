@@ -1,0 +1,54 @@
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">1000ms</span></label>
+      <input type="range" id="ptDuration" min="200" max="3000" step="50" value="1000" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing</label>
+      <select id="ptEasing">
+        <option value="cubic-bezier(.65,0,.35,1)">Cubic Bezier</option>
+        <option value="linear">Linear</option>
+        <option value="ease-in-out" selected>Ease In Out</option>
+        <option value="cubic-bezier(.2,1,.1,1)">Punchy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptGrain">Grain <span class="value" id="ptGrainVal">2px</span></label>
+      <input type="range" id="ptGrain" min="1" max="10" step="1" value="2" />
+    </div>
+
+    <div class="control-row">
+      <label>Tint</label>
+      <div class="t-swatches" role="group" aria-label="Noise tint">
+        <button type="button" class="t-swatch" data-color="#fff" style="background:#fff" aria-pressed="true" aria-label="White"></button>
+        <button type="button" class="t-swatch" data-color="#3f0" style="background:#3f0" aria-pressed="false" aria-label="Green"></button>
+        <button type="button" class="t-swatch" data-color="#ffb000" style="background:#ffb000" aria-pressed="false" aria-label="Amber"></button>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="ptScanlines" checked />
+        Scanlines
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scanlines">?<span class="hint" role="tooltip" id="hint-scanlines">Faint horizontal lines over the noise — the classic CRT texture.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row" id="ptScanlineSpacingRow">
+      <label for="ptScanlineSpacing">Line Spacing <span class="value" id="ptScanlineSpacingVal">5px</span></label>
+      <input type="range" id="ptScanlineSpacing" min="3" max="48" step="1" value="5" />
+    </div>
+
+    <div class="control-row" id="ptScanlineThicknessRow">
+      <label for="ptScanlineThickness">Thickness <span class="value" id="ptScanlineThicknessVal">2px</span></label>
+      <input type="range" id="ptScanlineThickness" min="1" max="12" step="1" value="2" />
+    </div>
+
+    <div class="control-row" id="ptScanlineBlurRow">
+      <label class="control-checkbox">
+        <input type="checkbox" id="ptScanlineBlur" checked />
+        Soft Edges
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scanline-blur">?<span class="hint" role="tooltip" id="hint-scanline-blur">Blurs the scanlines instead of the default hard-edged cutoff.</span></span>
+      </label>
+    </div>

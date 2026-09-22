@@ -196,19 +196,22 @@ Transitions.aperture.play(cardB);
         <code>window.TransitionConfig.aperture</code>, and a
         <code>sessionStorage</code> key of
         <code>t-aperture-pending</code> — so it registers alongside
-        <a href="/docs/transitions/shutter.html">Shutter</a> without
-        either clobbering the other. This site's own layout does exactly
-        that: both scripts load on every page, each one reacting only to
-        links tagged with its own slug:
+        <a href="/docs/transitions/shutter.html">Shutter</a> and
+        <a href="/docs/transitions/static.html">Static</a> without any of
+        them clobbering the others. This site's own layout does exactly
+        that: all three scripts load on every page, each one reacting only
+        to links tagged with its own slug:
       </p>
       <pre><code>&lt;script&gt;
   window.TransitionConfig = {
     shutter:  { selector: '[data-t-transition="shutter"]' },
     aperture: { selector: '[data-t-transition="aperture"]' },
+    static:   { selector: '[data-t-transition="static"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
-&lt;script src="aperture.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="aperture.js"&gt;&lt;/script&gt;
+&lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Which link uses which effect is decided by the <em>value</em> of
         <code>data-t-transition</code> — each script only reacts to the
@@ -237,8 +240,8 @@ Transitions.aperture.play(cardB);
         That's a different multiplicity than
         <a href="#element-transitions">Element Transitions</a>' concurrent
         instances above — this section is about running <em>different</em>
-        named effects (Shutter, Aperture, …) on one page without them
-        colliding; that one is about running <em>this same</em> effect on
+        named effects (Shutter, Aperture, Static, …) on one page without
+        them colliding; that one is about running <em>this same</em> effect on
         several elements (or the same element repeatedly) at once, which
         works because each target keeps its own independent state rather
         than sharing one page-wide profile.

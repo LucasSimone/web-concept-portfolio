@@ -1,0 +1,261 @@
+/* Page-specific styles for the Static transition demo.
+   Base layout/nav comes from /shared/site.css. The static effect's own
+   CSS ships inside ./static.js and is injected automatically. */
+
+.static-demo {
+  min-height: calc(100vh - 57px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4vh 6vw;
+}
+
+.static-hero {
+  max-width: 60ch;
+}
+
+.static-hero .eyebrow {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+}
+
+.static-hero h1 {
+  font-size: clamp(40px, 9vw, 96px);
+  line-height: 1;
+  margin: 0 0 1.5rem;
+}
+
+.static-hero p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+  margin: 0 0 2rem;
+}
+
+.static-hero p code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.4em;
+}
+
+.static-next {
+  display: inline-block;
+  padding: 14px 28px;
+  font-size: 14px;
+}
+
+/* `p` in the selector, not just the class, so this beats .static-hero p's
+   own margin (same specificity, declared earlier) instead of losing to it. */
+p.element-demo-hint {
+  font-size: 12px;
+  opacity: 0.55;
+  margin: 4rem 0 0.75rem;
+}
+
+.element-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 96px;
+  margin: 0 auto;
+  border: 1px solid #000;
+  cursor: pointer;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.element-demo:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.element-demo:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+/* Page One reserves space for the controls panel; Page Two has none. */
+.static-demo--controls {
+  margin-right: 300px;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row .control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.control-checkbox input {
+  accent-color: #000;
+}
+
+/* Spacing/thickness/blur only mean anything while scanlines are on. */
+.control-row:has(#ptScanlines:not(:checked)) ~ #ptScanlineSpacingRow,
+.control-row:has(#ptScanlines:not(:checked)) ~ #ptScanlineThicknessRow,
+.control-row:has(#ptScanlines:not(:checked)) ~ #ptScanlineBlurRow {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.t-swatches {
+  display: flex;
+  gap: 8px;
+}
+
+.t-swatch {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.t-swatch[aria-pressed="true"] {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .static-demo--controls {
+    margin-right: 0;
+  }
+}

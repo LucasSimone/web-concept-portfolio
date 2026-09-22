@@ -59,10 +59,12 @@ const layoutSrc = `<!doctype html>
     window.TransitionConfig = {
       shutter: { selector: '[data-t-transition="shutter"]' },
       aperture: { selector: '[data-t-transition="aperture"]' },
+      static: { selector: '[data-t-transition="static"]' },
     };
   </script>
   <script src="/transitions/shutter/shutter.js"></script>
   <script src="/transitions/aperture/aperture.js"></script>
+  <script src="/transitions/static/static.js"></script>
 {{.Head}}</head>
 <body>
   <nav class="site-nav">

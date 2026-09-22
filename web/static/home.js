@@ -257,7 +257,7 @@ Vacuum.initAll('.variation-card.bg-vacuum', {
 // that case (see shutter.js/aperture.js), which without this guard would
 // just spin the loop as fast as JS allows instead of showing anything.
 if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
-  const TRANSITION_LOOP_MIN_PAUSE_MS = 1500;
+  const TRANSITION_LOOP_MIN_PAUSE_MS = 3000;
   const TRANSITION_LOOP_MAX_PAUSE_MS = 6000;
   function randomTransitionPause() {
     return TRANSITION_LOOP_MIN_PAUSE_MS + Math.random() * (TRANSITION_LOOP_MAX_PAUSE_MS - TRANSITION_LOOP_MIN_PAUSE_MS);
@@ -266,6 +266,9 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     const engine = window.Transitions && window.Transitions[card.dataset.tTransition];
     if (!engine) return;
     card.classList.add('t-el');
+    // Card is too small for scanlines to read as anything but noise —
+    // Static's own option, ignored by engines that don't have one.
+    const overrides = card.dataset.tTransition === 'static' ? { scanlines: false } : undefined;
     // Hovering commandeers the card's own cover()/reveal() calls rather
     // than reaching into shutter.js/aperture.js: cover()/reveal() are
     // built so a newer call on the same target supersedes an in-flight one
@@ -285,8 +288,8 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     }
     function cycle() {
       if (hovering) return;
-      engine.cover(card)
-        .then(() => { if (!hovering) return engine.reveal(card); })
+      engine.cover(card, overrides)
+        .then(() => { if (!hovering) return engine.reveal(card, overrides); })
         .then(() => { if (!hovering) scheduleCycle(); });
     }
     card.addEventListener('mouseenter', () => {
@@ -295,11 +298,11 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
         clearTimeout(pendingCycle);
         pendingCycle = null;
       }
-      engine.cover(card);
+      engine.cover(card, overrides);
     });
     card.addEventListener('mouseleave', () => {
       hovering = false;
-      engine.reveal(card).then(scheduleCycle);
+      engine.reveal(card, overrides).then(scheduleCycle);
     });
     scheduleCycle();
   });

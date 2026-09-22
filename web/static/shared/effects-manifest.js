@@ -107,5 +107,13 @@
       jsPath: '/transitions/aperture/aperture.js',
       docsPath: '/docs/transitions/aperture.html',
     },
+    {
+      slug: 'static',
+      name: 'Static',
+      category: 'transitions',
+      demoPath: '/transitions/static/index.html',
+      jsPath: '/transitions/static/static.js',
+      docsPath: '/docs/transitions/static.html',
+    },
   ];
 })(window);

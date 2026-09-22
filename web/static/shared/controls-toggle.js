@@ -7,12 +7,13 @@
  * fixed edge tab to pull it back out when hidden (see the shared rules in
  * site.css). Open by default on desktop, closed by default on mobile -
  * every visit, for every demo. The one exception: the two-page transition
- * labs (Shutter, Aperture), where a desktop visitor's choice on Page One
- * should still hold on Page Two rather than snapping back open. Everywhere
- * else nothing is persisted, so a demo's controls always start fresh.
+ * labs (Shutter, Aperture, Static), where a desktop visitor's choice on
+ * Page One should still hold on Page Two rather than snapping back open.
+ * Everywhere else nothing is persisted, so a demo's controls always start
+ * fresh.
  */
 (function () {
-  var PERSISTED_FOLDERS = ['/transitions/shutter/', '/transitions/aperture/'];
+  var PERSISTED_FOLDERS = ['/transitions/shutter/', '/transitions/aperture/', '/transitions/static/'];
   var persistsAcrossPages = PERSISTED_FOLDERS.some(function (folder) {
     return window.location.pathname.indexOf(folder) === 0;
   });

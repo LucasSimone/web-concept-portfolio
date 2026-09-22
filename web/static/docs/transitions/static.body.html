@@ -4,20 +4,22 @@
 
     <div class="docs-content">
       <p class="docs-eyebrow">Transition · Navigation</p>
-      <h1>Shutter</h1>
+      <h1>Static</h1>
       <p>
-        Two full-screen white panels, each with a gray border on its
-        leading edge, that close over the viewport from the top and bottom
-        edges, meeting in the middle, when a link is clicked, then split
-        back apart to reveal the next page once it loads — one continuous
-        vertical motion, split across the navigation boundary. Set
-        <code>variant: 'single'</code> for the original single-panel
-        version that rises from the bottom edge instead.
+        Old tube-TV channel noise: animated black-and-white static fades in
+        to cover the screen on exit, keeps flickering the whole time it's
+        covering the page (not just during the fade), then fades back out
+        once the next page loads. One continuous motion split across the
+        navigation boundary, same shape as
+        <a href="/docs/transitions/shutter.html">Shutter</a> and
+        <a href="/docs/transitions/aperture.html">Aperture</a> — just built
+        from opacity and real per-pixel noise instead of a sliding panel or
+        a spiraling iris.
       </p>
 
       <div class="docs-actions">
-        <a class="btn" href="/transitions/shutter/index.html">View Demo</a>
-        <a class="btn" href="/transitions/shutter/shutter.js" download>Download JS</a>
+        <a class="btn" href="/transitions/static/index.html">View Demo</a>
+        <a class="btn" href="/transitions/static/static.js" download>Download JS</a>
       </div>
 
       <nav class="docs-toc" aria-label="On this page">
@@ -32,20 +34,20 @@
       </nav>
 
       <h2 id="install">Install</h2>
-      <pre><code>&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
       <p>
-        Unlike the other effects on this site, this one belongs in
+        Like the other transitions, this one belongs in
         <code>&lt;head&gt;</code>, not next to the markup it affects — as a
         plain, non-<code>async</code>/<code>defer</code> tag, on every page
         that should take part. It has to run and register its CSS before
-        the page paints, so the initial cover (when arriving from another
+        the page paints, so the initial static (when arriving from another
         transitioned page) shows with no flash of the page underneath.
       </p>
       <p>
         Dropping the script in doesn't intercept anything by itself:
         navigation is off until you set <code>selector</code> (see Options
         below). With no config at all, you still get
-        <a href="#element-transitions"><code>Transitions.shutter.play</code>/<code>cover</code>/<code>reveal</code></a>
+        <a href="#element-transitions"><code>Transitions.static.play</code>/<code>cover</code>/<code>reveal</code></a>
         for transitioning elements — just no link interception.
       </p>
 
@@ -56,21 +58,21 @@
       </p>
       <pre><code>&lt;script&gt;
   window.TransitionConfig = {
-    shutter: { selector: 'a[href]' },
+    static: { selector: 'a[href]' },
   };
 &lt;/script&gt;
-&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         No class to add and no elements to opt in beyond that — it now
         listens for clicks on the whole document and intercepts any
         left-click on a same-origin <code>&lt;a href&gt;</code> that isn't
         a hash link, a <code>download</code> link, a
         <code>target="_blank"</code> link, or opened with a modifier key
-        held. Clicking one plays the exit cover, then navigates once it
-        finishes. The reveal only plays on the page that receives that
-        navigation — a direct load, refresh, or bookmarked visit never
+        held. Clicking one fades the screen into static, then navigates
+        once it finishes. The reveal only plays on the page that receives
+        that navigation — a direct load, refresh, or bookmarked visit never
         shows the overlay at all, and if the destination page doesn't also
-        load <code>shutter.js</code>, the cover simply finishes and that
+        load <code>static.js</code>, the fade-in simply finishes and that
         page appears underneath with no reveal of its own.
       </p>
 
@@ -86,35 +88,36 @@
       </div>
 
       <div class="recipe">
-        <h3>Override one link's timing or color</h3>
+        <h3>Override one link's timing or look</h3>
         <p>
-          A single link can override duration, easing, color, or variant
-          for just its own transition, leaving every other link on the
-          page using the default profile — this is how the
-          <a href="/transitions/shutter/index.html">demo's controls
+          A single link can override duration, easing, tint color, grain,
+          scanlines, scanline spacing, thickness, or edge blur for just its
+          own transition, leaving every other
+          link on the page using the default profile — this is how the
+          <a href="/transitions/static/index.html">demo's controls
           panel</a> customizes only the Page One → Page Two link without
           touching the site nav around it. Whichever profile a click
           used — default or overridden — travels to the next page in the
           same handoff that triggers its reveal, so the two halves of the
           motion always match.
         </p>
-        <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#555"&gt;
+        <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#3f0"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
       </div>
 
       <div class="recipe">
-        <h3>Set the default timing, color, or variant</h3>
+        <h3>Set the default timing, color, grain, or scanlines</h3>
         <p>
           Configure the page-wide profile once, alongside turning on
           <code>selector</code>:
         </p>
         <pre><code>&lt;script&gt;
   window.TransitionConfig = {
-    shutter: { duration: 700, color: '#111', variant: 'single', selector: 'a[href]' },
+    static: { duration: 700, color: '#ffb000', grain: 5, scanlineSpacing: 10, scanlineThickness: 4, scanlineBlur: true, selector: 'a[href]' },
   };
 &lt;/script&gt;
-&lt;script src="shutter.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
       </div>
 
       <div class="recipe">
@@ -124,21 +127,21 @@
           script that runs later, rather than setting
           <code>window.TransitionConfig</code> up front.
         </p>
-        <pre><code>Transitions.shutter.configure({ selector: '[data-t-transition="shutter"]' });</code></pre>
+        <pre><code>Transitions.static.configure({ selector: '[data-t-transition="static"]' });</code></pre>
       </div>
 
       <h2 id="element-transitions">Element Transitions</h2>
       <p>
-        Beyond whole-page navigation, Shutter can also transition any
+        Beyond whole-page navigation, Static can also transition any
         element in place — cover it, swap what's inside, then reveal —
         with no page load involved. Mark the element <code>class="t-el"</code>
-        (gives the cover a positioning context to size itself against)
+        (gives the overlay a positioning context to size itself against)
         and call <code>play</code>:
       </p>
       <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
 
 &lt;script&gt;
-  Transitions.shutter.play(document.getElementById('card'), {
+  Transitions.static.play(document.getElementById('card'), {
     swap: (el) =&gt; { el.textContent = 'New content'; },
   });
 &lt;/script&gt;</code></pre>
@@ -153,7 +156,9 @@
         three take the same fields as the per-link <code>data-t-*</code>
         attributes above, as a plain object, and return a promise that
         resolves once that step finishes — they're the primitives
-        <code>play</code> is built from, not a separate flow.
+        <code>play</code> is built from, not a separate flow. The noise
+        keeps flickering for the entire time <code>el</code> stays covered,
+        including however long <code>swap</code> itself takes.
       </p>
       <p>
         Every element gets independent state: two different elements (or
@@ -161,11 +166,11 @@
         on their own, with nothing shared between them.
       </p>
       <pre><code>// Two cards, two independent covers, at the same time.
-Transitions.shutter.play(cardA);
-Transitions.shutter.play(cardB);
+Transitions.static.play(cardA);
+Transitions.static.play(cardB);
 
 // Looping the same element.
-(function loop() { Transitions.shutter.play(card).then(loop); })();</code></pre>
+(function loop() { Transitions.static.play(card).then(loop); })();</code></pre>
       <p>
         Not part of the navigation flow above — a navigating page's cover
         has no same-document reveal to chain into (it navigates instead),
@@ -178,15 +183,15 @@ Transitions.shutter.play(cardB);
         A page can load more than one transition effect at once,
         each handling a different set of links. Every effect keeps its
         public API, its config, and its arrival flag under its own slug —
-        <code>window.Transitions.shutter</code>,
-        <code>window.TransitionConfig.shutter</code>, and a
+        <code>window.Transitions.static</code>,
+        <code>window.TransitionConfig.static</code>, and a
         <code>sessionStorage</code> key of
-        <code>t-shutter-pending</code> — so a second, differently named
+        <code>t-static-pending</code> — so a second, differently named
         effect's script can register alongside this one without either
         clobbering the other. This site's own layout does exactly that,
-        loading <a href="/docs/transitions/aperture.html">Aperture</a> and
-        <a href="/docs/transitions/static.html">Static</a> alongside
-        Shutter on every page:
+        loading <a href="/docs/transitions/shutter.html">Shutter</a> and
+        <a href="/docs/transitions/aperture.html">Aperture</a> alongside
+        Static on every page:
       </p>
       <pre><code>&lt;script&gt;
   window.TransitionConfig = {
@@ -205,7 +210,7 @@ Transitions.shutter.play(cardB);
         can only ever belong to one effect:
       </p>
       <pre><code>&lt;a href="/a" data-t-transition="shutter"&gt;Uses Shutter&lt;/a&gt;
-&lt;a href="/b" data-t-transition="aperture"&gt;Uses Aperture&lt;/a&gt;</code></pre>
+&lt;a href="/b" data-t-transition="static"&gt;Uses Static&lt;/a&gt;</code></pre>
       <p>
         Neither script coordinates with the other. Arriving on the next
         page, each one only checks whether its own
@@ -217,19 +222,21 @@ Transitions.shutter.play(cardB);
         Running the <em>same</em> effect configured differently in
         different places is a separate case that doesn't need any of
         this — see the per-link <code>data-t-duration</code>/
-        <code>-easing</code>/<code>-color</code> attributes above, which
-        already let one script handle any number of differently
-        configured links on one page.
+        <code>-easing</code>/<code>-color</code>/<code>-grain</code>/
+        <code>-scanlines</code>/<code>-scanline-spacing</code>/
+        <code>-scanline-thickness</code>/<code>-scanline-blur</code>
+        attributes above, which already let one script handle any number of
+        differently configured links on one page.
       </p>
       <p>
         That's a different multiplicity than
         <a href="#element-transitions">Element Transitions</a>' concurrent
         instances above — this section is about running <em>different</em>
         named effects (Shutter, Aperture, Static, …) on one page without
-        them colliding; that one is about running <em>this same</em> effect on
-        several elements (or the same element repeatedly) at once, which
-        works because each target keeps its own independent state rather
-        than sharing one page-wide profile.
+        them colliding; that one is about running <em>this same</em>
+        effect on several elements (or the same element repeatedly) at
+        once, which works because each target keeps its own independent
+        state rather than sharing one page-wide profile.
       </p>
 
       <h2 id="options">Options</h2>
@@ -238,11 +245,14 @@ Transitions.shutter.play(cardB);
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>duration</code></td><td><code>550</code></td><td>ms for each half (cover or reveal) of the motion</td></tr>
-          <tr><td><code>easing</code></td><td><code>'cubic-bezier(.65,0,.35,1)'</code></td><td>CSS easing applied to the transform transition</td></tr>
-          <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Panel background color</td></tr>
-          <tr><td><code>variant</code></td><td><code>'split'</code></td><td><code>'split'</code> (top + bottom panels meet in the middle) or <code>'single'</code> (one panel, rises from the bottom)</td></tr>
-          <tr><td><code>border</code></td><td><code>'2px solid #555'</code></td><td>CSS border shorthand drawn on each panel's leading edge only — the edge it advances from as it covers. Pass <code>null</code> to turn it off. Keeps the wipe reading as a moving edge instead of a flat color fading in, especially against a light page</td></tr>
+          <tr><td><code>duration</code></td><td><code>1000</code></td><td>ms for each half (fade in or fade out) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'ease-in-out'</code></td><td>CSS easing applied to the opacity transition</td></tr>
+          <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Tint multiplied over the grayscale noise (like an old monochrome monitor's phosphor) — <code>'#fff'</code> leaves it untouched</td></tr>
+          <tr><td><code>grain</code></td><td><code>2</code></td><td>px per noise cell before the canvas is scaled up — bigger numbers mean blockier, more retro static</td></tr>
+          <tr><td><code>scanlines</code></td><td><code>true</code></td><td>Overlay faint horizontal CRT scanlines on top of the noise, scrolling slowly upward</td></tr>
+          <tr><td><code>scanlineSpacing</code></td><td><code>5</code></td><td>px between the start of one scanline and the next. Scroll speed stays constant (px/s) regardless of spacing, so wider spacing doesn't read as scrolling faster</td></tr>
+          <tr><td><code>scanlineThickness</code></td><td><code>2</code></td><td>px width of each scanline itself</td></tr>
+          <tr><td><code>scanlineBlur</code></td><td><code>true</code></td><td>Feathers each scanline's edges (1px in from either side) instead of a hard cutoff — at small <code>scanlineThickness</code>, the feather can consume the whole line</td></tr>
           <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are eligible for interception — navigation stays off until this is set</td></tr>
         </tbody>
       </table>
@@ -255,8 +265,11 @@ Transitions.shutter.play(cardB);
           <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
           <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
           <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
-          <tr><td><code>data-t-variant</code></td><td><code>variant</code></td></tr>
-          <tr><td><code>data-t-border</code></td><td><code>border</code></td></tr>
+          <tr><td><code>data-t-grain</code></td><td><code>grain</code></td></tr>
+          <tr><td><code>data-t-scanlines</code></td><td><code>scanlines</code> (set to the literal string <code>"false"</code> to turn it off — any other value, including omitting the attribute, is treated as on)</td></tr>
+          <tr><td><code>data-t-scanline-spacing</code></td><td><code>scanlineSpacing</code></td></tr>
+          <tr><td><code>data-t-scanline-thickness</code></td><td><code>scanlineThickness</code></td></tr>
+          <tr><td><code>data-t-scanline-blur</code></td><td><code>scanlineBlur</code> (set to the literal string <code>"true"</code> to turn it on)</td></tr>
         </tbody>
       </table>
 
@@ -268,15 +281,15 @@ Transitions.shutter.play(cardB);
         <tbody>
           <tr>
             <td><code>configure(options)</code></td>
-            <td>Merges new options into the page-wide default profile - typically called just to widen/set <code>selector</code> from a script that runs after <code>shutter.js</code> has loaded.</td>
+            <td>Merges new options into the page-wide default profile - typically called just to widen/set <code>selector</code> from a script that runs after <code>static.js</code> has loaded.</td>
           </tr>
           <tr>
             <td><code>cover(el, options)</code></td>
-            <td>Covers <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>), resolving once fully covered. Leaves <code>el</code> covered - pair with <code>reveal()</code>.</td>
+            <td>Fades <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>) into full static, resolving once fully covered. Leaves <code>el</code> covered - pair with <code>reveal()</code>.</td>
           </tr>
           <tr>
             <td><code>reveal(el, options)</code></td>
-            <td>Reveals <code>el</code>, resolving once fully revealed and cleaned up.</td>
+            <td>Fades the static back out, resolving once <code>el</code> is fully revealed and cleaned up.</td>
           </tr>
           <tr>
             <td><code>play(el, options)</code></td>
@@ -285,7 +298,7 @@ Transitions.shutter.play(cardB);
         </tbody>
       </table>
       <p>
-        All four are on <code>Transitions.shutter</code>. <code>cover</code>,
+        All four are on <code>Transitions.static</code>. <code>cover</code>,
         <code>reveal</code>, and <code>play</code> take the same fields as
         the per-link <code>data-t-*</code> attributes above, as a plain
         options object, and return a promise that resolves once that step
@@ -298,7 +311,7 @@ Transitions.shutter.play(cardB);
         a link navigates immediately with no cover, and an arrival never
         plays a reveal; <code>cover</code>/<code>reveal</code>/<code>play</code>
         resolve immediately the same way — <code>play</code>'s
-        <code>swap</code> still runs, just with no cover shown around it.
+        <code>swap</code> still runs, just with no static shown around it.
         A back/forward (bfcache) restore also skips replaying anything —
         <code>pageshow</code> with <code>event.persisted</code> resets
         every still-active element straight to its clean, uncovered state
@@ -308,7 +321,15 @@ Transitions.shutter.play(cardB);
         shows up as a query param or hash.
       </p>
       <p>
-        The cover overlay stacks above the target element's own content,
+        Unlike Shutter's panels or Aperture's blades, which sit still once
+        fully closed, the noise itself keeps flickering for the entire
+        time a target stays covered — through the fade in, however long it
+        takes for whatever it's covering to be ready (a page load, or a
+        <code>play()</code> swap), and into the fade out — the same way a
+        real dead channel never holds still.
+      </p>
+      <p>
+        The static overlay stacks above the target element's own content,
         not above the whole page — for the navigation case (covering
         <code>&lt;html&gt;</code>) that's already the top of everything,
         but for an element target it's only as high as that element's own
