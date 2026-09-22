@@ -92,6 +92,14 @@
       docsPath: '/docs/background/vacuum.html',
     },
     {
+      slug: 'fireflies',
+      name: 'Fireflies',
+      category: 'background',
+      demoPath: '/background/fireflies/index.html',
+      jsPath: '/background/fireflies/fireflies.js',
+      docsPath: '/docs/background/fireflies.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

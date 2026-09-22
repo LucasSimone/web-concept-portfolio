@@ -43,6 +43,7 @@ const layoutSrc = `<!doctype html>
   <script src="/shared/hint-position.js"></script>
   <script src="/shared/docs-nav.js"></script>
   <script src="/shared/docs-copy.js"></script>
+  <script src="/shared/demo-shared.js"></script>
   <script>
     // Sitewide defaults for every transition effect, keyed by its own
     // slug (each effect's script reads window.TransitionConfig[slug]

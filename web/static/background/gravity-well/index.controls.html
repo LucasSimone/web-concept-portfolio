@@ -25,3 +25,15 @@
         <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-mode">?<span class="hint" role="tooltip" id="hint-mode">Grid draws the mesh lines; dots shows only the vertices.</span></span>
       </div>
     </div>
+
+    <div class="control-row">
+      <label for="colorPicker">Line color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-color">?<span class="hint" role="tooltip" id="hint-color">Color of the grid lines (or dots in dot mode).</span></span>
+      </label>
+      <input type="color" id="colorPicker" class="t-swatch" value="#000000" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Opacity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-opacity">?<span class="hint" role="tooltip" id="hint-opacity">How solid the grid lines are.</span></span></span><span id="opacityVal" class="value"></span></label>
+      <input type="range" id="opacityRange" min="0.05" max="1" step="0.05" value="0.3" />
+    </div>

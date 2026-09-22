@@ -247,6 +247,9 @@ GravityWell.initAll('.variation-card.bg-gravity-well', {
 Vacuum.initAll('.variation-card.bg-vacuum', {
   radius: 90, density: 8, maxParticles: 80,
 });
+Fireflies.initAll('.variation-card.bg-fireflies', {
+  count: 16, glowSize: 6,
+});
 
 // Transition Lab cards: loop each card's own engine (cover -> reveal, the
 // same cover/reveal the click-through demo pages use, minus any content

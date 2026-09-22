@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const easing = document.getElementById('ptEasing');
   const grain = document.getElementById('ptGrain');
   const grainVal = document.getElementById('ptGrainVal');
-  const swatches = Array.from(document.querySelectorAll('[aria-label="Noise tint"] .t-swatch'));
+  const tint = document.getElementById('ptTint');
   const scanlines = document.getElementById('ptScanlines');
   const scanlineSpacing = document.getElementById('ptScanlineSpacing');
   const scanlineSpacingVal = document.getElementById('ptScanlineSpacingVal');
@@ -49,14 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // one just persists for the session, like any other UI preference.
   const STORAGE_KEY = 't-static-demo-controls';
 
-  function loadSaved() {
-    try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    } catch (e) {
-      return null;
-    }
-  }
-
   function save() {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -72,10 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function selectSwatch(color) {
-    const match = swatches.find((b) => b.dataset.color === color) || swatches[0];
-    swatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
-    link.dataset.tColor = match.dataset.color;
+  function syncTint() {
+    link.dataset.tColor = tint.value;
+    save();
   }
 
   function syncDuration() {
@@ -124,30 +115,23 @@ document.addEventListener('DOMContentLoaded', () => {
   scanlineSpacing.addEventListener('input', syncScanlineSpacing);
   scanlineThickness.addEventListener('input', syncScanlineThickness);
   scanlineBlur.addEventListener('change', syncScanlineBlur);
+  tint.addEventListener('input', syncTint);
 
-  swatches.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectSwatch(btn.dataset.color);
-      save();
-    });
-  });
-
-  const saved = loadSaved();
+  const saved = loadSessionJSON(STORAGE_KEY);
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
     grain.value = saved.grain || 2;
-    selectSwatch(saved.color);
+    setColorInputValue(tint, saved.color);
     scanlines.checked = saved.scanlines !== false;
     scanlineSpacing.value = saved.scanlineSpacing || 5;
     scanlineThickness.value = saved.scanlineThickness || 2;
     scanlineBlur.checked = !!saved.scanlineBlur;
-  } else {
-    selectSwatch(swatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color);
   }
   syncDuration();
   syncEasing();
   syncGrain();
+  syncTint();
   syncScanlines();
   syncScanlineSpacing();
   syncScanlineThickness();

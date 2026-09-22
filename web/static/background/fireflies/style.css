@@ -1,61 +1,91 @@
-/* Page-specific styles for the Triple Vision variation.
-   Base layout/nav comes from /shared/site.css */
-
-:root {
-  --font-size: 14vw;
-}
-
-.scroll-spacer {
-  height: 60vh;
-}
-
 main {
   margin-right: 300px;
 }
 
-.hero {
-  min-height: 90vh;
+.fireflies-intro {
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 4vh 4vw;
+  padding: 10vh 10vw 6vh;
+  max-width: 720px;
 }
 
-.hero p.eyebrow {
-  letter-spacing: 0.2em;
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: 12px;
-  opacity: 0.6;
-  margin-bottom: 2rem;
+  opacity: 0.55;
 }
 
-/* The `.triple-vision` effect's own CSS ships inside
-   ./triple-vision.js and is injected automatically. This page
-   adds only its own font choice and sizing hook. */
-.triple-vision {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: var(--font-size);
+.fireflies-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
 }
 
-.stacked-echoes {
-  min-height: 80vh;
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.section-label {
+  padding: 0 10vw;
+  margin: 6vh 0 2vh;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* The `.bg-fireflies` effect's own CSS ships inside ./fireflies.js and is
+   injected automatically — nothing to define here. Everything below is
+   this demo page's own staging. */
+.fireflies-hero {
+  height: 70vh;
+  min-height: 420px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.25rem;
-  padding: 6vh 4vw;
   text-align: center;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
 }
 
-.triple-vision--stacked {
-  font-size: clamp(48px, 8vw, 120px);
-  line-height: 0.95;
+.fireflies-hero .label {
+  font-size: clamp(28px, 6vw, 64px);
+  letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
-/* --- Control panel --- */
+.fireflies-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 10vw 10vh;
+}
+
+.fireflies-card {
+  width: 320px;
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+  border: 1px solid #000;
+}
+
+.fireflies-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* --- Control panel, matching the rest of the lab --- */
 .controls {
   position: fixed;
   top: 57px;
@@ -171,9 +201,7 @@ main {
   accent-color: #000;
 }
 
-.control-row select,
-.control-row input[type="text"],
-.toggle-button {
+.control-row select {
   width: 100%;
   padding: 6px;
   border: 1px solid #000;
@@ -182,7 +210,12 @@ main {
   font-size: 13px;
 }
 
-.control-row input[type="color"] {
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.t-swatch {
   -webkit-appearance: none;
   appearance: none;
   width: 32px;
@@ -193,21 +226,31 @@ main {
   cursor: pointer;
 }
 
-.control-row input[type="color"]::-webkit-color-swatch-wrapper {
+.t-swatch::-webkit-color-swatch-wrapper {
   padding: 0;
 }
 
-.control-row input[type="color"]::-webkit-color-swatch {
+.t-swatch::-webkit-color-swatch {
   border: none;
 }
 
-.control-row input[type="color"]::-moz-color-swatch {
+.t-swatch::-moz-color-swatch {
   border: none;
 }
 
-.toggle-button {
+.control-row button {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  text-align: center;
   cursor: pointer;
-  text-align: left;
+}
+
+.control-row button:hover {
+  background: #f5f5f5;
 }
 
 .toggle-button[aria-pressed="true"] {
@@ -215,31 +258,12 @@ main {
   color: #fff;
 }
 
-.controls .value {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-.controls[data-mode="scroll"] [data-continuous-only] {
-  display: none;
-}
-
-.controls[data-mode="continuous"] [data-scroll-only] {
-  display: none;
-}
-
-.controls[data-mode="continuous"][data-profile="vibrate"] [data-rotate-only] {
-  display: none;
-}
-
-.controls[data-mode="continuous"][data-profile="rotate"] [data-vibrate-only],
-.controls[data-mode="continuous"][data-profile="rotate"] [data-hide-rotate] {
-  display: none;
+.toggle-button[aria-pressed="true"]:hover {
+  background: #222;
 }
 
 @media (max-width: 720px) {
   main {
     margin-right: 0;
   }
-  :root { --font-size: 12vw; }
 }

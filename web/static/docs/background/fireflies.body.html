@@ -1,0 +1,180 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Continuous</p>
+      <h1>Fireflies</h1>
+      <p>
+        A canvas of soft glowing points that wander an open field on their
+        own slowly-turning paths, each blinking independently on a random
+        cycle — a long dark stretch, then a brief rise and fall in
+        brightness (occasionally a quick double-flash instead), then dark
+        again, with a slight twinkle in size as it brightens. Each firefly
+        also carries its own small variation on the base
+        <code>glowColor</code>, which defaults to a warm yellow-green close
+        to real firefly bioluminescence — set it to <code>'0, 0, 0'</code>
+        for a flat monochrome swarm instead. Nothing responds to the cursor;
+        it just keeps drifting. Purely decorative — it sits behind the
+        element's content and never touches real page elements.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/fireflies/index.html">View Demo</a>
+        <a class="btn" href="/background/fireflies/fireflies.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="fireflies.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required
+        to render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-fireflies" aria-label="Fireflies background"&gt;
+  &lt;span class="label"&gt;Just watch&lt;/span&gt;
+&lt;/section&gt;
+&lt;script src="fireflies.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No text/data attribute needed — just apply the class to a container
+        with a size of its own. A <code>ResizeObserver</code> on the host
+        element keeps the canvas sized to fit, clamping any fireflies that
+        would otherwise fall outside the new bounds rather than resetting
+        the whole population. Auto-initializes against every
+        <code>.bg-fireflies</code> element. To configure options:
+      </p>
+      <pre><code>Fireflies.initAll('.bg-fireflies', {
+  count: 80,
+  glowSize: 14,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Dense, restless swarm</h3>
+        <p>
+          More fireflies moving faster with a shorter dark gap between blinks
+          reads as a busier, more agitated field instead of a calm one.
+        </p>
+        <pre><code>Fireflies.initAll('.bg-fireflies', {
+  count: 100,
+  speed: 30,
+  blinkMin: 0.4,
+  blinkMax: 1.5,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Sparse and lazy</h3>
+        <p>
+          Fewer fireflies, slower drift, and long dark gaps between blinks
+          for a still, sparse night-field feel.
+        </p>
+        <pre><code>Fireflies.initAll('.bg-fireflies', {
+  count: 18,
+  speed: 6,
+  wander: 0.4,
+  blinkMin: 3,
+  blinkMax: 8,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Bigger, softer glow</h3>
+        <p>
+          <code>glowSize</code> controls the halo radius at peak brightness —
+          larger values read as bigger, softer light sources rather than
+          pinpricks.
+        </p>
+        <pre><code>Fireflies.initAll('.bg-fireflies', { glowSize: 20 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Flat monochrome</h3>
+        <p>
+          A fully desaturated <code>glowColor</code> like black or white
+          skips the per-firefly hue variation, so every firefly renders in
+          exactly the same shade instead of a swarm of near-neighbors.
+        </p>
+        <pre><code>Fireflies.initAll('.bg-fireflies', {
+  glowColor: '0, 0, 0',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Dark sky, light fireflies</h3>
+        <p>
+          <code>background</code> and <code>glowColor</code> are independent,
+          so inverting to a dark field with pale fireflies is just an option
+          change away.
+        </p>
+        <pre><code>Fireflies.initAll('.bg-fireflies', {
+  background: '#050505',
+  glowColor: '255, 255, 255',
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>count</code></td><td><code>100</code></td><td>How many fireflies are alive at once</td></tr>
+          <tr><td><code>speed</code></td><td><code>25</code></td><td>Base drift speed in px/sec; each firefly varies it by ±40%</td></tr>
+          <tr><td><code>wander</code></td><td><code>1.4</code></td><td>How sharply each firefly's heading randomly turns per second. Higher looks more erratic</td></tr>
+          <tr><td><code>blinkMin</code></td><td><code>1.2</code></td><td>Minimum dark gap between blinks, in seconds</td></tr>
+          <tr><td><code>blinkMax</code></td><td><code>4</code></td><td>Maximum dark gap between blinks, in seconds</td></tr>
+          <tr><td><code>visibleMin</code></td><td><code>0.4</code></td><td>Minimum time a firefly stays lit during a blink, in seconds</td></tr>
+          <tr><td><code>visibleMax</code></td><td><code>1.1</code></td><td>Maximum time a firefly stays lit during a blink, in seconds; stretched further on a double-flash</td></tr>
+          <tr><td><code>glowSize</code></td><td><code>9</code></td><td>Halo radius at peak brightness, in px; each firefly varies it by ±30%</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>Canvas fill color drawn behind the fireflies each frame</td></tr>
+          <tr><td><code>glowColor</code></td><td><code>'154, 205, 50'</code></td><td>RGB triplet (no <code>rgb()</code> wrapper) for the glow/core color; each firefly jitters its own hue/lightness slightly around it. Use a desaturated value like <code>'0, 0, 0'</code> for flat monochrome</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. Changing <code>count</code> adds or removes fireflies immediately; any other option just applies on the next frame.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize observer, and removes the canvas.</td></tr>
+          <tr><td><code>Fireflies.get(elOrSelector)</code> / <code>Fireflies.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Double-flash odds are fixed (not configurable) — <code>blinkMin</code>/
+        <code>blinkMax</code> control the dark pacing between blinks, and
+        <code>visibleMin</code>/<code>visibleMax</code> control how long each
+        blink stays lit, which together are what actually shape how the
+        field feels — so the field never falls into visible lockstep even
+        with a small population. Drifting fireflies wrap around the edges of
+        the host element instead of bouncing off them. Respects
+        <code>prefers-reduced-motion</code> by skipping the animation loop
+        entirely and rendering every firefly at a fixed mid-blink brightness,
+        so the field is still visible but static. The demo page's own
+        control panel adds a Profile dropdown with a few preset combinations
+        (dense/restless, sparse/lazy, quick flicker, slow glow, monochrome) as
+        a starting point — picking one just sets the sliders below it, which
+        stay freely editable afterward. It also exposes a raw color picker for
+        <code>glowColor</code> — reach for <code>glowColor</code>/
+        <code>background</code> directly in code for anything more specific.
+      </p>
+    </div>
+  </div>

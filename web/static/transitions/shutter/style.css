@@ -228,11 +228,6 @@ p.element-demo-hint {
   accent-color: #000;
 }
 
-.t-swatches {
-  display: flex;
-  gap: 8px;
-}
-
 #ptBorderColor {
   margin: 10px 0;
 }
@@ -243,16 +238,26 @@ p.element-demo-hint {
 }
 
 .t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
   width: 32px;
   height: 32px;
   padding: 0;
   border: 1px solid #000;
+  background: #fff;
   cursor: pointer;
 }
 
-.t-swatch[aria-pressed="true"] {
-  outline: 2px solid #000;
-  outline-offset: 2px;
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
 }
 
 .t-style-toggle {

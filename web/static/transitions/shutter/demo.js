@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const durationVal = document.getElementById('ptDurationVal');
   const easing = document.getElementById('ptEasing');
   const variantButtons = Array.from(document.querySelectorAll('[data-variant-group] .t-style-btn'));
-  const swatches = Array.from(document.querySelectorAll('[aria-label="Panel color"] .t-swatch'));
+  const panelColor = document.getElementById('ptColor');
   const border = document.getElementById('ptBorder');
-  const borderSwatches = Array.from(document.querySelectorAll('#ptBorderColor .t-swatch'));
+  const borderColor = document.getElementById('ptBorderColor');
 
   // The "Click me" box below the main link — a small live example of
   // Shutter transitioning an element in place rather than a whole page.
@@ -42,14 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // one just persists for the session, like any other UI preference.
   const STORAGE_KEY = 't-shutter-demo-controls';
 
-  function loadSaved() {
-    try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    } catch (e) {
-      return null;
-    }
-  }
-
   function save() {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -63,10 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function selectSwatch(color) {
-    const match = swatches.find((b) => b.dataset.color === color) || swatches[0];
-    swatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
-    link.dataset.tColor = match.dataset.color;
+  function syncPanelColor() {
+    link.dataset.tColor = panelColor.value;
+    save();
   }
 
   function selectVariant(variant) {
@@ -76,13 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function currentBorderColor() {
-    const match = borderSwatches.find((b) => b.getAttribute('aria-pressed') === 'true') || borderSwatches[0];
-    return match.dataset.borderColor;
-  }
-
-  function selectBorderColor(color) {
-    const match = borderSwatches.find((b) => b.dataset.borderColor === color) || borderSwatches[0];
-    borderSwatches.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
+    return borderColor.value;
   }
 
   function syncBorder() {
@@ -104,20 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
   duration.addEventListener('input', syncDuration);
   easing.addEventListener('change', syncEasing);
   border.addEventListener('change', syncBorder);
-
-  borderSwatches.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectBorderColor(btn.dataset.borderColor);
-      syncBorder();
-    });
-  });
-
-  swatches.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectSwatch(btn.dataset.color);
-      save();
-    });
-  });
+  borderColor.addEventListener('input', syncBorder);
+  panelColor.addEventListener('input', syncPanelColor);
 
   variantButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -126,19 +99,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const saved = loadSaved();
+  const saved = loadSessionJSON(STORAGE_KEY);
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
     selectVariant(saved.variant || 'split');
-    selectSwatch(saved.color);
+    setColorInputValue(panelColor, saved.color);
     border.checked = !!saved.border;
-    selectBorderColor(saved.borderColor || '#000');
+    setColorInputValue(borderColor, saved.borderColor);
   } else {
     selectVariant(variantButtons.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.variant);
-    selectSwatch(swatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color);
   }
   syncDuration();
   syncEasing();
   syncBorder();
+  syncPanelColor();
 });

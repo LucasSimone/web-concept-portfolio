@@ -1,0 +1,61 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the sliders below. Adjusting any slider afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="dense">Dense &amp; Restless</option>
+        <option value="sparse">Sparse &amp; Lazy</option>
+        <option value="flicker">Quick Flicker</option>
+        <option value="slowglow">Slow Glow</option>
+        <option value="mono">Monochrome</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Population <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-count">?<span class="hint" role="tooltip" id="hint-count">How many fireflies are alive at once.</span></span></span><span id="countVal" class="value"></span></label>
+      <input type="range" id="countRange" min="5" max="150" step="5" value="100" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Drift speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-speed">?<span class="hint" role="tooltip" id="hint-speed">How fast each firefly moves along its own path, in px/sec.</span></span></span><span id="speedVal" class="value"></span></label>
+      <input type="range" id="speedRange" min="2" max="60" step="1" value="25" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Wobble <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wander">?<span class="hint" role="tooltip" id="hint-wander">How sharply each firefly's heading randomly turns. Higher looks more erratic.</span></span></span><span id="wanderVal" class="value"></span></label>
+      <input type="range" id="wanderRange" min="0.1" max="3" step="0.1" value="1.4" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Shortest dark gap <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-blinkMin">?<span class="hint" role="tooltip" id="hint-blinkMin">The minimum time a firefly stays dark between blinks, in seconds.</span></span></span><span id="blinkMinVal" class="value"></span></label>
+      <input type="range" id="blinkMinRange" min="0.2" max="4" step="0.1" value="1.2" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Longest dark gap <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-blinkMax">?<span class="hint" role="tooltip" id="hint-blinkMax">The maximum time a firefly stays dark between blinks, in seconds.</span></span></span><span id="blinkMaxVal" class="value"></span></label>
+      <input type="range" id="blinkMaxRange" min="1" max="10" step="0.2" value="4" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Shortest visible <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-visibleMin">?<span class="hint" role="tooltip" id="hint-visibleMin">The minimum time a firefly stays lit during a blink, in seconds.</span></span></span><span id="visibleMinVal" class="value"></span></label>
+      <input type="range" id="visibleMinRange" min="0.1" max="4" step="0.1" value="0.4" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Longest visible <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-visibleMax">?<span class="hint" role="tooltip" id="hint-visibleMax">The maximum time a firefly stays lit during a blink, in seconds.</span></span></span><span id="visibleMaxVal" class="value"></span></label>
+      <input type="range" id="visibleMaxRange" min="0.3" max="8" step="0.1" value="1.1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Glow size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glowSize">?<span class="hint" role="tooltip" id="hint-glowSize">Halo radius at peak brightness, in px.</span></span></span><span id="glowSizeVal" class="value"></span></label>
+      <input type="range" id="glowSizeRange" min="3" max="24" step="1" value="9" />
+    </div>
+
+    <div class="control-row">
+      <label for="colorPicker">Glow color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-color">?<span class="hint" role="tooltip" id="hint-color">Warm yellow-green by default, close to real firefly bioluminescence. Each firefly varies it slightly — pick black for a flat monochrome swarm instead.</span></span>
+      </label>
+      <input type="color" id="colorPicker" class="t-swatch" value="#9acd32" />
+    </div>

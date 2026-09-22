@@ -22,6 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
     labels.ease.textContent = controls.ease.value;
   }
 
+  const colorPicker = document.getElementById('colorPicker');
+  const opacityRange = document.getElementById('opacityRange');
+  const opacityVal = document.getElementById('opacityVal');
+
+  function syncColor() {
+    const lineColor = hexToRgbString(colorPicker.value);
+    instances.forEach((instance) => instance.update({ lineColor }));
+  }
+
+  function syncOpacity() {
+    opacityVal.textContent = opacityRange.value;
+    instances.forEach((instance) => instance.update({ lineOpacity: Number(opacityRange.value) }));
+  }
+
+  colorPicker.addEventListener('input', syncColor);
+  opacityRange.addEventListener('input', syncOpacity);
+
   Object.keys(controls).forEach((key) => {
     controls[key].addEventListener('input', () => {
       syncLabels();
@@ -43,4 +60,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   syncLabels();
+  syncOpacity();
 });

@@ -299,6 +299,19 @@
   display: block;
 }
 
+/* Fireflies: same override pattern as Circuit Board/Gravity Well above. */
+.variation-card.bg-fireflies {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.fireflies__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
 .carousel {
   position: relative;
   /* Establishes a stacking context so the focused card's z-index (up to

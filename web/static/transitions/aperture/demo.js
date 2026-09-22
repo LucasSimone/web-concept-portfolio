@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const blades = document.getElementById('ptBlades');
   const bladesVal = document.getElementById('ptBladesVal');
   const styleButtons = Array.from(document.querySelectorAll('[data-style-group] .t-style-btn'));
-  const panelSwatches = Array.from(document.querySelectorAll('[data-swatch-group="panel"] .t-swatch'));
-  const lineSwatches = Array.from(document.querySelectorAll('[data-swatch-group="line"] .t-swatch'));
+  const panelColor = document.getElementById('ptPanelColor');
+  const lineColor = document.getElementById('ptLineColor');
 
   // The "Click me" box below the main link — a small live example of
   // Aperture transitioning an element in place rather than a whole page.
@@ -38,14 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // one just persists for the session, like any other UI preference.
   const STORAGE_KEY = 't-aperture-demo-controls';
 
-  function loadSaved() {
-    try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-    } catch (e) {
-      return null;
-    }
-  }
-
   function save() {
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -59,10 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function selectSwatch(list, color, datasetKey) {
-    const match = list.find((b) => b.dataset.color === color) || list[0];
-    list.forEach((b) => b.setAttribute('aria-pressed', String(b === match)));
-    link.dataset[datasetKey] = match.dataset.color;
+  function syncPanelColor() {
+    link.dataset.tColor = panelColor.value;
+    save();
+  }
+
+  function syncLineColor() {
+    link.dataset.tLineColor = lineColor.value;
+    save();
   }
 
   function selectStyle(style) {
@@ -92,18 +88,8 @@ document.addEventListener('DOMContentLoaded', () => {
   easing.addEventListener('change', syncEasing);
   blades.addEventListener('input', syncBlades);
 
-  panelSwatches.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectSwatch(panelSwatches, btn.dataset.color, 'tColor');
-      save();
-    });
-  });
-  lineSwatches.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectSwatch(lineSwatches, btn.dataset.color, 'tLineColor');
-      save();
-    });
-  });
+  panelColor.addEventListener('input', syncPanelColor);
+  lineColor.addEventListener('input', syncLineColor);
   styleButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       selectStyle(btn.dataset.style);
@@ -111,20 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const saved = loadSaved();
+  const saved = loadSessionJSON(STORAGE_KEY);
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
     blades.value = saved.blades || 8;
     selectStyle(saved.style);
-    selectSwatch(panelSwatches, saved.color, 'tColor');
-    selectSwatch(lineSwatches, saved.lineColor, 'tLineColor');
+    setColorInputValue(panelColor, saved.color);
+    setColorInputValue(lineColor, saved.lineColor);
   } else {
     selectStyle(styleButtons.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.style);
-    selectSwatch(panelSwatches, panelSwatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color, 'tColor');
-    selectSwatch(lineSwatches, lineSwatches.find((b) => b.getAttribute('aria-pressed') === 'true').dataset.color, 'tLineColor');
   }
   syncDuration();
   syncEasing();
   syncBlades();
+  syncPanelColor();
+  syncLineColor();
 });
