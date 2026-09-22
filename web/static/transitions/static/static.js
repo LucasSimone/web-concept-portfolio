@@ -14,11 +14,12 @@
  *
  * The noise is real per-pixel randomness drawn into a low-resolution
  * `<canvas>` (`grain` px per cell, upscaled with `image-rendering:
- * pixelated` for the blocky look) rather than a CSS trick, layered under a
- * `color`-tinted blend layer (CSS `mix-blend-mode: multiply`, so `#fff`
- * leaves it untouched and a phosphor color like green or amber recolors
- * the grayscale noise the way an old monochrome monitor would) and an
- * optional scanline layer (`scanlines`).
+ * pixelated` for the blocky look) rather than a CSS trick: each cell is
+ * independently rolled to be either `colorA` or `colorB` (defaulting to
+ * white and black, the classic dead-channel look), weighted by `ratio` —
+ * the fraction of cells that land on `colorA` — so dragging the ratio
+ * shifts the whole field from mostly-white snow to mostly-black and back.
+ * Topped with an optional scanline layer (`scanlines`).
  *
  * Two ways to use it:
  *
@@ -50,11 +51,11 @@
  * effect's script can register alongside it without either clobbering
  * the other.
  *
- * A single call can override duration/easing/color/grain/scanlines/
- * scanlineSpacing/scanlineThickness/scanlineBlur for just that one
- * transition, leaving every other link/call using the page's default
+ * A single call can override duration/easing/colorA/colorB/ratio/grain/
+ * scanlines/scanlineSpacing/scanlineThickness/scanlineBlur for just that
+ * one transition, leaving every other link/call using the page's default
  * profile: a link's
- * `data-t-duration`/`-easing`/`-color`/`-grain`/`-scanlines`/
+ * `data-t-duration`/`-easing`/`-color-a`/`-color-b`/`-ratio`/`-grain`/`-scanlines`/
  * `-scanline-spacing`/`-scanline-thickness`/`-scanline-blur` attributes
  * for navigation, or the same fields
  * passed straight into `cover`/`reveal`/
@@ -77,7 +78,9 @@
   var DEFAULTS = {
     duration: 1000, // ms for each half (fade in or fade out) of the motion
     easing: 'ease-in-out',
-    color: '#fff', // tint multiplied over the grayscale noise (mix-blend-mode) — '#fff' leaves it untouched
+    colorA: '#fff', // first noise color — defaults (with colorB) to the classic black-and-white look
+    colorB: '#000', // second noise color
+    ratio: 0.5, // fraction of noise cells that land on colorA rather than colorB (0 = all colorB, 1 = all colorA)
     grain: 2, // px per noise cell before the canvas is scaled up (pixelated) — bigger = blockier, more retro
     scanlines: true, // overlay faint horizontal CRT scanlines on top of the noise
     scanlineSpacing: 5, // px between the start of one scanline and the next
@@ -138,11 +141,6 @@
       // covered/animating.
       '.t-static-active > .t-static-overlay{display:block;pointer-events:auto;opacity:1;}' +
       '.t-static-overlay canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;}' +
-      // Recolors the grayscale noise the way a monochrome CRT's phosphor
-      // would: multiply blend means result = noise * color / 255, so
-      // black stays black, white becomes exactly `color`, and the default
-      // '#fff' is a no-op (multiplying by white leaves the noise as-is).
-      '.t-static-tint{position:absolute;inset:0;background:var(--t-static-color,#fff);mix-blend-mode:multiply;}' +
       // A 1px-per-3px line was the same order of size as a couple of grain
       // cells, so it just read as more noise instead of a distinct banding
       // pattern. Wider, higher-contrast bands (and multiply, so they darken
@@ -208,7 +206,6 @@
   function applyProfile(el, profile) {
     el.style.setProperty('--t-static-duration', profile.duration + 'ms');
     el.style.setProperty('--t-static-easing', profile.easing);
-    el.style.setProperty('--t-static-color', profile.color);
     el.setAttribute('data-t-static-scanlines', String(profile.scanlines));
     el.style.setProperty('--t-static-scan-spacing', profile.scanlineSpacing + 'px');
     // Keeps scroll speed constant (see SCAN_SPEED) instead of the scanline
@@ -229,12 +226,9 @@
     var overlayEl = document.createElement('div');
     overlayEl.className = 't-static-overlay';
     var canvas = document.createElement('canvas');
-    var tint = document.createElement('div');
-    tint.className = 't-static-tint';
     var scanlines = document.createElement('div');
     scanlines.className = 't-static-scanlines';
     overlayEl.appendChild(canvas);
-    overlayEl.appendChild(tint);
     overlayEl.appendChild(scanlines);
     el.appendChild(overlayEl); // child of the target itself, root or element alike
     return {
@@ -245,7 +239,30 @@
       resH: 0,
       imageData: null,
       buf32: null,
+      colorAInt: 0,
+      colorBInt: 0,
+      ratio: 0.5,
     };
+  }
+
+  // Offscreen 1x1 canvas used purely to let the browser's own CSS color
+  // parser turn any valid color string (hex, named, rgb()/hsl(), ...) into
+  // concrete RGB bytes, rather than writing a parser for it ourselves.
+  var colorParseCtx = null;
+  function colorToInt(color, fallback) {
+    if (!colorParseCtx) {
+      var c = document.createElement('canvas');
+      c.width = c.height = 1;
+      colorParseCtx = c.getContext('2d', { willReadFrequently: true });
+    }
+    colorParseCtx.fillStyle = fallback; // reset first: an invalid `color` leaves fillStyle unchanged, so this is what it falls back to
+    colorParseCtx.fillStyle = color;
+    colorParseCtx.fillRect(0, 0, 1, 1);
+    var d = colorParseCtx.getImageData(0, 0, 1, 1).data;
+    // Uint32Array is little-endian, so the byte order that lands each
+    // channel in the right place is R,G,B,A low-to-high — same packing
+    // drawNoise() relies on.
+    return (255 << 24) | (d[2] << 16) | (d[1] << 8) | d[0];
   }
 
   // Recomputes the canvas's backing resolution for the target's current
@@ -263,6 +280,12 @@
     // exactly where cover() left off, and still paints above whatever the
     // swap added.
     if (overlay.el.parentNode !== el) el.appendChild(overlay.el);
+    // Recomputed every call, not just on resize — colorA/colorB/ratio can
+    // change between cover() and reveal() (or across calls) independently
+    // of size, and this is cheap enough to just always redo.
+    overlay.colorAInt = colorToInt(profile.colorA, DEFAULTS.colorA);
+    overlay.colorBInt = colorToInt(profile.colorB, DEFAULTS.colorB);
+    overlay.ratio = profile.ratio;
     var size = targetSize(el);
     var grain = profile.grain > 0 ? profile.grain : DEFAULTS.grain;
     var resW = Math.max(1, Math.round(size.width / grain));
@@ -286,9 +309,11 @@
   function drawNoise(overlay) {
     if (!overlay || !overlay.buf32) return;
     var buf = overlay.buf32;
+    var colorA = overlay.colorAInt;
+    var colorB = overlay.colorBInt;
+    var ratio = overlay.ratio;
     for (var i = 0; i < buf.length; i++) {
-      var v = (Math.random() * 256) | 0;
-      buf[i] = (255 << 24) | (v << 16) | (v << 8) | v; // alpha,blue,green,red bytes -> opaque gray pixel
+      buf[i] = Math.random() < ratio ? colorA : colorB;
     }
     overlay.ctx.putImageData(overlay.imageData, 0, 0);
   }
@@ -347,8 +372,8 @@
     activeElements.delete(el);
   }
 
-  // A link's own data-t-duration/-easing/-color/-grain/-scanlines/
-  // -scanline-spacing/-scanline-thickness/-scanline-blur, or an options
+  // A link's own data-t-duration/-easing/-color-a/-color-b/-ratio/-grain/
+  // -scanlines/-scanline-spacing/-scanline-thickness/-scanline-blur, or an options
   // object passed straight to cover/reveal/play, win over the
   // page's default profile field-by-field — every other field keeps using
   // `options`.
@@ -356,12 +381,15 @@
     overrides = overrides || {};
     var duration = overrides.duration;
     var grain = overrides.grain;
+    var ratio = overrides.ratio;
     var scanlineSpacing = overrides.scanlineSpacing;
     var scanlineThickness = overrides.scanlineThickness;
     return {
       duration: (typeof duration === 'number' && isFinite(duration)) ? duration : options.duration,
       easing: overrides.easing || options.easing,
-      color: overrides.color || options.color,
+      colorA: overrides.colorA || options.colorA,
+      colorB: overrides.colorB || options.colorB,
+      ratio: (typeof ratio === 'number' && isFinite(ratio)) ? Math.min(1, Math.max(0, ratio)) : options.ratio,
       grain: (typeof grain === 'number' && isFinite(grain) && grain > 0) ? grain : options.grain,
       scanlines: overrides.scanlines !== undefined ? overrides.scanlines : options.scanlines,
       scanlineSpacing: (typeof scanlineSpacing === 'number' && isFinite(scanlineSpacing) && scanlineSpacing > 0)
@@ -377,7 +405,9 @@
     return {
       duration: ds.tDuration ? Number(ds.tDuration) : undefined,
       easing: ds.tEasing,
-      color: ds.tColor,
+      colorA: ds.tColorA,
+      colorB: ds.tColorB,
+      ratio: ds.tRatio ? Number(ds.tRatio) : undefined,
       grain: ds.tGrain ? Number(ds.tGrain) : undefined,
       scanlines: ds.tScanlines === undefined ? undefined : ds.tScanlines !== 'false',
       scanlineSpacing: ds.tScanlineSpacing ? Number(ds.tScanlineSpacing) : undefined,

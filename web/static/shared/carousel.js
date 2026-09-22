@@ -37,6 +37,12 @@
  * passed through while moving), it gets a bubbling 'carousel-settle'
  * event - lets a page react to "this card just became the focused one"
  * without reaching into the carousel's own position tracking.
+ *
+ * The pointer also drives focus directly: while it's over a card (and
+ * nothing's being dragged or actively wheeled), that card is the settle
+ * spring's target instead of the nearest integer to the current position,
+ * so mousing across the strip pulls the focused card along with it the
+ * same way scrolling to it would.
  */
 (function (global) {
   const DEFAULTS = {
@@ -73,6 +79,13 @@
       this._dragPrevPos = 0;
       this._wheelActive = false;
       this._wheelIdleTimer = null;
+      // Index of the card currently under the pointer, or null when the
+      // pointer isn't over any card - see the _hoverDelegate binding below.
+      // While set, it's the settle spring's target instead of the nearest
+      // integer to _pos, so mousing across the cards pulls the focused
+      // position along with it exactly like scrolling/dragging there
+      // would.
+      this._hoverIndex = null;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
       // Remembers the focused card per carousel (by element id) across page
@@ -96,6 +109,20 @@
       this.root.addEventListener('wheel', this._onWheel, { passive: false });
       this.root.addEventListener('pointerdown', this._onPointerDown);
       this.track.addEventListener('click', this._onClickCapture, true);
+      // See shared/hover-delegate.js for why this needs mousemove-based
+      // delegation rather than the track's own mouseenter/mouseleave.
+      // Ignored while dragging - a swipe shouldn't also go chasing
+      // whatever card the pointer happens to cross on its way past
+      // (_onPointerDown clears any pre-drag hover target of its own).
+      this._hoverDelegate = bindHoverDelegate(this.track, '.variation-card', (card) => {
+        if (this._dragging) return;
+        if (!card) {
+          this._hoverIndex = null;
+          return;
+        }
+        const index = this._cards.indexOf(card);
+        if (index !== -1) this._hoverIndex = index;
+      });
       global.addEventListener('resize', this._onResize);
 
       this.refresh();
@@ -120,6 +147,7 @@
 
       this._pos = startIndex;
       this._velocity = 0;
+      this._hoverIndex = null;
       this._settledIndex = -1;
       this._setSettledIndex(startIndex);
       this._render();
@@ -193,6 +221,10 @@
       this._pos = clamp(this._pos + deltaIndex, 0, this._maxIndex);
       this._velocity = clamp(deltaIndex, -this.options.maxVelocity, this.options.maxVelocity);
 
+      // The strip is about to slide under a stationary cursor, which would
+      // leave a stale _hoverIndex fighting the scroll for the settle
+      // target once it goes idle - see the _hoverDelegate binding above.
+      this._hoverIndex = null;
       this._wheelActive = true;
       clearTimeout(this._wheelIdleTimer);
       this._wheelIdleTimer = setTimeout(() => {
@@ -205,6 +237,10 @@
       this._dragging = true;
       this._dragMoved = 0;
       this._velocity = 0;
+      // Same reasoning as _onWheel: a drag is about to move cards under a
+      // pointer that isn't itself generating mousemove hover updates, so
+      // any pre-drag hover target must not survive to fight the release.
+      this._hoverIndex = null;
       this._dragStartX = event.clientX;
       this._dragStartPos = this._pos;
       this._dragPrevPos = this._pos;
@@ -242,7 +278,9 @@
     _tick() {
       const settling = !this._dragging && !this._wheelActive;
       if (settling) {
-        const snapTarget = clamp(Math.round(this._pos), 0, this._maxIndex);
+        const snapTarget = this._hoverIndex !== null
+          ? this._hoverIndex
+          : clamp(Math.round(this._pos), 0, this._maxIndex);
         this._velocity += (snapTarget - this._pos) * this.options.snapStrength;
         this._velocity *= this.options.friction;
         if (Math.abs(this._velocity) < 0.0004 && Math.abs(snapTarget - this._pos) < 0.0004) {
@@ -309,6 +347,7 @@
       this.root.removeEventListener('wheel', this._onWheel);
       this.root.removeEventListener('pointerdown', this._onPointerDown);
       this.track.removeEventListener('click', this._onClickCapture, true);
+      this._hoverDelegate.destroy();
       global.removeEventListener('resize', this._onResize);
       global.removeEventListener('pointermove', this._onPointerMove);
       global.removeEventListener('pointerup', this._onPointerUp);

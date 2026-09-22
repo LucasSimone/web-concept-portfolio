@@ -61,12 +61,20 @@ p.element-demo-hint {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 220px;
-  height: 96px;
+  /* Same 320:140 aspect ratio as the old fixed 220x96 box, just scaled up
+     — width caps at 100% so it shrinks to fit on narrow viewports instead
+     of overflowing, and aspect-ratio scales height down to match rather
+     than needing a separate mobile breakpoint. */
+  width: min(320px, 100%);
+  aspect-ratio: 320 / 140;
+  /* Floor so the label never gets shorter than one comfortable line even
+     if the container shrinks well below 320px. */
+  min-height: 44px;
+  box-sizing: border-box;
   margin: 0 auto;
   border: 1px solid #000;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   user-select: none;

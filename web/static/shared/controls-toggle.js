@@ -18,6 +18,7 @@
     return window.location.pathname.indexOf(folder) === 0;
   });
   var STORAGE_KEY = 'controls-panel-open:' + window.location.pathname.replace(/[^/]*$/, '');
+  var isPageTwo = /page-two\.html$/.test(window.location.pathname);
 
   document.addEventListener('DOMContentLoaded', function () {
     var controls = document.querySelector('.controls');
@@ -28,8 +29,11 @@
     var isMobile = window.matchMedia('(max-width: 720px)').matches;
     var canPersist = persistsAcrossPages && !isMobile;
 
+    // Only Page Two reads the saved choice, so arriving fresh at Page One
+    // (from the homepage, a reload, etc.) always gets the normal default
+    // instead of picking up a closed state left over from an earlier visit.
     var saved = null;
-    if (canPersist) {
+    if (canPersist && isPageTwo) {
       try { saved = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
     }
     var isOpen = saved !== null ? saved === '1' : !isMobile;

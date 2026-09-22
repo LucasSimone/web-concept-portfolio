@@ -90,9 +90,10 @@
       <div class="recipe">
         <h3>Override one link's timing or look</h3>
         <p>
-          A single link can override duration, easing, tint color, grain,
-          scanlines, scanline spacing, thickness, or edge blur for just its
-          own transition, leaving every other
+          A single link can override duration, easing, the two noise
+          colors, their ratio, grain, scanlines, scanline spacing,
+          thickness, or edge blur for just its own transition, leaving
+          every other
           link on the page using the default profile — this is how the
           <a href="/transitions/static/index.html">demo's controls
           panel</a> customizes only the Page One → Page Two link without
@@ -101,20 +102,20 @@
           same handoff that triggers its reveal, so the two halves of the
           motion always match.
         </p>
-        <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color="#3f0"&gt;
+        <pre><code>&lt;a href="page-two.html" data-t-duration="900" data-t-color-a="#3f0"&gt;
   Enter Page Two
 &lt;/a&gt;</code></pre>
       </div>
 
       <div class="recipe">
-        <h3>Set the default timing, color, grain, or scanlines</h3>
+        <h3>Set the default timing, colors, grain, or scanlines</h3>
         <p>
           Configure the page-wide profile once, alongside turning on
           <code>selector</code>:
         </p>
         <pre><code>&lt;script&gt;
   window.TransitionConfig = {
-    static: { duration: 700, color: '#ffb000', grain: 5, scanlineSpacing: 10, scanlineThickness: 4, scanlineBlur: true, selector: 'a[href]' },
+    static: { duration: 700, colorA: '#ffb000', colorB: '#000', ratio: 0.6, grain: 5, scanlineSpacing: 10, scanlineThickness: 4, scanlineBlur: true, selector: 'a[href]' },
   };
 &lt;/script&gt;
 &lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
@@ -222,7 +223,8 @@ Transitions.static.play(cardB);
         Running the <em>same</em> effect configured differently in
         different places is a separate case that doesn't need any of
         this — see the per-link <code>data-t-duration</code>/
-        <code>-easing</code>/<code>-color</code>/<code>-grain</code>/
+        <code>-easing</code>/<code>-color-a</code>/<code>-color-b</code>/
+        <code>-ratio</code>/<code>-grain</code>/
         <code>-scanlines</code>/<code>-scanline-spacing</code>/
         <code>-scanline-thickness</code>/<code>-scanline-blur</code>
         attributes above, which already let one script handle any number of
@@ -247,7 +249,9 @@ Transitions.static.play(cardB);
         <tbody>
           <tr><td><code>duration</code></td><td><code>1000</code></td><td>ms for each half (fade in or fade out) of the motion</td></tr>
           <tr><td><code>easing</code></td><td><code>'ease-in-out'</code></td><td>CSS easing applied to the opacity transition</td></tr>
-          <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>Tint multiplied over the grayscale noise (like an old monochrome monitor's phosphor) — <code>'#fff'</code> leaves it untouched</td></tr>
+          <tr><td><code>colorA</code></td><td><code>'#fff'</code></td><td>First noise color — each cell is independently rolled to be <code>colorA</code> or <code>colorB</code></td></tr>
+          <tr><td><code>colorB</code></td><td><code>'#000'</code></td><td>Second noise color</td></tr>
+          <tr><td><code>ratio</code></td><td><code>0.5</code></td><td>Fraction (0–1) of noise cells that land on <code>colorA</code> rather than <code>colorB</code> — <code>0</code> is all <code>colorB</code>, <code>1</code> is all <code>colorA</code></td></tr>
           <tr><td><code>grain</code></td><td><code>2</code></td><td>px per noise cell before the canvas is scaled up — bigger numbers mean blockier, more retro static</td></tr>
           <tr><td><code>scanlines</code></td><td><code>true</code></td><td>Overlay faint horizontal CRT scanlines on top of the noise, scrolling slowly upward</td></tr>
           <tr><td><code>scanlineSpacing</code></td><td><code>5</code></td><td>px between the start of one scanline and the next. Scroll speed stays constant (px/s) regardless of spacing, so wider spacing doesn't read as scrolling faster</td></tr>
@@ -264,7 +268,9 @@ Transitions.static.play(cardB);
         <tbody>
           <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
           <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
-          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-color-a</code></td><td><code>colorA</code></td></tr>
+          <tr><td><code>data-t-color-b</code></td><td><code>colorB</code></td></tr>
+          <tr><td><code>data-t-ratio</code></td><td><code>ratio</code></td></tr>
           <tr><td><code>data-t-grain</code></td><td><code>grain</code></td></tr>
           <tr><td><code>data-t-scanlines</code></td><td><code>scanlines</code> (set to the literal string <code>"false"</code> to turn it off — any other value, including omitting the attribute, is treated as on)</td></tr>
           <tr><td><code>data-t-scanline-spacing</code></td><td><code>scanlineSpacing</code></td></tr>

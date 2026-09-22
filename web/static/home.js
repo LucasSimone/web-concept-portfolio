@@ -265,6 +265,10 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
   function randomTransitionPause() {
     return TRANSITION_LOOP_MIN_PAUSE_MS + Math.random() * (TRANSITION_LOOP_MAX_PAUSE_MS - TRANSITION_LOOP_MIN_PAUSE_MS);
   }
+  // card element -> { enter, leave }, filled in below and driven by the
+  // delegated mousemove tracker underneath it instead of each card's own
+  // mouseenter/mouseleave - see that tracker for why.
+  const transitionCards = new Map();
   Array.from(document.querySelectorAll('#transitionGrid .variation-card[data-t-transition]')).forEach((card) => {
     const engine = window.Transitions && window.Transitions[card.dataset.tTransition];
     if (!engine) return;
@@ -277,38 +281,73 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     // built so a newer call on the same target supersedes an in-flight one
     // instead of fighting it (see their "gen" comments) - the CSS
     // transition just retargets from wherever it currently sits. So
-    // mouseenter's cover() closes it (or, mid-reveal, reverses it closed
+    // enter()'s cover() closes it (or, mid-reveal, reverses it closed
     // from wherever it got to) and holds it there since nothing schedules
-    // a follow-up reveal while hovering; mouseleave's reveal() reopens it
+    // a follow-up reveal while hovering; leave()'s reveal() reopens it
     // and hands the loop its next cycle.
+    //
+    // Borrows that same "gen" idea for the loop wrapper itself: enter()
+    // can land while a natural cycle()'s cover()->reveal() promise chain
+    // is still in flight (now routine, since the carousel's hover-follow
+    // fires enter/leave far more often than a one-off manual hover did).
+    // Without a generation check, that stale chain keeps running after
+    // enter() takes over and, if hovering has already ended again by the
+    // time its `.then`s resolve, calls its own reveal()/scheduleCycle()
+    // alongside the one leave() already started - two loop chains now
+    // ticking independently, which reads as the cycle suddenly running
+    // too fast. Bumping `gen` on every enter() and having each chain
+    // check it's still current before acting keeps exactly one chain
+    // alive at a time.
     let hovering = false;
     let pendingCycle = null;
+    let gen = 0;
     // Each card re-rolls its own random pause after every cycle, so the
     // cards drift in and out of sync with each other instead of the fixed
     // lockstep a shared interval would give.
-    function scheduleCycle() {
-      pendingCycle = setTimeout(cycle, randomTransitionPause());
+    function scheduleCycle(myGen) {
+      if (pendingCycle) clearTimeout(pendingCycle);
+      pendingCycle = setTimeout(() => cycle(myGen), randomTransitionPause());
     }
-    function cycle() {
-      if (hovering) return;
+    function cycle(myGen) {
+      if (hovering || myGen !== gen) return;
       engine.cover(card, overrides)
-        .then(() => { if (!hovering) return engine.reveal(card, overrides); })
-        .then(() => { if (!hovering) scheduleCycle(); });
+        .then(() => { if (!hovering && myGen === gen) return engine.reveal(card, overrides); })
+        .then(() => { if (!hovering && myGen === gen) scheduleCycle(myGen); });
     }
-    card.addEventListener('mouseenter', () => {
-      hovering = true;
-      if (pendingCycle) {
-        clearTimeout(pendingCycle);
-        pendingCycle = null;
-      }
-      engine.cover(card, overrides);
+    transitionCards.set(card, {
+      enter() {
+        if (hovering) return;
+        hovering = true;
+        gen++;
+        if (pendingCycle) {
+          clearTimeout(pendingCycle);
+          pendingCycle = null;
+        }
+        engine.cover(card, overrides);
+      },
+      leave() {
+        if (!hovering) return;
+        hovering = false;
+        const myGen = gen;
+        engine.reveal(card, overrides).then(() => { if (myGen === gen) scheduleCycle(myGen); });
+      },
     });
-    card.addEventListener('mouseleave', () => {
-      hovering = false;
-      engine.reveal(card, overrides).then(scheduleCycle);
-    });
-    scheduleCycle();
+    scheduleCycle(gen);
   });
+
+  // See shared/hover-delegate.js: the transition carousel's own
+  // hover-follow (see carousel.js) animates cards by sliding them under
+  // the pointer, which needs this same mousemove-based delegation instead
+  // of each card's own mouseenter/mouseleave to avoid sending this loop's
+  // cover/reveal rapidly back and forth as cards slide underneath a
+  // stationary cursor.
+  const transitionGrid = document.getElementById('transitionGrid');
+  if (transitionGrid) {
+    bindHoverDelegate(transitionGrid, '.variation-card', (card, prevCard) => {
+      if (prevCard && transitionCards.has(prevCard)) transitionCards.get(prevCard).leave();
+      if (card && transitionCards.has(card)) transitionCards.get(card).enter();
+    });
+  }
 }
 
 // Remembers how far down the homepage the user had scrolled, so following a

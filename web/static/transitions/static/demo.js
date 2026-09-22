@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const easing = document.getElementById('ptEasing');
   const grain = document.getElementById('ptGrain');
   const grainVal = document.getElementById('ptGrainVal');
-  const tint = document.getElementById('ptTint');
+  const colorA = document.getElementById('ptColorA');
+  const colorB = document.getElementById('ptColorB');
+  const ratio = document.getElementById('ptRatio');
+  const ratioVal = document.getElementById('ptRatioVal');
   const scanlines = document.getElementById('ptScanlines');
   const scanlineSpacing = document.getElementById('ptScanlineSpacing');
   const scanlineSpacingVal = document.getElementById('ptScanlineSpacingVal');
@@ -27,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     Transitions.static.play(elementDemo, {
       duration: Number(link.dataset.tDuration),
       easing: link.dataset.tEasing,
-      color: link.dataset.tColor,
+      colorA: link.dataset.tColorA,
+      colorB: link.dataset.tColorB,
+      ratio: Number(link.dataset.tRatio),
       grain: Number(link.dataset.tGrain),
       // Too small a box for scanlines to read as anything but noise —
       // always off here regardless of what the controls panel has set.
@@ -55,7 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         duration: duration.value,
         easing: easing.value,
         grain: grain.value,
-        color: link.dataset.tColor,
+        colorA: link.dataset.tColorA,
+        colorB: link.dataset.tColorB,
+        ratio: ratio.value,
         scanlines: scanlines.checked,
         scanlineSpacing: scanlineSpacing.value,
         scanlineThickness: scanlineThickness.value,
@@ -64,8 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {}
   }
 
-  function syncTint() {
-    link.dataset.tColor = tint.value;
+  function syncColorA() {
+    link.dataset.tColorA = colorA.value;
+    save();
+  }
+
+  function syncColorB() {
+    link.dataset.tColorB = colorB.value;
+    save();
+  }
+
+  function syncRatio() {
+    link.dataset.tRatio = ratio.value;
+    ratioVal.textContent = `${Math.round(ratio.value * 100)}%`;
     save();
   }
 
@@ -115,14 +133,18 @@ document.addEventListener('DOMContentLoaded', () => {
   scanlineSpacing.addEventListener('input', syncScanlineSpacing);
   scanlineThickness.addEventListener('input', syncScanlineThickness);
   scanlineBlur.addEventListener('change', syncScanlineBlur);
-  tint.addEventListener('input', syncTint);
+  colorA.addEventListener('input', syncColorA);
+  colorB.addEventListener('input', syncColorB);
+  ratio.addEventListener('input', syncRatio);
 
   const saved = loadSessionJSON(STORAGE_KEY);
   if (saved) {
     duration.value = saved.duration;
     easing.value = saved.easing;
     grain.value = saved.grain || 2;
-    setColorInputValue(tint, saved.color);
+    setColorInputValue(colorA, saved.colorA);
+    setColorInputValue(colorB, saved.colorB);
+    ratio.value = saved.ratio === undefined ? 0.5 : saved.ratio;
     scanlines.checked = saved.scanlines !== false;
     scanlineSpacing.value = saved.scanlineSpacing || 5;
     scanlineThickness.value = saved.scanlineThickness || 2;
@@ -131,7 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
   syncDuration();
   syncEasing();
   syncGrain();
-  syncTint();
+  syncColorA();
+  syncColorB();
+  syncRatio();
   syncScanlines();
   syncScanlineSpacing();
   syncScanlineThickness();
