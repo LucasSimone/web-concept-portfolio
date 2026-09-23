@@ -2,11 +2,11 @@
  * Liftoff
  * -------
  * Hold a card in the pointer for a sustained dwell (default 1.5s) and it
- * lifts off the page, settles into a slow ambient float, and grows an
- * underglow beneath it - somewhere between a car's underglow and a
- * rocket's exhaust plume. Leaving before the dwell completes cancels
- * cleanly with no visible motion at all; leaving after liftoff eases the
- * card back down and lets the glow fade out.
+ * lifts off the page, settles into a slow ambient float, and a scatter of
+ * short black dashes streams downward beneath it, clustered toward the
+ * middle, for as long as it stays lifted. Leaving before the dwell
+ * completes cancels cleanly with no visible motion at all; leaving after
+ * liftoff eases the card back down and lets the dashes fade out.
  *
  * Everything is driven by one continuous scalar per card (`amount`, 0-1)
  * rather than a CSS class + transition: entry, the ambient float, and the
@@ -29,11 +29,9 @@
   --lift-r: 0deg;
   --lift-s: 1;
   --lift-amount: 0;
-  --glow-ambient: 0;
   --glow-thrust: 0;
-  --glow-ambient-color: #ff8c28;
-  --glow-thrust-color: #ff7a1a;
   --shadow-color: #000000;
+  --dash-color: #000000;
   --shadow-max: 1;
 
   position: relative;
@@ -62,46 +60,48 @@
   pointer-events: none;
 }
 
-/* Ambient underglow - broad, soft, slow-pulsing - the "car underglow" half.
-   Color comes from \`--glow-ambient-color\` (the \`glowColor\` option);
-   color-mix blends in its own transparency rather than the option itself
-   carrying alpha, since a hex color can't. */
-.liftoff-card__glow--ambient {
+/* Thrust lines - simple, disjointed dashes instead of anything soft or
+   filled: each is its own small \`<div>\` (a straight bar), spawned one at
+   a time by createThrustEmitter() below rather than built once and
+   looped, so no two dashes are ever the same shape or timing. Columns are
+   evenly spaced across the card's width, each with its own independent
+   spawn stream whose max fall distance follows a normal distribution
+   (tallest in the middle, thinning toward the edges). Each dash fades in,
+   falls straight down its column's full distance while fading back out,
+   then is removed and a new one is scheduled after a random pause -
+   that's "move" and "dissipate" as two keyframe steps on the same
+   element, nothing fancier. The outer element sits flush against the
+   card's own bottom edge with no overlap upward into the card
+   (\`bottom\`/\`height\` set inline from \`thrustHeight\` so its top edge
+   lands exactly on the card's own bottom edge) and spans the card's full
+   width so the columns can be distributed across the *whole* bottom edge,
+   not just the center. */
+.liftoff-card__glow--thrust {
   position: absolute;
-  left: -25%;
-  right: -25%;
-  bottom: -42px;
-  height: 92px;
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--glow-ambient-color) 55%, transparent), transparent 72%);
-  filter: blur(18px);
-  opacity: var(--glow-ambient);
+  left: 0;
+  right: 0;
+  bottom: -54px;
+  height: 54px;
+  opacity: var(--glow-thrust);
   z-index: -1;
   pointer-events: none;
 }
 
-/* Thrust plume - tighter, taller, flickering - the "rocket exhaust" half.
-   Anchored to the card's bottom edge and scaled from the top so it reads
-   as streaming further down the more the card lifts, not just fading in
-   place. The core is \`--glow-thrust-color\` mixed toward white for a hot
-   center, fading through the plain color to transparent at the edge. */
-.liftoff-card__glow--thrust {
+.liftoff-card__line {
   position: absolute;
-  left: 34%;
-  right: 34%;
-  bottom: -58px;
-  height: 72px;
-  background: radial-gradient(
-    ellipse at 50% 0%,
-    color-mix(in srgb, var(--glow-thrust-color) 60%, white),
-    color-mix(in srgb, var(--glow-thrust-color) 35%, transparent) 55%,
-    transparent 80%
-  );
-  filter: blur(6px);
-  opacity: var(--glow-thrust);
-  transform: scaleY(calc(0.55 + 0.45 * var(--lift-amount)));
-  transform-origin: top center;
-  z-index: -1;
-  pointer-events: none;
+  top: 0;
+  width: 2px;
+  background-color: var(--dash-color);
+  transform: translateX(-50%);
+  animation-name: liftoff-line-fall;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 1;
+}
+@keyframes liftoff-line-fall {
+  0% { opacity: 0; transform: translateX(-50%) translateY(0); }
+  15% { opacity: 1; }
+  70% { opacity: 0.6; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(var(--line-fall, 12px)); }
 }
 `;
 
@@ -113,6 +113,116 @@
     document.head.appendChild(style);
   }
 
+  // How sharply column height tapers off from the center, in points on the
+  // 0-100 local-width scale used below - independent of column count or
+  // container width, so the bell shape reads the same regardless of how
+  // many columns are packed into it.
+  const THRUST_HEIGHT_SIGMA = 20;
+
+  // Small fixed gap (px) between the card's own bottom edge and where the
+  // first dash in each column starts, so the thrust visibly breaks contact
+  // with the card instead of touching it.
+  const THRUST_GAP_PX = 6;
+
+  // Fall speed (px/ms) for a dash at `thrustSpeed: 1` - tuned so the
+  // default 54px `thrustHeight` takes about the same ~1.5s a dash took to
+  // fall under the old fixed-duration animation.
+  const BASE_FALL_SPEED = 0.035;
+
+  // Max fall distance for a column at horizontal position `xPercent`
+  // (0-100, local to its container) - a normal distribution centered on
+  // the container's middle and peaking at `peakHeight`, so the center
+  // column travels close to the full `thrustHeight` and columns toward
+  // the edges travel less.
+  function envelopeHeight(xPercent, peakHeight) {
+    const dz = (xPercent - 50) / THRUST_HEIGHT_SIGMA;
+    return Math.max(4, peakHeight * Math.exp(-0.5 * dz * dz));
+  }
+
+  // Drives one thrust container's continuous dash spawning. Each column
+  // is spaced evenly across the container's width (not random - that's
+  // the control surface: `thrustColumns`) and runs its own independent
+  // spawn stream: emit a dash with a random length, let it fall the
+  // column's own envelope distance while fading out, remove it, then wait
+  // a random pause before spawning the next one. Every dash is a fresh
+  // element with its own randomized length/duration/pause rather than a
+  // shared loop replaying the same shape, so nothing about the effect
+  // visibly repeats. `getOptions` is called fresh on every spawn so live
+  // changes to speed/length/spacing take effect on the next dash without
+  // needing a restart.
+  function createThrustEmitter(container, getOptions, isLifted) {
+    let timers = [];
+
+    function stop() {
+      timers.forEach((id) => clearTimeout(id));
+      timers = [];
+      container.innerHTML = '';
+    }
+
+    function spawn(x, height, slot) {
+      const o = getOptions();
+
+      // `glow: false` (e.g. the homepage preset) means these dashes are
+      // permanently invisible, and a resting/never-hovered card has
+      // `--glow-thrust` at 0 regardless of `glow` - either way, poll
+      // cheaply instead of actually creating and animating DOM elements
+      // nobody will ever see, so idle cards don't churn them forever in
+      // the background. Resumes spawning normally the moment the card
+      // lifts with glow on.
+      if (!o.glow || !isLifted()) {
+        timers[slot] = setTimeout(() => spawn(x, height, slot), 500);
+        return;
+      }
+
+      const speedPxPerMs = BASE_FALL_SPEED * Math.max(0.05, o.thrustSpeed);
+
+      const lenMin = Math.min(o.lineLengthMin, o.lineLengthMax);
+      const lenMax = Math.max(o.lineLengthMin, o.lineLengthMax);
+      const len = lenMin + Math.random() * (lenMax - lenMin);
+      const durationMs = Math.max(o.minFallDuration, height / speedPxPerMs);
+
+      const line = document.createElement('div');
+      line.className = 'liftoff-card__line';
+      line.style.left = `${x.toFixed(1)}%`;
+      line.style.top = `${THRUST_GAP_PX}px`;
+      line.style.width = `${o.lineThickness}px`;
+      line.style.height = `${len.toFixed(1)}px`;
+      line.style.setProperty('--line-fall', `${height.toFixed(1)}px`);
+      line.style.animationDuration = `${(durationMs / 1000).toFixed(2)}s`;
+      line.addEventListener('animationend', () => line.remove());
+      container.appendChild(line);
+
+      const spaceMin = Math.min(o.spacingMin, o.spacingMax);
+      const spaceMax = Math.max(o.spacingMin, o.spacingMax);
+      const spacing = spaceMin + Math.random() * (spaceMax - spaceMin);
+      const delay = Math.max(16, spacing / speedPxPerMs);
+      timers[slot] = setTimeout(() => spawn(x, height, slot), delay);
+    }
+
+    // (Re)starts every column's spawn stream from scratch - clears any
+    // dashes and pending spawns from a previous column layout first, so
+    // changing `thrustColumns`/`thrustHeight` never leaves stale streams
+    // running alongside new ones.
+    function start(columns, peakHeight) {
+      stop();
+      const step = 100 / (columns + 1);
+      for (let i = 1; i <= columns; i++) {
+        const x = step * i;
+        const height = envelopeHeight(x, peakHeight);
+        // Staggers each column's first dash so they don't all spawn in
+        // lockstep the moment a card lifts off.
+        timers[i] = setTimeout(() => spawn(x, height, i), Math.random() * 500);
+      }
+    }
+
+    return { start, stop };
+  }
+
+  // Options whose new value requires the dash streams to be restarted
+  // (they shape column layout/timing up front) rather than just being
+  // read fresh on the next spawn like everything else.
+  const THRUST_REBUILD_KEYS = ['thrustColumns', 'thrustHeight'];
+
   const DEFAULTS = {
     dwell: 1500,        // ms of continuous hover before liftoff triggers
     riseSmoothing: 220, // ms time-constant easing `amount` toward its target
@@ -122,10 +232,24 @@
     tilt: 1.6,            // deg of ambient rotation at full liftoff
     scale: 1.035,         // scale at full liftoff
     shadowAtRest: true,   // show the contact shadow while resting on the page
-    glow: true,           // show the underglow + thrust plume while lifted
+    glow: true,           // show the falling dashes while lifted
     shadowColor: '#000000', // contact shadow color
-    glowColor: '#ff8c28', // underglow color
-    thrustColor: '#ff7a1a', // thrust plume color
+    dashColor: '#000000', // falling dash color
+    thrustColumns: 11,    // number of evenly-spaced dash columns
+    lineThickness: 2,     // px width of each dash
+    thrustHeight: 54,     // px height of the tallest (center) column
+    thrustSpeed: 1,       // multiplier on dash fall/fade speed
+    lineLengthMin: 6,     // px, shortest random dash length
+    lineLengthMax: 16,    // px, longest random dash length
+    spacingMin: 4,        // px, shortest random gap before a column's next dash spawns
+    spacingMax: 14,       // px, longest random gap before a column's next dash spawns
+    // ms floor on a dash's animation duration, independent of `thrustSpeed`.
+    // Columns near the edges of the `thrustHeight` gaussian taper can have
+    // only a few px of fall distance, which without this floor finishes
+    // its fade-in/fall/fade-out cycle fast enough to read as a flicker
+    // instead of a fall. Raising this keeps even a short-distance dash
+    // slow enough to look like real (if small) motion.
+    minFallDuration: 750,
     // Auto-bind pointerenter/pointerleave/focusin/focusout on the host
     // element. Set false to skip that entirely and drive the card only
     // through enter()/leave() - for a host whose hover is already owned
@@ -148,11 +272,18 @@
 
       this._shadowEl = document.createElement('div');
       this._shadowEl.className = 'liftoff-card__shadow';
-      this._glowAmbientEl = document.createElement('div');
-      this._glowAmbientEl.className = 'liftoff-card__glow--ambient';
+
       this._glowThrustEl = document.createElement('div');
       this._glowThrustEl.className = 'liftoff-card__glow--thrust';
-      el.prepend(this._shadowEl, this._glowAmbientEl, this._glowThrustEl);
+
+      this._thrustEmitter = createThrustEmitter(
+        this._glowThrustEl,
+        () => this.options,
+        () => this.amount > 0.02,
+      );
+      this._rebuildThrust();
+
+      el.prepend(this._shadowEl, this._glowThrustEl);
 
       this._onPointerEnter = this._onPointerEnter.bind(this);
       this._onPointerLeave = this._onPointerLeave.bind(this);
@@ -226,18 +357,14 @@
       style.setProperty('--lift-s', (1 + (scale - 1) * a).toFixed(4));
       style.setProperty('--lift-amount', a.toFixed(4));
 
-      // Glow: a slow ambient pulse (the "underglow" half) plus a faster,
-      // noisier flicker (the "thrust" half, squared against `a` so it only
-      // shows up once the card is mostly airborne), both gated by `a` so
-      // the glow is entirely gone at rest instead of just dim.
-      const ambientPulse = 0.85 + Math.sin(tSec * 1.3 + p) * 0.15;
-      const flicker = 0.9 + Math.sin(tSec * 11 + p * 4) * 0.07 + Math.sin(tSec * 23 + p * 7) * 0.04;
+      // Line opacity - just `a` itself (each individual dash already has
+      // its own fade in/out via its CSS animation), gated by `glow` so
+      // it's entirely gone at rest instead of just dim.
       const g = this.options.glow ? 1 : 0;
-      style.setProperty('--glow-ambient', (g * a * ambientPulse).toFixed(4));
-      style.setProperty('--glow-thrust', (g * a * a * flicker).toFixed(4));
-      style.setProperty('--glow-ambient-color', this.options.glowColor);
-      style.setProperty('--glow-thrust-color', this.options.thrustColor);
+      style.setProperty('--glow-thrust', (g * a).toFixed(4));
       style.setProperty('--shadow-color', this.options.shadowColor);
+      style.setProperty('--dash-color', this.options.dashColor);
+
       // `shadowAtRest` just toggles whether the contact shadow (below) is
       // allowed to show at all - independent of the glow above.
       style.setProperty('--shadow-max', this.options.shadowAtRest ? 1 : 0);
@@ -245,10 +372,30 @@
       this.el.style.zIndex = a > 0.02 ? 5 : '';
     }
 
-    // Merges new option values in - every value is read fresh each frame
-    // by _render(), so nothing needs to be rebuilt or restarted.
+    // Resizes the thrust container and restarts its dash spawn streams
+    // from the current options - called at construction and again
+    // whenever `thrustColumns`/`thrustHeight` change (THRUST_REBUILD_KEYS),
+    // since those two reshape column layout up front rather than being
+    // read fresh on each spawn like everything else the emitter uses.
+    _rebuildThrust() {
+      const { thrustColumns, thrustHeight } = this.options;
+      const pad = 14;
+
+      const thrustContainerHeight = thrustHeight + pad;
+      this._glowThrustEl.style.height = `${thrustContainerHeight}px`;
+      this._glowThrustEl.style.bottom = `-${thrustContainerHeight}px`;
+      this._thrustEmitter.start(thrustColumns, thrustHeight);
+    }
+
+    // Merges new option values in - every value is read fresh either each
+    // frame by _render() or on each dash spawn by the thrust emitters, so
+    // nothing needs to be rebuilt or restarted, except THRUST_REBUILD_KEYS
+    // which reshape column layout itself.
     update(options = {}) {
       Object.assign(this.options, options);
+      if (Object.keys(options).some((key) => THRUST_REBUILD_KEYS.includes(key))) {
+        this._rebuildThrust();
+      }
     }
 
     destroy() {
@@ -260,8 +407,8 @@
         this.el.removeEventListener('focusin', this._onPointerEnter);
         this.el.removeEventListener('focusout', this._onPointerLeave);
       }
+      this._thrustEmitter.stop();
       this._shadowEl.remove();
-      this._glowAmbientEl.remove();
       this._glowThrustEl.remove();
     }
   }

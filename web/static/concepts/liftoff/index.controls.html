@@ -4,9 +4,11 @@
         <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the sliders below. Adjusting any slider afterward just tweaks that preset.</span></span>
       </label>
       <select id="profileSelect">
-        <option value="underglow" selected>Underglow</option>
+        <option value="classic" selected>Classic</option>
         <option value="rocket">Rocket Launch</option>
         <option value="drone">Drone Hover</option>
+        <option value="afterburner">Afterburner</option>
+        <option value="hovermist">Hover Mist</option>
         <option value="homepage">Homepage</option>
       </select>
     </div>
@@ -15,16 +17,13 @@
       <label class="control-checkbox">
         <input type="checkbox" id="shadowAtRestCheckbox" checked />
         Shadow at rest
-        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shadowAtRest">?<span class="hint" role="tooltip" id="hint-shadowAtRest">Shows the dark contact shadow beneath the card while it's resting on the page. Off removes it entirely, independent of the underglow/thrust above.</span></span>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shadowAtRest">?<span class="hint" role="tooltip" id="hint-shadowAtRest">Shows the dark contact shadow beneath the card while it's resting on the page. Off removes it entirely, independent of the dashes above.</span></span>
       </label>
     </div>
 
     <div class="control-row">
-      <label class="control-checkbox">
-        <input type="checkbox" id="glowCheckbox" checked />
-        Glow
-        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glow">?<span class="hint" role="tooltip" id="hint-glow">Turns the underglow and thrust plume on or off together. Off, the card just floats and hovers with no light beneath it.</span></span>
-      </label>
+      <label for="shadowColorInput">Shadow color</label>
+      <input type="color" id="shadowColorInput" class="t-swatch" value="#000000" aria-label="Shadow color" />
     </div>
 
     <div class="control-row">
@@ -63,16 +62,59 @@
     </div>
 
     <div class="control-row">
-      <label for="shadowColorInput">Shadow color</label>
-      <input type="color" id="shadowColorInput" class="t-swatch" value="#000000" aria-label="Shadow color" />
+      <label class="control-checkbox">
+        <input type="checkbox" id="glowCheckbox" checked />
+        Dashes
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glow">?<span class="hint" role="tooltip" id="hint-glow">Turns the falling dashes on or off. Off, the card just floats and hovers with nothing beneath it - the controls below grey out since they only affect the dashes.</span></span>
+      </label>
     </div>
 
-    <div class="control-row">
-      <label for="glowColorInput">Underglow color</label>
-      <input type="color" id="glowColorInput" class="t-swatch" value="#000000" aria-label="Underglow color" />
+    <div class="control-row dash-control">
+      <label for="dashColorInput">Dash color</label>
+      <input type="color" id="dashColorInput" class="t-swatch" value="#000000" aria-label="Dash color" />
     </div>
 
-    <div class="control-row">
-      <label for="thrustColorInput">Thrust color</label>
-      <input type="color" id="thrustColorInput" class="t-swatch" value="#000000" aria-label="Thrust color" />
+    <div class="control-row dash-control">
+      <label><span class="label-text">Columns <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-thrustColumns">?<span class="hint" role="tooltip" id="hint-thrustColumns">How many evenly-spaced dash columns make up the thrust. Each column's own dashes are still random and disjointed.</span></span></span><span id="thrustColumnsVal" class="value"></span></label>
+      <input id="thrustColumnsRange" type="range" min="3" max="16" step="1" value="11" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Line thickness <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lineThickness">?<span class="hint" role="tooltip" id="hint-lineThickness">Width of each individual dash.</span></span></span><span id="lineThicknessVal" class="value"></span></label>
+      <input id="lineThicknessRange" type="range" min="1" max="6" step="0.5" value="2" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Thrust height <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-thrustHeight">?<span class="hint" role="tooltip" id="hint-thrustHeight">How tall the thrust reaches at its peak - a normal distribution across the whole width, so the center column comes closest to this height and columns toward the edges are shorter.</span></span></span><span id="thrustHeightVal" class="value"></span></label>
+      <input id="thrustHeightRange" type="range" min="10" max="120" step="2" value="54" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-thrustSpeed">?<span class="hint" role="tooltip" id="hint-thrustSpeed">Multiplier on how fast each dash falls and fades, and on how quickly the next one spawns.</span></span></span><span id="thrustSpeedVal" class="value"></span></label>
+      <input id="thrustSpeedRange" type="range" min="0.3" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Line length min <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lineLengthMin">?<span class="hint" role="tooltip" id="hint-lineLengthMin">Shortest a randomly-spawned dash can be. Each dash picks a random length between this and the max below.</span></span></span><span id="lineLengthMinVal" class="value"></span></label>
+      <input id="lineLengthMinRange" type="range" min="2" max="40" step="1" value="6" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Line length max <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lineLengthMax">?<span class="hint" role="tooltip" id="hint-lineLengthMax">Longest a randomly-spawned dash can be.</span></span></span><span id="lineLengthMaxVal" class="value"></span></label>
+      <input id="lineLengthMaxRange" type="range" min="2" max="60" step="1" value="16" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Spacing min <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-spacingMin">?<span class="hint" role="tooltip" id="hint-spacingMin">Shortest random gap before a column spawns its next dash. Each pause is random between this and the max below.</span></span></span><span id="spacingMinVal" class="value"></span></label>
+      <input id="spacingMinRange" type="range" min="0" max="60" step="1" value="4" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Spacing max <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-spacingMax">?<span class="hint" role="tooltip" id="hint-spacingMax">Longest random gap before a column spawns its next dash.</span></span></span><span id="spacingMaxVal" class="value"></span></label>
+      <input id="spacingMaxRange" type="range" min="0" max="100" step="1" value="14" />
+    </div>
+
+    <div class="control-row dash-control">
+      <label><span class="label-text">Min fall duration <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-minFallDuration">?<span class="hint" role="tooltip" id="hint-minFallDuration">Floor on how fast a single dash's fall/fade can play out, regardless of speed. Short columns near the edges otherwise finish so fast they read as a flicker instead of a fall - raising this slows just those down.</span></span></span><span id="minFallDurationVal" class="value"></span></label>
+      <input id="minFallDurationRange" type="range" min="100" max="1000" step="10" value="750" />
     </div>

@@ -8,13 +8,14 @@
       <p>
         Hold the pointer over an element for a sustained dwell (default
         1.5s) and it breaks contact with the page: rising into a slow
-        ambient float while an underglow burns beneath it, somewhere
-        between a car's underglow and a rocket's exhaust plume. Leaving
-        before the dwell completes cancels cleanly with no visible motion
-        at all; leaving after liftoff eases the element back down and lets
-        the glow fade out. Injects its own shadow/glow layers behind
-        whatever content you put inside the element, so applying the
-        class and calling the script is the whole setup.
+        ambient float while a scatter of short black dashes streams
+        downward beneath it, clustered toward the middle, for as long as
+        it stays lifted. Leaving before the dwell completes cancels
+        cleanly with no visible motion at all; leaving after liftoff eases
+        the element back down and lets the dashes fade out. Injects its
+        own shadow/dash layers behind whatever content you put inside the
+        element, so applying the class and calling the script is the
+        whole setup.
       </p>
 
       <div class="docs-actions">
@@ -35,7 +36,7 @@
       <pre><code>&lt;script src="liftoff.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Injects its own <code>&lt;style&gt;</code> tag defining
-        <code>.liftoff-card</code> and its shadow/glow layers, so no
+        <code>.liftoff-card</code> and its shadow/dash layers, so no
         companion CSS file is required — but the host element needs its
         own size and content, since the injected CSS sets neither.
       </p>
@@ -67,7 +68,33 @@
         </p>
         <pre><code>Liftoff.initAll('.liftoff-card', {
   dwell: 900, riseSmoothing: 160, lift: 46, driftX: 10, driftY: 14, tilt: 3.2, scale: 1.07,
-  glowColor: '#ff5a1f', thrustColor: '#ffd23f',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Afterburner</h3>
+        <p>
+          More columns, thicker and longer dashes, and barely any pause
+          between spawns reads as a sustained, roaring burn instead of a
+          light float.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', {
+  dwell: 700, riseSmoothing: 140, lift: 50, driftX: 12, driftY: 16, tilt: 3.6, scale: 1.08,
+  thrustColumns: 14, lineThickness: 3, thrustHeight: 90, thrustSpeed: 2,
+  lineLengthMin: 14, lineLengthMax: 34, spacingMin: 1, spacingMax: 5,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Hover mist</h3>
+        <p>
+          Fewer columns, thin and short dashes, and long pauses between
+          spawns reads as a faint idle mist instead of a thrust.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', {
+  dwell: 1800, riseSmoothing: 260, lift: 18, driftX: 5, driftY: 4, tilt: 1, scale: 1.02,
+  thrustColumns: 8, lineThickness: 1, thrustHeight: 26, thrustSpeed: 0.5,
+  lineLengthMin: 2, lineLengthMax: 6, spacingMin: 20, spacingMax: 50,
 });</code></pre>
       </div>
 
@@ -79,7 +106,7 @@
         </p>
         <pre><code>Liftoff.initAll('.liftoff-card', {
   dwell: 2200, riseSmoothing: 340, lift: 14, driftX: 3, driftY: 2, tilt: 0.6, scale: 1.015,
-  shadowColor: '#0f172a', glowColor: '#38bdf8', thrustColor: '#60a5fa',
+  shadowColor: '#0f172a',
 });</code></pre>
       </div>
 
@@ -88,18 +115,18 @@
         <p>
           <code>shadowAtRest: false</code> removes the dark contact shadow
           shown while the element rests on the page, independent of the
-          glow above — useful over a background where a drawn shadow would
-          look out of place.
+          dashes above — useful over a background where a drawn shadow
+          would look out of place.
         </p>
         <pre><code>Liftoff.initAll('.liftoff-card', { shadowAtRest: false });</code></pre>
       </div>
 
       <div class="recipe">
-        <h3>Lift with no glow</h3>
+        <h3>Lift with no dashes</h3>
         <p>
           <code>glow: false</code> keeps the float/drift motion but drops
-          the underglow and thrust plume entirely — just an element that
-          quietly lifts.
+          the falling dashes entirely — just an element that quietly
+          lifts.
         </p>
         <pre><code>Liftoff.initAll('.liftoff-card', { glow: false });</code></pre>
       </div>
@@ -133,11 +160,17 @@ someExternalHoverSource.on('leave', () => card.leave());</code></pre>
           <tr><td><code>driftY</code></td><td><code>5</code></td><td>Pixels of extra ambient vertical bob once lifted</td></tr>
           <tr><td><code>tilt</code></td><td><code>1.6</code></td><td>Degrees of ambient rotation once lifted</td></tr>
           <tr><td><code>scale</code></td><td><code>1.035</code></td><td>Scale factor at full liftoff</td></tr>
-          <tr><td><code>shadowAtRest</code></td><td><code>true</code></td><td>Shows the dark contact shadow while resting on the page; <code>false</code> removes it entirely, independent of the glow below</td></tr>
-          <tr><td><code>glow</code></td><td><code>true</code></td><td>Turns the underglow and thrust plume on or off together; <code>false</code> leaves just the float/drift motion</td></tr>
+          <tr><td><code>shadowAtRest</code></td><td><code>true</code></td><td>Shows the dark contact shadow while resting on the page; <code>false</code> removes it entirely, independent of the dashes below</td></tr>
+          <tr><td><code>glow</code></td><td><code>true</code></td><td>Turns the falling dashes on or off; <code>false</code> leaves just the float/drift motion</td></tr>
           <tr><td><code>shadowColor</code></td><td><code>'#000000'</code></td><td>Contact shadow color</td></tr>
-          <tr><td><code>glowColor</code></td><td><code>'#ff8c28'</code></td><td>Underglow color</td></tr>
-          <tr><td><code>thrustColor</code></td><td><code>'#ff7a1a'</code></td><td>Thrust plume color</td></tr>
+          <tr><td><code>dashColor</code></td><td><code>'#000000'</code></td><td>Falling dash color</td></tr>
+          <tr><td><code>thrustColumns</code></td><td><code>11</code></td><td>Number of evenly-spaced dash columns. Column position is fixed; only the dashes within each column are randomized</td></tr>
+          <tr><td><code>lineThickness</code></td><td><code>2</code></td><td>Pixel width of each dash</td></tr>
+          <tr><td><code>thrustHeight</code></td><td><code>54</code></td><td>Pixel height of the tallest column, at the center. Column height follows a normal distribution across the element's width, so it tapers toward the edges</td></tr>
+          <tr><td><code>thrustSpeed</code></td><td><code>1</code></td><td>Multiplier on how fast each dash falls and fades, and on how quickly the next one spawns</td></tr>
+          <tr><td><code>lineLengthMin</code> / <code>lineLengthMax</code></td><td><code>6</code> / <code>16</code></td><td>Pixel range a freshly-spawned dash's length is randomized between</td></tr>
+          <tr><td><code>spacingMin</code> / <code>spacingMax</code></td><td><code>4</code> / <code>14</code></td><td>Pixel range a column's pause before its next dash spawns is randomized between</td></tr>
+          <tr><td><code>minFallDuration</code></td><td><code>750</code></td><td>Millisecond floor on a single dash's fall/fade duration, independent of <code>thrustSpeed</code>. Columns near the edges of the <code>thrustHeight</code> taper can have only a few px to fall, which otherwise finishes fast enough to read as a flicker instead of a fall</td></tr>
           <tr><td><code>hoverEvents</code></td><td><code>true</code></td><td>Auto-binds the element's own pointerenter/pointerleave/focusin/focusout; set <code>false</code> to drive it entirely through <code>.enter()</code>/<code>.leave()</code> instead</td></tr>
         </tbody>
       </table>
@@ -151,7 +184,7 @@ someExternalHoverSource.on('leave', () => card.leave());</code></pre>
           <tr><td><code>.enter()</code></td><td>Starts the dwell timer toward liftoff, exactly like a real hover would. Called automatically by the bound listeners unless <code>hoverEvents: false</code>.</td></tr>
           <tr><td><code>.leave()</code></td><td>Cancels any pending dwell and eases back down, exactly like hover ending would.</td></tr>
           <tr><td><code>.update(options)</code></td><td>Merges new option values in — every value is read fresh each frame, so nothing needs to be rebuilt or restarted.</td></tr>
-          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, removes its bound listeners (if any), and removes the injected shadow/glow layers.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, removes its bound listeners (if any), and removes the injected shadow/dash layers.</td></tr>
           <tr><td><code>Liftoff.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
         </tbody>
       </table>
@@ -169,10 +202,10 @@ someExternalHoverSource.on('leave', () => card.leave());</code></pre>
         <code>prefers-reduced-motion</code> by skipping auto-init entirely
         (an explicit <code>Liftoff.initAll()</code> call still works if
         you want it anyway). The demo page's own control panel adds a
-        Profile dropdown with a few preset combinations (Underglow,
-        Rocket Launch, Drone Hover, Homepage) as a starting point — picking
-        one just sets the sliders below it, which stay freely editable
-        afterward.
+        Profile dropdown with a few preset combinations (Classic,
+        Rocket Launch, Drone Hover, Afterburner, Hover Mist, Homepage) as
+        a starting point — picking one just sets the sliders below it,
+        which stay freely editable afterward.
       </p>
     </div>
   </div>

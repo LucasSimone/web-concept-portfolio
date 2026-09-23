@@ -268,6 +268,15 @@ const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers
 // auto-init and the Transition Lab loop below - otherwise these cards
 // would lift/drift/tilt on hover regardless of the OS setting.
 if (!prefersReducedMotion) {
+  // The concept grid's own Liftoff card (the one linking through to the
+  // Liftoff concept page itself) gets the classic profile - falling dashes
+  // included - instead of the subdued HOMEPAGE_PRESET every other card
+  // below uses, since this one card's job is to actually show what the
+  // effect looks like. shadowAtRest stays off, same as the homepage preset,
+  // so the card doesn't sit with a shadow while idle in the carousel.
+  // Initializing it first claims the element so the broader initAll()
+  // below (which skips already-initialized elements) leaves it alone.
+  Liftoff.initAll('#conceptGrid .liftoff-card', { hoverEvents: false, shadowAtRest: false });
   Liftoff.initAll('.liftoff-card', { hoverEvents: false, ...Liftoff.HOMEPAGE_PRESET });
   // One delegate per carousel track (bindHoverDelegate is scoped to a
   // single container) resolving each hovered .liftoff-card to its own
@@ -300,11 +309,11 @@ if (!prefersReducedMotion) {
 // Transition Lab cards: loop each card's own engine (cover -> reveal, the
 // same cover/reveal the click-through demo pages use, minus any content
 // swap) directly on the card element instead of the whole page - a small
-// always-playing preview of what clicking through actually looks like,
-// same spirit as Intertwine's own looping card preview above. Skipped
-// under reduced motion: cover()/reveal() still resolve (near-)instantly in
-// that case (see shutter.js/aperture.js), which without this guard would
-// just spin the loop as fast as JS allows instead of showing anything.
+// always-playing preview of what clicking through actually looks like.
+// Skipped under reduced motion: cover()/reveal() still resolve
+// (near-)instantly in that case (see shutter.js/aperture.js), which
+// without this guard would just spin the loop as fast as JS allows
+// instead of showing anything.
 if (!prefersReducedMotion) {
   const TRANSITION_LOOP_MIN_PAUSE_MS = 3000;
   const TRANSITION_LOOP_MAX_PAUSE_MS = 6000;

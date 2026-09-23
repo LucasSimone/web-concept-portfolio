@@ -200,35 +200,6 @@
   font-family: 'IBM Plex Mono', monospace;
 }
 
-/* Intertwine: a small looping version of the two live paths, drawn
-   continuously behind the title instead of scroll-linked (the real
-   demo pins a whole section to scrub them, which doesn't fit a card). */
-.variation-card .intertwine-mini {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  opacity: 0.35;
-  pointer-events: none;
-}
-.variation-card .intertwine-mini path {
-  fill: none;
-  stroke: #000;
-  stroke-width: 2;
-  stroke-dasharray: 900;
-  animation: home-intertwine-draw 6s linear infinite;
-}
-.variation-card .intertwine-mini .intertwine-path--two {
-  animation-direction: reverse;
-  animation-delay: -1s;
-}
-@keyframes home-intertwine-draw {
-  0% { stroke-dashoffset: 900; }
-  50% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -900; }
-}
-
 /* Liftoff: the real engine (concepts/liftoff/liftoff.js), used through
    its public API only - no hand-authored shadow/glow markup or CSS here,
    liftoff.js injects both itself onto any .liftoff-card element (see
@@ -326,6 +297,17 @@
   inset: 0;
   z-index: 0;
   display: block;
+}
+
+/* The concept carousel is the last thing on the page, and its Liftoff card
+   is the only homepage card with its falling dashes actually visible (see
+   home.js) - those stream down up to ~70px below the card. With nothing
+   below the carousel to hold that space open, the page's scrollable height
+   grows and shrinks as the card lifts/settles, toggling the scrollbar and
+   making the whole page visibly shake. This bottom margin reserves that
+   room permanently instead. */
+#conceptCarousel {
+  margin-bottom: 100px;
 }
 
 .carousel {

@@ -83,6 +83,121 @@ main {
   margin-bottom: 8px;
 }
 
+/* --- Gallery: the same .liftoff-card component applied to a handful of
+   other element shapes, to show the effect isn't tied to a 300x220 card.
+   Each auto-inits with liftoff.js's plain defaults - no wiring to the
+   control panel above. */
+.gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 4vh 5vw 12vh;
+}
+
+.gallery h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem 3rem;
+  margin-top: 2rem;
+  padding: 2rem 0;
+}
+
+.liftoff-btn {
+  width: auto;
+  height: auto;
+  appearance: none;
+  border: 1px solid #000;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font: inherit;
+  font-size: 14px;
+  cursor: default;
+}
+
+.liftoff-icon {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: default;
+}
+
+.liftoff-thumb {
+  width: 220px;
+  height: 130px;
+  border: 1px solid #000;
+  background: repeating-linear-gradient(135deg, #000 0, #000 1px, #fff 1px, #fff 12px);
+  align-items: stretch;
+  justify-content: flex-end;
+  cursor: default;
+}
+
+.liftoff-thumb__caption {
+  width: 100%;
+  padding: 6px 10px;
+  background: #fff;
+  border-top: 1px solid #000;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liftoff-link {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  padding: 6px 2px;
+  font-size: 16px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: default;
+}
+
+.liftoff-badge {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  padding: 6px 16px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.liftoff-stat {
+  width: 140px;
+  height: 100px;
+  border: 1px solid #000;
+  gap: 2px;
+  cursor: default;
+}
+
+.liftoff-stat__num {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.liftoff-stat__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
 /* --- Control panel --- */
 .controls {
   position: fixed;
@@ -211,6 +326,14 @@ main {
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
+}
+
+/* Greys out the dash-only sliders (Columns through Min fall duration) when
+   the Dashes checkbox is off, since none of them do anything while the
+   dashes themselves are hidden - see demo.js's updateDashControlsEnabled(). */
+.control-row.dash-control.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .control-row .control-checkbox {
