@@ -24,34 +24,8 @@
   flex-direction: column;
   gap: 8px;
   min-height: 160px;
-  transition: background 0.15s ease;
   position: relative;
   overflow: hidden;
-}
-.variation-card:hover { background: #f5f5f5; }
-/* `transition` is a shorthand - whichever rule wins the cascade for this
-   element replaces the whole transition list, it doesn't merge with
-   another rule's. Aperture's own engine (aperture.js) declares its own
-   `transition: --t-aperture-progress ...` directly on whatever element
-   it's covering, via a class it toggles on the SAME element a card like
-   this one is - and since this stylesheet loads after aperture.js's
-   injected styles (this page's own <head> content lands after the shared
-   layout's <script> tags), this rule's plain `background` transition
-   would otherwise silently win and outright replace Aperture's, leaving
-   --t-aperture-progress un-transitioned - it'd just snap instantly on
-   every class change instead of animating, while still LOOKING like classes
-   were behaving correctly. Restating both together here, at higher
-   specificity than either single-class rule, keeps the hover fade and
-   Aperture's cover/reveal motion both working. Duration/easing are read
-   from the same custom properties applyProfile() already sets inline on
-   the element, so this stays in sync with whatever profile is active
-   instead of hardcoding Aperture's default. Shutter doesn't need the
-   same treatment - it animates transform on ::before/::after pseudo-
-   elements, a separate paint target from this element, so there's no
-   collision with this rule to begin with. */
-.variation-card.t-aperture-anim {
-  transition: background 0.15s ease,
-    --t-aperture-progress var(--t-aperture-duration, 600ms) var(--t-aperture-easing, cubic-bezier(.65, 0, .35, 1));
 }
 .variation-card .type {
   align-self: flex-start;
@@ -255,9 +229,51 @@
   100% { stroke-dashoffset: -900; }
 }
 
+/* Liftoff: the real engine (concepts/liftoff/liftoff.js), used through
+   its public API only - no hand-authored shadow/glow markup or CSS here,
+   liftoff.js injects both itself onto any .liftoff-card element (see
+   home.js). Applied to every card on the homepage, each with an inner
+   wrapper instead of the anchor itself: the carousel writes
+   `transform`/`z-index` directly onto `.variation-card` every frame to
+   position it in the strip (see carousel.js _render()), so Liftoff's own
+   lift/tilt/glow motion needs a paint target the carousel never touches -
+   and since the whole card (not just its text) has to visibly lift, the
+   card's actual chrome (border/background/padding, plus any per-card
+   effect - background canvases, transition cover/reveal - that needs to
+   move and lift with it) moves off the anchor and onto that same wrapper,
+   leaving the anchor an invisible, carousel-owned hit box. Hover is driven
+   by shared/hover-delegate.js instead of native pointerenter/pointerleave
+   (see home.js) for the same reason the Transition Lab cards need it: the
+   carousel's hover-follow slides a hovered card toward center under a
+   stationary cursor, which would otherwise retrigger native hover on its
+   own. */
+.carousel .variation-card.liftoff-host {
+  border: none;
+  background: none;
+  padding: 0;
+  /* Lifted, the card's border sits right at this box's edge and the
+     scale/translate would otherwise clip it away against `overflow:
+     hidden` (inherited from the base .variation-card rule) - the
+     carousel's own overflow is horizontal-only (see .carousel below), so
+     nothing clips it vertically either. */
+  overflow: visible;
+}
+.variation-card.liftoff-host .liftoff-card {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1px solid #000;
+}
+
 /* Circuit Board: the real reusable background effect, applied to the
-   whole card instead of just the title. */
-.variation-card.bg-circuit-board {
+   whole card instead of just the title. Targets the .liftoff-card wrapper
+   (see the Liftoff comment above) rather than the anchor, so the canvas
+   lifts with the rest of the card's chrome. */
+.liftoff-card.bg-circuit-board {
   isolation: isolate;
   background: #fff;
   color: #000;
@@ -272,7 +288,7 @@
 /* Gravity Well: same override pattern as Circuit Board above — the
    injected canvas sits at z-index 0 within the card's own stacking
    context instead of the -1 it uses on a full page section. */
-.variation-card.bg-gravity-well {
+.liftoff-card.bg-gravity-well {
   isolation: isolate;
   background: #fff;
   color: #000;
@@ -287,7 +303,7 @@
 /* Vacuum: same override pattern as the two effects above, plus the
    canvas needs to sit ABOVE the card's own title/type/go text (it
    normally renders on top of live content) rather than below it. */
-.variation-card.bg-vacuum {
+.liftoff-card.bg-vacuum {
   isolation: isolate;
   background: #fff;
   color: #000;
@@ -300,7 +316,7 @@
 }
 
 /* Fireflies: same override pattern as Circuit Board/Gravity Well above. */
-.variation-card.bg-fireflies {
+.liftoff-card.bg-fireflies {
   isolation: isolate;
   background: #fff;
   color: #000;
@@ -323,7 +339,16 @@
   z-index: 0;
   width: 100%;
   height: 240px;
-  overflow: hidden;
+  /* Horizontal-only: cards need clipping as they slide past the strip's
+     left/right edges, but nothing here relies on vertical clipping (see
+     carousel.js's header comment) - visible so a lifted card (liftoff-host
+     above) can rise past the track's top edge without being cut off.
+     `clip` rather than `hidden` on the x-axis: per the CSS overflow spec,
+     pairing `hidden` with a `visible` value on the other axis silently
+     promotes that `visible` to `auto` (a real scroll container, which
+     still clips) - `clip` doesn't trigger that promotion. */
+  overflow-x: clip;
+  overflow-y: visible;
   touch-action: pan-y;
   cursor: grab;
 }

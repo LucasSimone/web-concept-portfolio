@@ -123,5 +123,13 @@
       jsPath: '/transitions/static/static.js',
       docsPath: '/docs/transitions/static.html',
     },
+    {
+      slug: 'liftoff',
+      name: 'Liftoff',
+      category: 'concepts',
+      demoPath: '/concepts/liftoff/index.html',
+      jsPath: '/concepts/liftoff/liftoff.js',
+      docsPath: '/docs/concepts/liftoff.html',
+    },
   ];
 })(window);

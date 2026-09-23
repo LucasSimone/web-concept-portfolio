@@ -238,18 +238,64 @@ if (rolodexCard) {
     rolodexCard.goTo(0);
   });
 }
-CircuitBoard.initAll('.variation-card.bg-circuit-board', {
+CircuitBoard.initAll('.liftoff-card.bg-circuit-board', {
   maxTraces: 30, cell: 20, speed: 30,
 });
-GravityWell.initAll('.variation-card.bg-gravity-well', {
+GravityWell.initAll('.liftoff-card.bg-gravity-well', {
   cell: 20, radius: 110, strength: 40,
 });
-Vacuum.initAll('.variation-card.bg-vacuum', {
+Vacuum.initAll('.liftoff-card.bg-vacuum', {
   radius: 90, density: 8, maxParticles: 80,
 });
-Fireflies.initAll('.variation-card.bg-fireflies', {
+Fireflies.initAll('.liftoff-card.bg-fireflies', {
   count: 16, glowSize: 6,
 });
+
+// Whether the OS has "reduce motion" set - shared by the Liftoff wiring
+// below and the Transition Lab loop further down, both of which skip their
+// own motion entirely in that case rather than just tuning it down.
+const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// Liftoff: initialized on every .liftoff-card element, across every lab
+// (see style.css for why each card needs its own inner wrapper rather
+// than the anchor itself) using only its public API - hoverEvents:false
+// skips its own native pointerenter/pointerleave/focusin/focusout
+// binding, and .enter()/.leave() are called instead from bindHoverDelegate
+// - same reasoning as the Transition Lab cards further down: the
+// carousel's hover-follow slides a hovered card toward center under a
+// stationary cursor, which would otherwise retrigger native hover on its
+// own. Skipped under reduced motion, same as liftoff.js's own default
+// auto-init and the Transition Lab loop below - otherwise these cards
+// would lift/drift/tilt on hover regardless of the OS setting.
+if (!prefersReducedMotion) {
+  Liftoff.initAll('.liftoff-card', { hoverEvents: false, ...Liftoff.HOMEPAGE_PRESET });
+  // One delegate per carousel track (bindHoverDelegate is scoped to a
+  // single container) resolving each hovered .liftoff-card to its own
+  // instance via Liftoff.get() - Transition Lab's transitionGrid gets one
+  // too, entirely independent of that grid's own cover/reveal hover
+  // delegate further down.
+  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid'].forEach((gridId) => {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    bindHoverDelegate(grid, '.liftoff-card', (el, prevEl) => {
+      if (prevEl) Liftoff.get(prevEl).leave();
+      if (el) Liftoff.get(el).enter();
+    });
+    // hoverEvents:false above also skips LiftoffCard's own native
+    // focusin/focusout binding, so keyboard focus is wired here to give
+    // it the same lift/drift/tilt feedback mouse hover gets. Focus lands
+    // on the anchor (.liftoff-card is its non-focusable child wrapper -
+    // see style.css), so each handler looks the card up from there.
+    grid.addEventListener('focusin', (event) => {
+      const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
+      if (card) Liftoff.get(card).enter();
+    });
+    grid.addEventListener('focusout', (event) => {
+      const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
+      if (card) Liftoff.get(card).leave();
+    });
+  });
+}
 
 // Transition Lab cards: loop each card's own engine (cover -> reveal, the
 // same cover/reveal the click-through demo pages use, minus any content
@@ -259,7 +305,7 @@ Fireflies.initAll('.variation-card.bg-fireflies', {
 // under reduced motion: cover()/reveal() still resolve (near-)instantly in
 // that case (see shutter.js/aperture.js), which without this guard would
 // just spin the loop as fast as JS allows instead of showing anything.
-if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+if (!prefersReducedMotion) {
   const TRANSITION_LOOP_MIN_PAUSE_MS = 3000;
   const TRANSITION_LOOP_MAX_PAUSE_MS = 6000;
   function randomTransitionPause() {
@@ -272,7 +318,14 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
   Array.from(document.querySelectorAll('#transitionGrid .variation-card[data-t-transition]')).forEach((card) => {
     const engine = window.Transitions && window.Transitions[card.dataset.tTransition];
     if (!engine) return;
-    card.classList.add('t-el');
+    // Covers the card's .liftoff-card wrapper, not the anchor (`card`
+    // itself) - see style.css's Liftoff comment: the anchor is an
+    // invisible, carousel-owned hit box, so the cover/reveal motion has to
+    // target the same wrapper that carries the card's actual chrome in
+    // order to lift along with it instead of staying flat on the page.
+    const surface = card.querySelector('.liftoff-card');
+    if (!surface) return;
+    surface.classList.add('t-el');
     // Card is too small for scanlines to read as anything but noise —
     // Static's own option, ignored by engines that don't have one.
     const overrides = card.dataset.tTransition === 'static' ? { scanlines: false } : undefined;
@@ -310,8 +363,8 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
     }
     function cycle(myGen) {
       if (hovering || myGen !== gen) return;
-      engine.cover(card, overrides)
-        .then(() => { if (!hovering && myGen === gen) return engine.reveal(card, overrides); })
+      engine.cover(surface, overrides)
+        .then(() => { if (!hovering && myGen === gen) return engine.reveal(surface, overrides); })
         .then(() => { if (!hovering && myGen === gen) scheduleCycle(myGen); });
     }
     transitionCards.set(card, {
@@ -323,13 +376,13 @@ if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')
           clearTimeout(pendingCycle);
           pendingCycle = null;
         }
-        engine.cover(card, overrides);
+        engine.cover(surface, overrides);
       },
       leave() {
         if (!hovering) return;
         hovering = false;
         const myGen = gen;
-        engine.reveal(card, overrides).then(() => { if (myGen === gen) scheduleCycle(myGen); });
+        engine.reveal(surface, overrides).then(() => { if (myGen === gen) scheduleCycle(myGen); });
       },
     });
     scheduleCycle(gen);

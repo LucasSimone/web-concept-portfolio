@@ -1,0 +1,260 @@
+main {
+  margin-right: 300px;
+  overflow: clip;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 8vh 5vw;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 110px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
+.direction {
+  max-width: 44ch;
+  margin: 0;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+.liftoff-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3rem;
+  padding: 4rem 0;
+}
+
+/* Structural/motion CSS (custom-prop defaults, the lift transform, the
+   shadow/glow layers) now ships inside concepts/liftoff/liftoff.js and is
+   injected automatically - this page only supplies its own size/content
+   layout, same as any other page consuming the component. */
+.liftoff-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 300px;
+  height: 220px;
+  border: 1px solid #000;
+  cursor: default;
+  user-select: none;
+}
+
+.liftoff-card:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 4px;
+}
+
+.liftoff-card__title {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.liftoff-card__hint {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: calc(0.45 * (1 - var(--lift-amount)));
+  margin-bottom: 8px;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.control-row .control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.control-checkbox input {
+  accent-color: #000;
+}
+
+.t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liftoff-card {
+    transition: none;
+  }
+}

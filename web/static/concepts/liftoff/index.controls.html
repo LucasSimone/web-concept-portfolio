@@ -1,0 +1,78 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the sliders below. Adjusting any slider afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="underglow" selected>Underglow</option>
+        <option value="rocket">Rocket Launch</option>
+        <option value="drone">Drone Hover</option>
+        <option value="homepage">Homepage</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="shadowAtRestCheckbox" checked />
+        Shadow at rest
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shadowAtRest">?<span class="hint" role="tooltip" id="hint-shadowAtRest">Shows the dark contact shadow beneath the card while it's resting on the page. Off removes it entirely, independent of the underglow/thrust above.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="glowCheckbox" checked />
+        Glow
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glow">?<span class="hint" role="tooltip" id="hint-glow">Turns the underglow and thrust plume on or off together. Off, the card just floats and hovers with no light beneath it.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Dwell <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dwell">?<span class="hint" role="tooltip" id="hint-dwell">How long the pointer has to stay over the card before it lifts off. Leaving before this elapses cancels with no visible motion.</span></span></span><span id="dwellVal" class="value"></span></label>
+      <input id="dwellRange" type="range" min="300" max="3000" step="50" value="1500" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Rise smoothing <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-riseSmoothing">?<span class="hint" role="tooltip" id="hint-riseSmoothing">Time-constant of the ease toward fully lifted (or back down). Higher lags and settles more slowly; lower snaps closer to instantly.</span></span></span><span id="riseSmoothingVal" class="value"></span></label>
+      <input id="riseSmoothingRange" type="range" min="80" max="500" step="10" value="220" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Lift height <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lift">?<span class="hint" role="tooltip" id="hint-lift">How far the card rises off the page at full liftoff.</span></span></span><span id="liftVal" class="value"></span></label>
+      <input id="liftRange" type="range" min="4" max="60" step="1" value="22" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Drift X <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-driftX">?<span class="hint" role="tooltip" id="hint-driftX">Ambient horizontal drift once lifted.</span></span></span><span id="driftXVal" class="value"></span></label>
+      <input id="driftXRange" type="range" min="0" max="24" step="1" value="7" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Drift Y <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-driftY">?<span class="hint" role="tooltip" id="hint-driftY">Extra ambient vertical bob layered on top of the lift height once airborne.</span></span></span><span id="driftYVal" class="value"></span></label>
+      <input id="driftYRange" type="range" min="0" max="24" step="1" value="5" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Tilt <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-tilt">?<span class="hint" role="tooltip" id="hint-tilt">Ambient rotation once lifted.</span></span></span><span id="tiltVal" class="value"></span></label>
+      <input id="tiltRange" type="range" min="0" max="6" step="0.1" value="1.6" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Scale <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scale">?<span class="hint" role="tooltip" id="hint-scale">How much the card grows at full liftoff.</span></span></span><span id="scaleVal" class="value"></span></label>
+      <input id="scaleRange" type="range" min="1" max="1.12" step="0.005" value="1.035" />
+    </div>
+
+    <div class="control-row">
+      <label for="shadowColorInput">Shadow color</label>
+      <input type="color" id="shadowColorInput" class="t-swatch" value="#000000" aria-label="Shadow color" />
+    </div>
+
+    <div class="control-row">
+      <label for="glowColorInput">Underglow color</label>
+      <input type="color" id="glowColorInput" class="t-swatch" value="#000000" aria-label="Underglow color" />
+    </div>
+
+    <div class="control-row">
+      <label for="thrustColorInput">Thrust color</label>
+      <input type="color" id="thrustColorInput" class="t-swatch" value="#000000" aria-label="Thrust color" />
+    </div>

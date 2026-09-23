@@ -45,6 +45,11 @@
  * same way scrolling to it would.
  */
 (function (global) {
+  // Below this many (visible) cards, hover-follow (pulling the focused
+  // card to whatever's under the pointer) is disabled - see the
+  // _hoverFollowEnabled field. Wheel/drag stay live regardless of count.
+  const MIN_HOVER_FOLLOW_CARDS = 5;
+
   const DEFAULTS = {
     cardStep: 200,
     minScale: 0.42,
@@ -79,6 +84,14 @@
       this._dragPrevPos = 0;
       this._wheelActive = false;
       this._wheelIdleTimer = null;
+      // Below MIN_HOVER_FOLLOW_CARDS, mousing over an off-focus card no
+      // longer pulls it to center - with only a few cards, that tracking
+      // reads as fighting the pointer rather than helping navigate.
+      // Wheel/drag and Liftoff both stay live regardless: this only
+      // gates the hover-follow itself. Computed in refresh() from the
+      // current visible card count, so a type filter that drops a grid
+      // below the threshold disables it too.
+      this._hoverFollowEnabled = true;
       // Index of the card currently under the pointer, or null when the
       // pointer isn't over any card - see the _hoverDelegate binding below.
       // While set, it's the settle spring's target instead of the nearest
@@ -115,7 +128,7 @@
       // whatever card the pointer happens to cross on its way past
       // (_onPointerDown clears any pre-drag hover target of its own).
       this._hoverDelegate = bindHoverDelegate(this.track, '.variation-card', (card) => {
-        if (this._dragging) return;
+        if (!this._hoverFollowEnabled || this._dragging) return;
         if (!card) {
           this._hoverIndex = null;
           return;
@@ -136,6 +149,7 @@
     refresh() {
       this._cards = Array.from(this.track.children).filter((el) => !el.hidden);
       this._maxIndex = Math.max(0, this._cards.length - 1);
+      this._hoverFollowEnabled = this._cards.length >= MIN_HOVER_FOLLOW_CARDS;
       this._measure();
 
       let startIndex = 0;

@@ -1,0 +1,178 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Concept · Hover</p>
+      <h1>Liftoff</h1>
+      <p>
+        Hold the pointer over an element for a sustained dwell (default
+        1.5s) and it breaks contact with the page: rising into a slow
+        ambient float while an underglow burns beneath it, somewhere
+        between a car's underglow and a rocket's exhaust plume. Leaving
+        before the dwell completes cancels cleanly with no visible motion
+        at all; leaving after liftoff eases the element back down and lets
+        the glow fade out. Injects its own shadow/glow layers behind
+        whatever content you put inside the element, so applying the
+        class and calling the script is the whole setup.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/concepts/liftoff/index.html">View Demo</a>
+        <a class="btn" href="/concepts/liftoff/liftoff.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="liftoff.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag defining
+        <code>.liftoff-card</code> and its shadow/glow layers, so no
+        companion CSS file is required — but the host element needs its
+        own size and content, since the injected CSS sets neither.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;div class="liftoff-card" style="width:300px;height:220px" tabindex="0"&gt;
+  &lt;h3&gt;Liftoff&lt;/h3&gt;
+&lt;/div&gt;
+&lt;script src="liftoff.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.liftoff-card</code> element.
+        <code>tabindex="0"</code> is optional but recommended — it makes
+        the lift keyboard-triggerable via focus, not just pointer hover.
+        To configure options:
+      </p>
+      <pre><code>Liftoff.initAll('.liftoff-card', {
+  dwell: 900,
+  lift: 40,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Rocket launch</h3>
+        <p>
+          A shorter dwell, faster rise, and a taller lift with more drift
+          and tilt reads as an urgent, energetic launch rather than a
+          gentle float.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', {
+  dwell: 900, riseSmoothing: 160, lift: 46, driftX: 10, driftY: 14, tilt: 3.2, scale: 1.07,
+  glowColor: '#ff5a1f', thrustColor: '#ffd23f',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Drone hover</h3>
+        <p>
+          A long dwell and slow, subtle drift/tilt reads as a heavier
+          object holding a steady hover rather than lifting off.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', {
+  dwell: 2200, riseSmoothing: 340, lift: 14, driftX: 3, driftY: 2, tilt: 0.6, scale: 1.015,
+  shadowColor: '#0f172a', glowColor: '#38bdf8', thrustColor: '#60a5fa',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>No contact shadow</h3>
+        <p>
+          <code>shadowAtRest: false</code> removes the dark contact shadow
+          shown while the element rests on the page, independent of the
+          glow above — useful over a background where a drawn shadow would
+          look out of place.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', { shadowAtRest: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Lift with no glow</h3>
+        <p>
+          <code>glow: false</code> keeps the float/drift motion but drops
+          the underglow and thrust plume entirely — just an element that
+          quietly lifts.
+        </p>
+        <pre><code>Liftoff.initAll('.liftoff-card', { glow: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Externally driven (no native hover)</h3>
+        <p>
+          <code>hoverEvents: false</code> skips binding the element's own
+          pointer/focus listeners entirely, for cases where something else
+          already owns hover detection for it — e.g. a carousel card whose
+          own hover-follow slides it under a stationary cursor, which
+          would otherwise retrigger native hover on its own (see every
+          card on the homepage). Drive it with
+          <code>.enter()</code> / <code>.leave()</code> instead.
+        </p>
+        <pre><code>const [card] = Liftoff.initAll('.liftoff-card', { hoverEvents: false });
+someExternalHoverSource.on('enter', () => card.enter());
+someExternalHoverSource.on('leave', () => card.leave());</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>dwell</code></td><td><code>1500</code></td><td>Milliseconds of continuous hover before liftoff triggers</td></tr>
+          <tr><td><code>riseSmoothing</code></td><td><code>220</code></td><td>Time-constant (ms) easing toward fully lifted (or back down). Higher lags and settles more slowly; lower snaps closer to instantly</td></tr>
+          <tr><td><code>lift</code></td><td><code>22</code></td><td>Pixels the element rises at full liftoff</td></tr>
+          <tr><td><code>driftX</code></td><td><code>7</code></td><td>Pixels of ambient horizontal drift once lifted</td></tr>
+          <tr><td><code>driftY</code></td><td><code>5</code></td><td>Pixels of extra ambient vertical bob once lifted</td></tr>
+          <tr><td><code>tilt</code></td><td><code>1.6</code></td><td>Degrees of ambient rotation once lifted</td></tr>
+          <tr><td><code>scale</code></td><td><code>1.035</code></td><td>Scale factor at full liftoff</td></tr>
+          <tr><td><code>shadowAtRest</code></td><td><code>true</code></td><td>Shows the dark contact shadow while resting on the page; <code>false</code> removes it entirely, independent of the glow below</td></tr>
+          <tr><td><code>glow</code></td><td><code>true</code></td><td>Turns the underglow and thrust plume on or off together; <code>false</code> leaves just the float/drift motion</td></tr>
+          <tr><td><code>shadowColor</code></td><td><code>'#000000'</code></td><td>Contact shadow color</td></tr>
+          <tr><td><code>glowColor</code></td><td><code>'#ff8c28'</code></td><td>Underglow color</td></tr>
+          <tr><td><code>thrustColor</code></td><td><code>'#ff7a1a'</code></td><td>Thrust plume color</td></tr>
+          <tr><td><code>hoverEvents</code></td><td><code>true</code></td><td>Auto-binds the element's own pointerenter/pointerleave/focusin/focusout; set <code>false</code> to drive it entirely through <code>.enter()</code>/<code>.leave()</code> instead</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.enter()</code></td><td>Starts the dwell timer toward liftoff, exactly like a real hover would. Called automatically by the bound listeners unless <code>hoverEvents: false</code>.</td></tr>
+          <tr><td><code>.leave()</code></td><td>Cancels any pending dwell and eases back down, exactly like hover ending would.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in — every value is read fresh each frame, so nothing needs to be rebuilt or restarted.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, removes its bound listeners (if any), and removes the injected shadow/glow layers.</td></tr>
+          <tr><td><code>Liftoff.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Everything is driven by one continuous scalar per card
+        (<code>amount</code>, 0–1) rather than a CSS class + transition:
+        entry, the ambient float, and the settle-back all read the same
+        value every frame, so a pointer leaving mid lift-in reverses
+        smoothly from wherever it currently sits instead of snapping or
+        fighting an in-flight CSS transition. Only mouse input triggers
+        the dwell — touch/pen pointer events are ignored, since a
+        sustained "hover" doesn't really exist on those. Respects
+        <code>prefers-reduced-motion</code> by skipping auto-init entirely
+        (an explicit <code>Liftoff.initAll()</code> call still works if
+        you want it anyway). The demo page's own control panel adds a
+        Profile dropdown with a few preset combinations (Underglow,
+        Rocket Launch, Drone Hover, Homepage) as a starting point — picking
+        one just sets the sliders below it, which stay freely editable
+        afterward.
+      </p>
+    </div>
+  </div>
