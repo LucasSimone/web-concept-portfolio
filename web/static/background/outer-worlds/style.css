@@ -1,0 +1,248 @@
+main {
+  margin-right: 300px;
+}
+
+.circuit-intro {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10vh 10vw 6vh;
+  max-width: 720px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.circuit-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.section-label {
+  padding: 0 10vw;
+  margin: 6vh 0 2vh;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* The `.bg-circuit-board` effect's own CSS ships inside
+   ./circuit-board.js and is injected automatically — nothing to
+   define here. Everything below is this demo page's own staging. */
+.circuit-hero {
+  height: 70vh;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.circuit-hero .label {
+  font-size: clamp(28px, 6vw, 64px);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.circuit-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 0 10vw 10vh;
+}
+
+.circuit-card {
+  width: 320px;
+  height: 220px;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+  border: 1px solid #000;
+}
+
+.circuit-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* --- Control panel, matching the rest of the lab --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.control-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-inline button {
+  flex: 1;
+  width: auto;
+}
+
+.control-row button {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.control-row button:hover {
+  background: #f5f5f5;
+}
+
+.toggle-button[aria-pressed="true"] {
+  background: #000;
+  color: #fff;
+}
+
+.toggle-button[aria-pressed="true"]:hover {
+  background: #222;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}
