@@ -1,0 +1,62 @@
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Hover for a spotlight</p>
+      <h1>Spotlight</h1>
+      <p class="direction">Hover the card and a beam rakes in from the top edge of the window, cut off cleanly at the card's own outline - the page dims around it, but nothing is ever painted over what it lights.</p>
+
+      <div class="spotlight-stage">
+        <div id="spDemoCard" class="spotlight-el" tabindex="0">
+          <div class="spotlight-el__hint">Hover for a spotlight</div>
+          <h3 class="spotlight-el__title">Spotlight</h3>
+          <p class="spotlight-el__body">Every word here keeps its full contrast at any beam opacity.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">Move between them</p>
+      <h2>One beam, many targets</h2>
+      <p class="direction">Every element on the page shares a single light. Sweep the pointer from one to the next and the beam swings across to follow instead of a second spotlight stacking on top of the first. The badge is click-triggered rather than hover.</p>
+
+      <div class="gallery-grid">
+        <button type="button" class="spotlight-el sp-btn">Get started</button>
+
+        <div class="spotlight-el sp-icon" tabindex="0" aria-label="Favorite">★</div>
+
+        <div class="spotlight-el sp-poster" tabindex="0">
+          <span class="sp-poster__caption">Poster</span>
+        </div>
+
+        <span class="spotlight-el sp-link" tabindex="0">A plain text link</span>
+
+        <button type="button" id="spClickBadge" class="spotlight-el sp-badge" data-sp-trigger="click">Click me</button>
+
+        <div class="spotlight-el sp-stat" tabindex="0">
+          <span class="sp-stat__num">312</span>
+          <span class="sp-stat__label">Signups</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="legibility">
+      <p class="eyebrow">The point</p>
+      <h2>Nothing lands on the element</h2>
+      <p class="direction">The beam, the scrim and the backdrop blur are all cut out at the element's own rounded outline, so dense content stays exactly as readable lit as it is at rest. Hover the panel below and check the small print.</p>
+
+      <div class="spotlight-stage">
+        <article class="spotlight-el sp-panel" tabindex="0">
+          <h3>Terms of the light</h3>
+          <p>An element standing in a beam blocks it. That is the whole trick here: the spotlight stops at this panel's outline rather than washing across it, which is both the physically honest read and the reason this paragraph has not lost a single shade of contrast to the effect around it.</p>
+          <ul>
+            <li>8px body copy stays 8px body copy.</li>
+            <li>The rim of light hugs the outside edge only.</li>
+            <li>The shadow falls away from the light, not straight down.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="spotlight.js"></script>
+  <script src="demo.js"></script>

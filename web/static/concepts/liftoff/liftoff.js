@@ -413,9 +413,19 @@
     }
   }
 
+  // `data-liftoff="off"` opts an element out of Liftoff entirely, even
+  // from an explicit initAll() call that selects it. The blanket auto-init
+  // below is the reason it has to be honored here rather than left to each
+  // caller's selector: it runs on DOMContentLoaded against every
+  // .liftoff-card on the page, so it always wins the race against a page's
+  // own narrower initAll() and would re-claim anything that call
+  // deliberately skipped. Needed wherever .liftoff-card is a page's
+  // structural card wrapper rather than only an effect marker - see
+  // home.js and style.css, where the homepage's Spotlight card carries the
+  // class for its chrome and layout but runs its own effect instead.
   function initAll(selector, options) {
     return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__liftoffInstance)
+      .filter((el) => !el.__liftoffInstance && el.dataset.liftoff !== 'off')
       .map((el) => {
         const instance = new LiftoffCard(el, options);
         el.__liftoffInstance = instance;

@@ -1,0 +1,413 @@
+main {
+  margin-right: 300px;
+  overflow: clip;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 8vh 5vw;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 110px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
+.direction {
+  max-width: 50ch;
+  margin: 0;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+.spotlight-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3rem;
+  padding: 4rem 6rem;
+}
+
+/* Structural/motion CSS ships inside concepts/spotlight/spotlight.js
+   and is injected automatically - this page only supplies its own
+   size/content layout, same as any other page consuming the component. */
+.spotlight-el {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  width: 320px;
+  height: 230px;
+  padding: 0 28px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: default;
+  user-select: none;
+}
+
+.spotlight-el:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 4px;
+}
+
+.spotlight-el__title {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.spotlight-el__body {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.6;
+}
+
+.spotlight-el__hint {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: calc(0.45 * (1 - var(--sp-amount, 0)));
+  margin-bottom: 4px;
+}
+
+/* --- Gallery: the same .spotlight-el component on a handful of other
+   element shapes, to show the effect isn't tied to one 320x230 card - and
+   to give the shared stage several targets to sweep the beam between.
+   Each auto-inits with spotlight.js's plain defaults (hover-triggered)
+   except #spClickBadge, which claims click mode via its own
+   data-sp-trigger attribute. */
+.gallery,
+.legibility {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 4vh 8vw;
+}
+
+.legibility {
+  padding-bottom: 16vh;
+}
+
+.gallery h2,
+.legibility h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem 4rem;
+  margin-top: 2rem;
+  padding: 2rem 1rem;
+}
+
+.sp-btn {
+  width: auto;
+  height: auto;
+  appearance: none;
+  border: 1px solid #000;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font: inherit;
+  font-size: 14px;
+  background: #fff;
+  color: #000;
+  cursor: default;
+}
+
+.sp-icon {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid #000;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: default;
+}
+
+.sp-poster {
+  width: 200px;
+  height: 140px;
+  padding: 0;
+  border: 1px solid #000;
+  background: repeating-linear-gradient(45deg, #000 0, #000 1px, #fff 1px, #fff 10px);
+  align-items: flex-end;
+  justify-content: stretch;
+  cursor: default;
+}
+
+.sp-poster__caption {
+  width: 100%;
+  padding: 6px 10px;
+  background: #fff;
+  border-top: 1px solid #000;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sp-link {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  padding: 6px 2px;
+  border: none;
+  background: none;
+  font-size: 16px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: default;
+}
+
+.sp-badge {
+  display: inline-flex;
+  width: auto;
+  height: auto;
+  appearance: none;
+  padding: 6px 16px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.sp-stat {
+  width: 140px;
+  height: 100px;
+  padding: 0;
+  border: 1px solid #000;
+  gap: 2px;
+  cursor: default;
+}
+
+.sp-stat__num {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sp-stat__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Deliberately the densest thing on the page: if the effect were painting
+   anything at all over its host, this is where it would show. */
+.sp-panel {
+  width: min(460px, 80vw);
+  height: auto;
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+  padding: 26px 28px 28px;
+  border-radius: 4px;
+}
+
+.sp-panel h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.sp-panel p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.sp-panel ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 11px;
+  line-height: 1.8;
+  opacity: 0.6;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.control-checkbox {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

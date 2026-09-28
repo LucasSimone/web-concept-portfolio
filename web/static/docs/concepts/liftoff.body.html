@@ -56,6 +56,18 @@
   dwell: 900,
   lift: 40,
 });</code></pre>
+      <p>
+        <code>data-liftoff="off"</code> on an element opts it out
+        entirely — the auto-init skips it, and so does an explicit
+        <code>initAll()</code> call whose selector happens to match it.
+        Worth knowing about wherever <code>.liftoff-card</code> is doing
+        double duty as a page's structural card wrapper rather than only
+        marking which cards lift: narrowing your own
+        <code>initAll()</code> selector is not enough on its own, since
+        the blanket auto-init runs on <code>DOMContentLoaded</code> and
+        would re-claim whatever that selector deliberately skipped.
+      </p>
+      <pre><code>&lt;div class="liftoff-card" data-liftoff="off"&gt;…&lt;/div&gt;</code></pre>
 
       <h2 id="recipes">Recipes</h2>
 

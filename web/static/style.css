@@ -299,6 +299,42 @@
   display: block;
 }
 
+/* Spotlight (concepts/spotlight/spotlight.js). The concept grid's
+   Spotlight card deliberately runs no Liftoff instance (see home.js), but
+   it still needs the .liftoff-card class - that's the structural wrapper
+   carrying every card's chrome, not just an effect marker. liftoff.js's
+   injected CSS therefore still matches it, and both that rule and
+   spotlight.js's own are single-class selectors in injected <style> tags,
+   so which `transform` wins would come down to which script happened to
+   inject last. This two-class selector settles it on specificity instead,
+   and states the answer: Spotlight's transform, Liftoff's nowhere in it.
+   (--lift-x and friends do still resolve - liftoff.js declares them as
+   defaults on .liftoff-card - so the fallback would be silent, not
+   broken, which is exactly why it's worth pinning down.) */
+.liftoff-card.spotlight-el {
+  transform: translateY(var(--sp-lift)) scale(var(--sp-scale));
+}
+
+/* Spotlight draws through page-level fixed overlays sitting above the
+   whole document, while the card being lit is just another card in the
+   carousel - so a spotlit card that happens to sit behind its focused
+   neighbour gets its own beam, halo and scrim cut-out painted over the top
+   of that neighbour: the light in front of the thing it is lighting.
+   Raising the card for as long as it is lit puts the two back in
+   agreement. 1100 clears the carousel's own range (up to ~1000 for the
+   focused card) and still can't escape .carousel's stacking context, so
+   the sitewide nav keeps covering it.
+
+   !important because carousel.js's _render() writes z-index inline on
+   every .variation-card on every frame (it never parks its rAF loop), and
+   an inline declaration outranks any normal stylesheet rule - so this is
+   the one way to win it without home.js racing the carousel frame by
+   frame. home.js toggles the class off Spotlight's own enter/leave; see
+   there for why it is held through the fade-out. */
+.carousel .variation-card.is-spotlit {
+  z-index: 1100 !important;
+}
+
 /* The concept carousel is the last thing on the page, and its Liftoff card
    is the only homepage card with its falling dashes actually visible (see
    home.js) - those stream down up to ~70px below the card. With nothing

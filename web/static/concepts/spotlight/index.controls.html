@@ -1,0 +1,92 @@
+
+    <div class="control-row">
+      <label><span class="label-text">Scale <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scale">?<span class="hint" role="tooltip" id="hint-scale">How much the element grows at full spotlight.</span></span></span><span id="scaleVal" class="value"></span></label>
+      <input id="scaleRange" type="range" min="1" max="1.3" step="0.01" value="1.06" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Lift <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lift">?<span class="hint" role="tooltip" id="hint-lift">How far the element rises toward the light at full spotlight, in pixels.</span></span></span><span id="liftVal" class="value"></span></label>
+      <input id="liftRange" type="range" min="0" max="40" step="1" value="12" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Fade speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-smoothing">?<span class="hint" role="tooltip" id="hint-smoothing">How quickly the whole thing eases in and out on trigger. Lower is snappier; higher is slower and lazier.</span></span></span><span id="smoothingVal" class="value"></span></label>
+      <input id="smoothingRange" type="range" min="50" max="600" step="10" value="170" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Sweep speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sweep">?<span class="hint" role="tooltip" id="hint-sweep">How long the beam takes to swing across when the pointer moves from one spotlit element straight onto another. Try the gallery further down the page.</span></span></span><span id="sweepVal" class="value"></span></label>
+      <input id="sweepRange" type="range" min="0" max="900" step="20" value="240" />
+    </div>
+
+    <div class="control-row">
+      <label for="colorInput">Light color</label>
+      <input type="color" id="colorInput" class="t-swatch" value="#ffd9a0" aria-label="Light color" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Angle <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-angle">?<span class="hint" role="tooltip" id="hint-angle">How far off vertical the light rakes in, in degrees. The emitter is placed along the window's top edge to hit this angle from whatever it's lighting, so every element gets the same rake instead of the same fixed corner. Negative leans the light in from the left.</span></span></span><span id="angleVal" class="value"></span></label>
+      <input id="angleRange" type="range" min="-60" max="60" step="1" value="18" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Beam opacity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-beamOpacity">?<span class="hint" role="tooltip" id="hint-beamOpacity">How bright the beam is where it lands, at full spotlight. It never touches the element's own content at any value - the beam is cut out at its outline.</span></span></span><span id="beamOpacityVal" class="value"></span></label>
+      <input id="beamOpacityRange" type="range" min="0" max="1" step="0.02" value="0.72" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Clearance <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-clearance">?<span class="hint" role="tooltip" id="hint-clearance">How far past the element's own corners the beam's edges pass, in pixels. The beam always frames the element - this just sets how tightly.</span></span></span><span id="clearanceVal" class="value"></span></label>
+      <input id="clearanceRange" type="range" min="0" max="80" step="2" value="16" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Source width <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sourceWidth">?<span class="hint" role="tooltip" id="hint-sourceWidth">How wide the emitter is where it sits on the window's top edge, in pixels. Narrow reads as a hard theatrical spot; wide reads as a soft overhead panel.</span></span></span><span id="sourceWidthVal" class="value"></span></label>
+      <input id="sourceWidthRange" type="range" min="0" max="220" step="4" value="40" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Overshoot <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-overshoot">?<span class="hint" role="tooltip" id="hint-overshoot">How far past the element the beam carries before fading out, as a multiple of the throw from the emitter. 1.0 stops it dead at the element.</span></span></span><span id="overshootVal" class="value"></span></label>
+      <input id="overshootRange" type="range" min="1" max="2" step="0.05" value="1.3" />
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="edgeGlowCheckbox" checked />
+        Edge glow
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-edgeGlow">?<span class="hint" role="tooltip" id="hint-edgeGlow">The two bright rim lines running down the beam's long edges.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="haloGlowCheckbox" checked />
+        Element halo
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-haloGlow">?<span class="hint" role="tooltip" id="hint-haloGlow">A rim of light in the beam's own color hugging the outside of the element's outline - the same light, just the half of it that isn't blocked.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="floorGlowCheckbox" checked />
+        Floor glow
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-floorGlow">?<span class="hint" role="tooltip" id="hint-floorGlow">A pool of light on the surface beneath the element, cast a little downlight rather than centered.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="dustMotesCheckbox" checked />
+        Dust motes
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dustMotes">?<span class="hint" role="tooltip" id="hint-dustMotes">Particles drifting down the beam and wrapping back to the top.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Page dim <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-darkOpacity">?<span class="hint" role="tooltip" id="hint-darkOpacity">How far the rest of the page drops into shadow at full spotlight. The beam is screen-blended light, so at 0 there is nothing darker than the page for it to show up against.</span></span></span><span id="darkOpacityVal" class="value"></span></label>
+      <input id="darkOpacityRange" type="range" min="0" max="100" step="2" value="74" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Page blur <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-blurAmount">?<span class="hint" role="tooltip" id="hint-blurAmount">Gaussian blur radius over the rest of the page, in pixels. Its edge sits just outside the element, under the dim's own falloff. Stacks with the dim above rather than replacing it; 0 turns it off.</span></span></span><span id="blurAmountVal" class="value"></span></label>
+      <input id="blurAmountRange" type="range" min="0" max="30" step="1" value="0" />
+    </div>

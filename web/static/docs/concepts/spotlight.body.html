@@ -1,0 +1,395 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Concept · Hover / Click</p>
+      <h1>Spotlight</h1>
+      <p>
+        Built around two things. First: the element is cut
+        out of every layer. The page dims, blurs and fills with light
+        around the element's own rounded outline, and nothing is ever
+        painted on top of it - so a dense panel of 11px copy is exactly as
+        readable lit as it is at rest, at any beam opacity. The beam stops
+        at the element's silhouette and carries on past it, which is also
+        the physically honest read: a solid thing standing in a beam
+        blocks it. Second: every instance on the page draws through one
+        shared stage, and only one element holds the light at a time.
+        Moving the pointer between two spotlit elements sweeps the beam
+        across to the new one rather than lighting both at once.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/concepts/spotlight/index.html">View Demo</a>
+        <a class="btn" href="/concepts/spotlight/spotlight.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="spotlight.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag defining
+        <code>.spotlight-el</code>, and builds one shared set of three
+        <code>position: fixed</code> layers on <code>&lt;body&gt;</code>
+        for the whole page however many instances there are, so no
+        companion CSS file is required - but the host element needs its
+        own size and content, since the injected CSS sets neither.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;div class="spotlight-el" style="width:320px;height:230px" tabindex="0"&gt;
+  &lt;h3&gt;Spotlight&lt;/h3&gt;
+&lt;/div&gt;
+&lt;script src="spotlight.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.spotlight-el</code>
+        element, hover-triggered by default. <code>tabindex="0"</code> is
+        optional but recommended - it makes the spotlight
+        keyboard-triggerable via focus, not just pointer hover. To
+        configure options:
+      </p>
+      <pre><code>Spotlight.initAll('.spotlight-el', {
+  angle: -25,
+  color: '#bfe3ff',
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Move the light</h3>
+        <p>
+          <code>angle</code> is how far off vertical the beam rakes in, in
+          degrees - positive leans the light in from the right, negative
+          from the left. It is an angle rather than a fixed position
+          because a hardcoded corner gives everything far from that corner
+          a near-horizontal skim: the emitter is placed along the window's
+          top edge to hit this angle from whatever it is currently
+          lighting, so every element on the page gets the same believable
+          rake. It's clamped into the window, so an element near one edge
+          gets a shallower angle rather than an emitter nobody can see.
+        </p>
+        <pre><code>// Light leaning in from the upper left instead
+Spotlight.initAll('.spotlight-el', { angle: -22 });
+
+// Straight down from directly overhead
+Spotlight.initAll('.spotlight-el', { angle: 0 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Blur the page as well as dimming it</h3>
+        <p>
+          <code>darkOpacity</code> and <code>blurAmount</code> are
+          independent and stack - there's no mode to pick between. The
+          beam is screen-blended light, so it needs something darker than
+          the page to show up against; a blur-heavy look still wants some
+          dim under it rather than <code>darkOpacity: 0</code>.
+        </p>
+        <pre><code>Spotlight.initAll('.spotlight-el', {
+  darkOpacity: 0.45,
+  blurAmount: 16,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Click to spotlight</h3>
+        <p>
+          <code>trigger: 'click'</code> makes the element toggle on and
+          off on click instead of tracking hover - useful for touch, or
+          anywhere a deliberate action should hold the spotlight rather
+          than a passing pointer. On an element also covered by a blanket
+          <code>initAll('.spotlight-el')</code> call elsewhere
+          (auto-init, say), set <code>data-sp-trigger="click"</code> on
+          the element itself instead - it wins the auto-init race that a
+          later, more specific <code>initAll()</code> call can't.
+        </p>
+        <pre><code>Spotlight.initAll('.spotlight-el', { trigger: 'click' });</code></pre>
+        <p>
+          A click-latched element keeps the light: hovering something else
+          borrows the beam, and the moment that hover ends it swings back.
+          Worth pairing with a small <code>lift</code> on a short click
+          target, though - the element is what the next click has to land
+          on, and <code>lift</code> moves it up out from under the pointer
+          by that many pixels, which on something only a couple of dozen
+          pixels tall can put its lower edge past where the visitor is
+          still aiming.
+        </p>
+        <pre><code>Spotlight.initAll('.sp-pill', { trigger: 'click', lift: 2 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Tight theatrical spot vs. soft overhead panel</h3>
+        <p>
+          <code>sourceWidth</code> is how wide the emitter is where it sits
+          on the window's top edge, and it's the single biggest lever on
+          the character of the light: near zero reads as a hard
+          point-source spot with crisp edges, wide reads as a soft light
+          panel. <code>clearance</code> sets how far past the element's own
+          corners the beam's edges pass - the beam always frames the
+          element whatever this is, since its edges are solved from the
+          element's silhouette, so this only controls how tightly.
+        </p>
+        <pre><code>// Hard theatrical spot
+Spotlight.initAll('.spotlight-el', {
+  sourceWidth: 6,
+  clearance: 6,
+});
+
+// Soft overhead wash
+Spotlight.initAll('.spotlight-el', {
+  sourceWidth: 180,
+  clearance: 40,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>How far the beam carries past the element</h3>
+        <p>
+          <code>overshoot</code> is a multiple of the throw from the
+          emitter to the element. <code>1.0</code> stops the beam dead at
+          the element; the default carries it a little past, so the light
+          that misses the element's silhouette keeps going and fades,
+          leaving the element's own shadow in the beam behind it.
+        </p>
+        <pre><code>// Beam stops at the element
+Spotlight.initAll('.spotlight-el', { overshoot: 1 });
+
+// Long throw well past it
+Spotlight.initAll('.spotlight-el', { overshoot: 1.8 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Just the light, none of the staging</h3>
+        <p>
+          <code>dustMotes</code>, <code>floorGlow</code>,
+          <code>edgeGlow</code> and <code>haloGlow</code> each turn off one
+          piece of the atmosphere around the beam. On a small element the
+          full set reads as clutter rather than staging.
+        </p>
+        <pre><code>Spotlight.initAll('.spotlight-el', {
+  dustMotes: false,
+  floorGlow: false,
+  edgeGlow: false,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Slower or instant sweeps</h3>
+        <p>
+          <code>sweep</code> is how long the beam takes to swing across
+          when the pointer moves from one spotlit element straight onto
+          another - separate from <code>smoothing</code>, which is how
+          fast the whole effect fades up and down. <code>0</code> makes
+          the beam jump to each new element instead of travelling.
+        </p>
+        <pre><code>// A long, lazy searchlight swing
+Spotlight.initAll('.spotlight-el', { sweep: 650 });
+
+// No travel at all
+Spotlight.initAll('.spotlight-el', { sweep: 0 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Externally driven (no native hover/click)</h3>
+        <p>
+          <code>autoBind: false</code> skips binding the element's own
+          listeners entirely, for cases where something else already owns
+          trigger detection for it - same reasoning as Liftoff's
+          <code>hoverEvents: false</code>. Drive it with
+          <code>.enter()</code> / <code>.leave()</code> /
+          <code>.toggle()</code> instead.
+        </p>
+        <pre><code>const [card] = Spotlight.initAll('.spotlight-el', { autoBind: false });
+someExternalHoverSource.on('enter', () =&gt; card.enter());
+someExternalHoverSource.on('leave', () =&gt; card.leave());</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>trigger</code></td><td><code>'hover'</code></td><td>How the spotlight is triggered - <code>'hover'</code> tracks pointer/focus, <code>'click'</code> toggles on and off on click</td></tr>
+          <tr><td><code>smoothing</code></td><td><code>170</code></td><td>Time-constant (ms) easing toward fully spotlighted (or back down)</td></tr>
+          <tr><td><code>sweep</code></td><td><code>240</code></td><td>Time-constant (ms) the beam retargets over when the light is handed from one element to another. <code>0</code> jumps instead of travelling</td></tr>
+          <tr><td><code>scale</code></td><td><code>1.06</code></td><td>Scale factor at full spotlight</td></tr>
+          <tr><td><code>lift</code></td><td><code>12</code></td><td>How far (px) the element rises toward the light at full spotlight</td></tr>
+          <tr><td><code>color</code></td><td><code>'#ffd9a0'</code></td><td>One color for the whole light: beam, rim lines, emitter bloom, floor pool, the halo around the element, and the element's own glow</td></tr>
+          <tr><td><code>angle</code></td><td><code>18</code></td><td>Degrees off vertical the light rakes in from; positive leans it in from the right. The emitter is placed along the window's top edge to hit this angle from the lit element, clamped into the window</td></tr>
+          <tr><td><code>beamOpacity</code></td><td><code>0.72</code></td><td>Beam brightness where it lands, at full spotlight. Never touches the element's own content at any value</td></tr>
+          <tr><td><code>sourceWidth</code></td><td><code>40</code></td><td>Width (px) of the emitter on the window's top edge. Narrow reads as a hard point-source spot, wide as a soft overhead panel</td></tr>
+          <tr><td><code>clearance</code></td><td><code>16</code></td><td>How far (px) past the element's own corners the beam's edges pass. The beam frames the element at any value - this only sets how tightly</td></tr>
+          <tr><td><code>overshoot</code></td><td><code>1.3</code></td><td>How far past the element the beam carries before fading, as a multiple of the throw from the emitter. <code>1</code> stops it at the element</td></tr>
+          <tr><td><code>edgeGlow</code></td><td><code>true</code></td><td>The two bright rim lines running down the beam's long edges</td></tr>
+          <tr><td><code>haloGlow</code></td><td><code>true</code></td><td>A rim of light in the beam's color hugging the outside of the element's outline</td></tr>
+          <tr><td><code>floorGlow</code></td><td><code>true</code></td><td>Pool of light on the surface beneath the element, cast a little downlight rather than centered</td></tr>
+          <tr><td><code>dustMotes</code></td><td><code>true</code></td><td>Particles drifting down the beam and wrapping back to the emitter</td></tr>
+          <tr><td><code>darkOpacity</code></td><td><code>0.74</code></td><td>Strength (0-1) of the scrim over the rest of the page at full spotlight. Stacks with <code>blurAmount</code> rather than excluding it</td></tr>
+          <tr><td><code>blurAmount</code></td><td><code>0</code></td><td>Backdrop blur radius (px) over the rest of the page at full spotlight, uniform, with its edge sitting just outside the element under the scrim's own falloff. <code>0</code> turns it off</td></tr>
+          <tr><td><code>autoBind</code></td><td><code>true</code></td><td>Auto-binds the host's own trigger listeners (pointer/focus for <code>'hover'</code>, click for <code>'click'</code>); set <code>false</code> to drive it entirely through <code>.enter()</code>/<code>.leave()</code>/<code>.toggle()</code> instead</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.enter()</code></td><td>Claims the shared stage and eases toward fully spotlighted. Called automatically by the bound listeners unless <code>autoBind: false</code>.</td></tr>
+          <tr><td><code>.leave()</code></td><td>Releases the stage and eases back to resting.</td></tr>
+          <tr><td><code>.toggle()</code></td><td>Flips between <code>.enter()</code>/<code>.leave()</code> - what a bound click trigger calls.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in - all of them are read fresh each frame; changing <code>trigger</code>/<code>autoBind</code> rebinds the listeners.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops this instance's animation loop and removes its bound listeners. The last instance to be destroyed takes the shared stage's layers out of the DOM with it. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
+          <tr><td><code>Spotlight.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>Why the element is cut out rather than lit:</strong>
+        painting the beam across the element - the obvious way, and what
+        earlier drafts of this did -
+        means every increase in beam opacity costs the element's own
+        content a shade of contrast, and on a light page, a
+        screen-blended wash over a white card does nothing visible anyway
+        except wash out the text on it. Here the beam, the scrim and the
+        backdrop blur are all masked by the element's own rounded rect.
+        Each cut-out is two rects rather than one: a crisp rect at the
+        element's exact bounds, guaranteeing its interior is fully clear,
+        and a blurred rect underneath it at the same bounds, contributing
+        only the half of its falloff that lands outside. Growing a single
+        blurred hole instead - the obvious fix for softness creeping
+        inside the element - trades that artifact for a worse one: a
+        fully undimmed ring of page hugging the element, which on a light
+        background reads as a hard white outline drawn around it, and is
+        bright enough to drown out the actual rim light. What makes the
+        element read as lit is the contrast against everything around it
+        dropping into shadow, plus a rim of light in the beam's color
+        hugging the outside of its outline and a shadow cast away from
+        the light - all of it strictly outside the element's own bounds.
+      </p>
+      <p>
+        <strong>How the beam's edges are found:</strong> not a fixed
+        spread, but a silhouette solve. Of the element's four corners, the
+        two at the angular extremes as seen from the emitter are picked,
+        and the beam's edges are the rays that graze those two. That's
+        what makes the cone land squarely around the element from any
+        direction and at any aspect ratio - a fixed-width wedge, or one
+        anchored to two opposite corners, slices diagonally across
+        anything that isn't square-on to it.
+      </p>
+      <p>
+        <strong>One stage, not one overlay per element:</strong> all
+        instances share a single set of layers, and the stage tracks which
+        element holds the light. N independent full-page scrims stacking
+        their darkness on top of each other is a whole class of bugs by
+        itself - two elements mid-crossfade double the dim, and each extra
+        backdrop-filter layer compounds it - and the shared stage removes
+        the possibility rather than managing it. It also buys the sweep:
+        the beam's aim eases toward the new element while the cut-out
+        snaps to it immediately, so the element handed the light is
+        legible from the first frame and the light arrives just after.
+      </p>
+      <p>
+        <strong>Why three separate layers on <code>&lt;body&gt;</code>:</strong>
+        the blur panes, the scrim and the light are three
+        <code>position: fixed</code> siblings rather than three children of
+        one overlay, and that isn't tidiness. Chrome silently drops a
+        <code>backdrop-filter</code> when the element is masked or clipped
+        (<a href="https://issues.chromium.org/issues/40778541">issues.chromium.org/issues/40778541</a>)
+        and <em>also</em> when a sibling inside the same stacking context
+        carries a <code>mix-blend-mode</code>. Put all three jobs inside
+        one overlay div and the blur silently never renders at all.
+        Giving the blur panes their own top-level layer with no
+        mask, no clip and no blended sibling is what makes it work. The
+        light layer carries <code>mix-blend-mode: screen</code> on the
+        layer itself for the mirror-image reason:
+        <code>position: fixed</code> always establishes a stacking
+        context, so a blended <em>child</em> of a fixed overlay only ever
+        blends against its own transparent parent - i.e. does nothing at
+        all.
+      </p>
+      <p>
+        <strong>Why the blur panes are all the same size:</strong> the
+        hole in the backdrop blur is framed by four clipping wrappers,
+        each holding a pane that covers the <em>whole viewport</em> and is
+        simply offset back into place. Sizing each pane to its own strip
+        instead - the obvious way - leaves a visible seam along every
+        join, because a <code>backdrop-filter</code> samples only what is
+        behind its own box: four differently-sized panes blur four
+        differently-cropped backdrops and disagree along their shared
+        edges, drawing faint lines across the page. Identical panes sample
+        identical backdrops and agree exactly. Their edges are rounded to
+        whole pixels for the same reason - a fractional coordinate leaves
+        either a hairline of unblurred page or a sliver of doubled blur
+        along the join. It's also one uniform blur rather than a ladder of
+        rings at decreasing radii: the rings were the first attempt at
+        softening the sharp-to-blurred transition, and every step boundary
+        just read as another line across the page. The single edge is
+        hidden instead, by sitting a few px outside the element under the
+        scrim's own falloff and the halo.
+      </p>
+      <p>
+        <strong>Mask regions are sized to the viewport, deliberately:</strong>
+        an SVG <code>&lt;mask&gt;</code>'s region both clips what it masks
+        and sizes the buffer it rasterizes into. Oversizing it to be safe
+        is not free: at three times the viewport on each axis Chrome
+        quietly gives up on the mask and drops the masked element
+        entirely, leaving a scrim that is measurably present in the DOM
+        and completely absent on screen. Nothing outside the viewport is
+        visible anyway.
+      </p>
+      <p>
+        <strong>Geometry is read per frame, not polled:</strong> the stage
+        reads <code>getBoundingClientRect()</code> once per frame on the
+        one element currently holding the light, so the beam tracks
+        scrolling, resizing and the element's own pop-scale for free -
+        with no scroll listener, no resize listener and no safety-net
+        polling timer. Everything downstream of that rect is guarded by a
+        signature check, so a pointer resting on an element costs a dozen
+        circle updates a frame for the dust motes and nothing else; the
+        beam's two large blurred polygons and both masks are only
+        rewritten when something actually moved.
+      </p>
+      <p>
+        The pop itself is driven by one continuous scalar per element
+        (<code>amount</code>, 0-1) rather than a CSS class + transition,
+        same reasoning as Liftoff: a pointer
+        leaving mid pop-in reverses smoothly from wherever it currently
+        sits instead of snapping or fighting an in-flight CSS transition.
+        In hover mode, only mouse input triggers it - touch/pen pointer
+        events are ignored. Respects
+        <code>prefers-reduced-motion</code> by skipping auto-init entirely
+        (an explicit <code>Spotlight.initAll()</code> call still works if
+        you want it anyway).
+      </p>
+      <p>
+        <strong>Combining with Liftoff:</strong> both effects scale the
+        host element itself through their own <code>transform</code> CSS
+        rule. Applying both <code>liftoff-card</code> and
+        <code>spotlight-el</code> to one element leaves only one
+        <code>transform</code> in effect - whichever the cascade picks,
+        not a blend of both - since two separate class rules targeting the
+        same CSS property on the same element don't merge. A two-class
+        selector composing both formulas into a single rule outranks
+        either one on specificity alone, regardless of which stylesheet
+        loaded last, and resolves it cleanly:
+        <code>.liftoff-card.spotlight-el { transform: translate(var(--lift-x), calc(var(--lift-y) + var(--sp-lift))) rotate(var(--lift-r)) scale(calc(var(--lift-s) * var(--sp-scale))); }</code>.
+        Nothing here adds that automatically - it's a one-rule fix to add
+        wherever the two are actually combined. Picking one outright is the
+        other valid answer, and the one this site's own homepage takes: its
+        Spotlight card keeps <code>.liftoff-card</code> for the structural
+        chrome but opts out of the effect with
+        <code>data-liftoff="off"</code>, so the same two-class selector
+        states Spotlight's transform alone.
+      </p>
+    </div>
+  </div>

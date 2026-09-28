@@ -131,5 +131,13 @@
       jsPath: '/concepts/liftoff/liftoff.js',
       docsPath: '/docs/concepts/liftoff.html',
     },
+    {
+      slug: 'spotlight',
+      name: 'Spotlight',
+      category: 'concepts',
+      demoPath: '/concepts/spotlight/index.html',
+      jsPath: '/concepts/spotlight/spotlight.js',
+      docsPath: '/docs/concepts/spotlight.html',
+    },
   ];
 })(window);

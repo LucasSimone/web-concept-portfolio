@@ -268,6 +268,17 @@ const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers
 // auto-init and the Transition Lab loop below - otherwise these cards
 // would lift/drift/tilt on hover regardless of the OS setting.
 if (!prefersReducedMotion) {
+  // These selectors match the Spotlight card too, and deliberately: it
+  // opts out at the element instead, via `data-liftoff="off"` in
+  // index.body.html (liftoff.js honors that in initAll - and has to,
+  // since its own blanket auto-init would otherwise re-claim anything a
+  // narrower selector here skipped). The card brings its own motion, and
+  // stacking Liftoff's drift/tilt/dashes under a beam that is busy
+  // tracking the card's exact rect reads as two effects arguing rather
+  // than one. It still carries the .liftoff-card class - that's the
+  // structural wrapper holding each card's chrome, and the selector the
+  // hover delegate below is scoped to, not just an effect marker.
+  //
   // The concept grid's own Liftoff card (the one linking through to the
   // Liftoff concept page itself) gets the classic profile - falling dashes
   // included - instead of the subdued HOMEPAGE_PRESET every other card
@@ -278,17 +289,87 @@ if (!prefersReducedMotion) {
   // below (which skips already-initialized elements) leaves it alone.
   Liftoff.initAll('#conceptGrid .liftoff-card', { hoverEvents: false, shadowAtRest: false });
   Liftoff.initAll('.liftoff-card', { hoverEvents: false, ...Liftoff.HOMEPAGE_PRESET });
+
+  // Spotlight: same hoverEvents:false/hover-delegate treatment as Liftoff
+  // above, on the one concept-grid card that carries .spotlight-el.
+  Spotlight.initAll('#conceptGrid .spotlight-el', { autoBind: false });
+
+  // Every card in these grids now carries exactly one of the two effects,
+  // so both lookups have to tolerate a miss: `.get()` returns null for the
+  // Spotlight card's Liftoff, and for every other card's Spotlight.
+  function liftoffOn(card, method) {
+    const instance = Liftoff.get(card);
+    if (instance) instance[method]();
+  }
+
+  // Raising the spotlit card above its carousel neighbours - see
+  // style.css's .carousel .variation-card.is-spotlit rule for what goes
+  // wrong without it. Kept here rather than inside spotlight.js on
+  // purpose: the effect has no business knowing about this page's
+  // carousel, and this is driven entirely through its public
+  // enter/leave/amount surface. The class goes on the anchor, not the
+  // card - the carousel writes a transform onto every .variation-card,
+  // which makes it a stacking context its children can never escape.
+  const SPOTLIT = 'is-spotlit';
+  let spotlitHost = null;
+  let spotlitRaf = null;
+
+  function raiseSpotlit(host) {
+    if (spotlitRaf) {
+      cancelAnimationFrame(spotlitRaf);
+      spotlitRaf = null;
+    }
+    if (spotlitHost && spotlitHost !== host) spotlitHost.classList.remove(SPOTLIT);
+    spotlitHost = host;
+    host.classList.add(SPOTLIT);
+  }
+
+  // Held until the light has actually gone, not dropped on leave(): the
+  // effect eases out over its own `smoothing`, so releasing the card the
+  // instant the pointer left would snap it back behind its neighbour with
+  // the beam still visibly fading off it.
+  function lowerSpotlitWhenDark(host, instance) {
+    if (host !== spotlitHost || spotlitRaf) return;
+    const step = () => {
+      if (instance.amount > 0.002) {
+        spotlitRaf = requestAnimationFrame(step);
+        return;
+      }
+      host.classList.remove(SPOTLIT);
+      if (spotlitHost === host) spotlitHost = null;
+      spotlitRaf = null;
+    };
+    spotlitRaf = requestAnimationFrame(step);
+  }
+
+  function spotlightOn(card, method) {
+    const instance = Spotlight.get(card);
+    if (!instance) return;
+    instance[method]();
+
+    const host = card.closest('.variation-card');
+    if (!host) return;
+    if (method === 'enter') raiseSpotlit(host);
+    else lowerSpotlitWhenDark(host, instance);
+  }
+
   // One delegate per carousel track (bindHoverDelegate is scoped to a
   // single container) resolving each hovered .liftoff-card to its own
-  // instance via Liftoff.get() - Transition Lab's transitionGrid gets one
-  // too, entirely independent of that grid's own cover/reveal hover
-  // delegate further down.
+  // Liftoff (and, where present, Spotlight) instance via .get() -
+  // Transition Lab's transitionGrid gets one too, entirely independent of
+  // that grid's own cover/reveal hover delegate further down.
   ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid'].forEach((gridId) => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     bindHoverDelegate(grid, '.liftoff-card', (el, prevEl) => {
-      if (prevEl) Liftoff.get(prevEl).leave();
-      if (el) Liftoff.get(el).enter();
+      if (prevEl) {
+        liftoffOn(prevEl, 'leave');
+        spotlightOn(prevEl, 'leave');
+      }
+      if (el) {
+        liftoffOn(el, 'enter');
+        spotlightOn(el, 'enter');
+      }
     });
     // hoverEvents:false above also skips LiftoffCard's own native
     // focusin/focusout binding, so keyboard focus is wired here to give
@@ -297,11 +378,15 @@ if (!prefersReducedMotion) {
     // see style.css), so each handler looks the card up from there.
     grid.addEventListener('focusin', (event) => {
       const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
-      if (card) Liftoff.get(card).enter();
+      if (!card) return;
+      liftoffOn(card, 'enter');
+      spotlightOn(card, 'enter');
     });
     grid.addEventListener('focusout', (event) => {
       const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
-      if (card) Liftoff.get(card).leave();
+      if (!card) return;
+      liftoffOn(card, 'leave');
+      spotlightOn(card, 'leave');
     });
   });
 }
