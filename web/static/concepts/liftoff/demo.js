@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // known-good values, but each stays a normal editable control afterward.
   const PROFILES = {
     classic: {
-      dwell: 1500, riseSmoothing: 220, lift: 22, driftX: 7, driftY: 5, tilt: 1.6, scale: 1.035,
+      dwell: 500, riseSmoothing: 220, lift: 22, driftX: 7, driftY: 5, tilt: 1.6, scale: 1.035,
       shadowAtRest: true, glow: true, shadowColor: '#000000', dashColor: '#000000',
       thrustColumns: 11, lineThickness: 2, thrustHeight: 54, thrustSpeed: 1,
       lineLengthMin: 6, lineLengthMax: 16, spacingMin: 4, spacingMax: 14, minFallDuration: 750,
@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
       lineLengthMin: 2, lineLengthMax: 6, spacingMin: 20, spacingMax: 50, minFallDuration: 400,
     },
     // What the homepage actually uses on every card (see home.js's
-    // Liftoff.HOMEPAGE_PRESET) - a quicker, subtler preview tuned for
-    // browsing rather than a one-off deliberate hover, with the dashes
+    // Liftoff.HOMEPAGE_PRESET) - a looser, more exaggerated float tuned
+    // for browsing rather than a one-off deliberate hover, with the dashes
     // dropped entirely.
     homepage: {
       ...Liftoff.HOMEPAGE_PRESET,

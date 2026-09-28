@@ -1,7 +1,7 @@
 /**
  * Liftoff
  * -------
- * Hold a card in the pointer for a sustained dwell (default 1.5s) and it
+ * Hold a card in the pointer for a sustained dwell (default 0.5s) and it
  * lifts off the page, settles into a slow ambient float, and a scatter of
  * short black dashes streams downward beneath it, clustered toward the
  * middle, for as long as it stays lifted. Leaving before the dwell
@@ -13,6 +13,10 @@
  * settle-back all read the same value every frame, so a pointer leaving
  * mid lift-in reverses smoothly from wherever it currently sits instead
  * of snapping or fighting an in-flight CSS transition.
+ *
+ * Hover is measured against the card's *resting* footprint as well as
+ * its current one, so a card that lifts out from under a stationary
+ * cursor stays lifted rather than oscillating - see _onPointerLeave().
  *
  * Usage: give any element class="liftoff-card" - this file injects its
  * own CSS and the shadow/glow layers behind whatever content you put
@@ -224,7 +228,7 @@
   const THRUST_REBUILD_KEYS = ['thrustColumns', 'thrustHeight'];
 
   const DEFAULTS = {
-    dwell: 1500,        // ms of continuous hover before liftoff triggers
+    dwell: 500,         // ms of continuous hover before liftoff triggers
     riseSmoothing: 220, // ms time-constant easing `amount` toward its target
     lift: 22,            // px the card rises at full liftoff
     driftX: 7,           // px of ambient horizontal drift at full liftoff
@@ -269,6 +273,11 @@
       this.phase = Math.random() * Math.PI * 2; // desyncs cards' float cycles
       this._dwellTimer = null;
       this._lastT = performance.now();
+      // Current transform offset in px, written every frame by _render()
+      // and read back by _restRect() to undo it.
+      this._offsetX = 0;
+      this._offsetY = 0;
+      this._watching = false;
 
       this._shadowEl = document.createElement('div');
       this._shadowEl.className = 'liftoff-card__shadow';
@@ -287,6 +296,8 @@
 
       this._onPointerEnter = this._onPointerEnter.bind(this);
       this._onPointerLeave = this._onPointerLeave.bind(this);
+      this._onWatchMove = this._onWatchMove.bind(this);
+      this._onWindowLeave = this._onWindowLeave.bind(this);
       this._tick = this._tick.bind(this);
 
       if (this.options.hoverEvents) {
@@ -314,15 +325,88 @@
     // like hover ending would.
     leave() {
       clearTimeout(this._dwellTimer);
+      this._unwatchRestRect();
       this.target = 0;
     }
 
     _onPointerEnter(event) {
       if (event.pointerType && event.pointerType !== 'mouse') return;
+      this._unwatchRestRect();
       this.enter();
     }
 
-    _onPointerLeave() {
+    // A lifted card translates (and scales) out from under a stationary
+    // pointer, which fires a native `pointerleave` even though the
+    // pointer never moved - the card drops, slides back under the
+    // pointer, fires `pointerenter`, and the two oscillate forever. The
+    // smaller the card the worse it is, since `lift`/`driftX`/`driftY`
+    // only need to carry a nearby edge past the cursor.
+    //
+    // So a `pointerleave` only counts when the pointer has actually left
+    // the card's *resting* footprint - where the card sits with no lift
+    // transform applied. Inside that footprint the card stays lifted and
+    // _watchRestRect() takes over tracking until the pointer genuinely
+    // leaves it (or the card floats back under the pointer and a real
+    // `pointerenter` arrives). Hover is therefore live over the union of
+    // the card's current position and its resting one, which is also
+    // what keeps the top edge - lifted past where the card started -
+    // from reading as a dead zone.
+    _onPointerLeave(event) {
+      // focusout has no pointer coordinates; it's always a real leave.
+      if (event && typeof event.clientX === 'number' && this._pointerInRestRect(event)) {
+        this._watchRestRect();
+        return;
+      }
+      this.leave();
+    }
+
+    // The card's layout box in viewport coordinates with its lift
+    // transform undone. Rotation and scale are both about the element's
+    // center so they leave that center where it is; subtracting just the
+    // translation puts it back at rest, and the untransformed size is
+    // plain offsetWidth/offsetHeight. Recomputed per event rather than
+    // cached so scrolling and reflow stay accounted for.
+    _restRect() {
+      const rect = this.el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2 - this._offsetX;
+      const cy = rect.top + rect.height / 2 - this._offsetY;
+      const halfW = this.el.offsetWidth / 2;
+      const halfH = this.el.offsetHeight / 2;
+      return { left: cx - halfW, right: cx + halfW, top: cy - halfH, bottom: cy + halfH };
+    }
+
+    _pointerInRestRect(event) {
+      const r = this._restRect();
+      return event.clientX >= r.left && event.clientX <= r.right
+        && event.clientY >= r.top && event.clientY <= r.bottom;
+    }
+
+    // Pointer tracking for the window of time where the card has moved
+    // off the pointer but the pointer is still over where the card
+    // started. Capture phase so it still sees moves consumed by whatever
+    // element the card vacated.
+    _watchRestRect() {
+      if (this._watching) return;
+      this._watching = true;
+      window.addEventListener('pointermove', this._onWatchMove, true);
+      document.addEventListener('pointerleave', this._onWindowLeave);
+    }
+
+    _unwatchRestRect() {
+      if (!this._watching) return;
+      this._watching = false;
+      window.removeEventListener('pointermove', this._onWatchMove, true);
+      document.removeEventListener('pointerleave', this._onWindowLeave);
+    }
+
+    _onWatchMove(event) {
+      if (this._pointerInRestRect(event)) return;
+      this.leave();
+    }
+
+    // The pointer left the window entirely, so no further pointermove is
+    // coming to tell us it left the resting footprint.
+    _onWindowLeave() {
       this.leave();
     }
 
@@ -350,9 +434,14 @@
       const bobX = Math.sin(tSec * 0.6 + p * 1.7) * driftX;
       const bobR = Math.sin(tSec * 0.5 + p * 2.3) * tilt;
 
+      // Kept for _restRect(), which subtracts them back off the live
+      // bounding rect to recover where the card sits untransformed.
+      this._offsetX = bobX * a;
+      this._offsetY = -lift * a + bobY * a;
+
       const style = this.el.style;
-      style.setProperty('--lift-x', `${(bobX * a).toFixed(2)}px`);
-      style.setProperty('--lift-y', `${(-lift * a + bobY * a).toFixed(2)}px`);
+      style.setProperty('--lift-x', `${this._offsetX.toFixed(2)}px`);
+      style.setProperty('--lift-y', `${this._offsetY.toFixed(2)}px`);
       style.setProperty('--lift-r', `${(bobR * a).toFixed(2)}deg`);
       style.setProperty('--lift-s', (1 + (scale - 1) * a).toFixed(4));
       style.setProperty('--lift-amount', a.toFixed(4));
@@ -401,6 +490,7 @@
     destroy() {
       cancelAnimationFrame(this._raf);
       clearTimeout(this._dwellTimer);
+      this._unwatchRestRect();
       if (this.options.hoverEvents) {
         this.el.removeEventListener('pointerenter', this._onPointerEnter);
         this.el.removeEventListener('pointerleave', this._onPointerLeave);
