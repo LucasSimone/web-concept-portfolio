@@ -149,6 +149,24 @@ Spotlight.initAll('.spotlight-el', {
       </div>
 
       <div class="recipe">
+        <h3>Color the light</h3>
+        <p>
+          <code>color</code> is one value for the whole light - beam, rim
+          lines, emitter bloom, floor pool, the halo on the element and its
+          own glow - with the hottest parts (rim lines, bloom, motes) mixed
+          toward white from it rather than painted flat in it. The default
+          is plain white, which reads as a stage light on any palette; a
+          tint is a deliberate choice, since every surface the beam lands
+          on picks it up.
+        </p>
+        <pre><code>// Warm theatrical amber
+Spotlight.initAll('.spotlight-el', { color: '#ffd9a0' });
+
+// Cold and clinical
+Spotlight.initAll('.spotlight-el', { color: '#bfe3ff' });</code></pre>
+      </div>
+
+      <div class="recipe">
         <h3>How far the beam carries past the element</h3>
         <p>
           <code>overshoot</code> is a multiple of the throw from the
@@ -221,7 +239,7 @@ someExternalHoverSource.on('leave', () =&gt; card.leave());</code></pre>
           <tr><td><code>sweep</code></td><td><code>240</code></td><td>Time-constant (ms) the beam retargets over when the light is handed from one element to another. <code>0</code> jumps instead of travelling</td></tr>
           <tr><td><code>scale</code></td><td><code>1.06</code></td><td>Scale factor at full spotlight</td></tr>
           <tr><td><code>lift</code></td><td><code>12</code></td><td>How far (px) the element rises toward the light at full spotlight</td></tr>
-          <tr><td><code>color</code></td><td><code>'#ffd9a0'</code></td><td>One color for the whole light: beam, rim lines, emitter bloom, floor pool, the halo around the element, and the element's own glow</td></tr>
+          <tr><td><code>color</code></td><td><code>'#ffffff'</code></td><td>One color for the whole light: beam, rim lines, emitter bloom, floor pool, the halo around the element, and the element's own glow</td></tr>
           <tr><td><code>angle</code></td><td><code>18</code></td><td>Degrees off vertical the light rakes in from; positive leans it in from the right. The emitter is placed along the window's top edge to hit this angle from the lit element, clamped into the window</td></tr>
           <tr><td><code>beamOpacity</code></td><td><code>0.72</code></td><td>Beam brightness where it lands, at full spotlight. Never touches the element's own content at any value</td></tr>
           <tr><td><code>sourceWidth</code></td><td><code>40</code></td><td>Width (px) of the emitter on the window's top edge. Narrow reads as a hard point-source spot, wide as a soft overhead panel</td></tr>
@@ -370,6 +388,21 @@ someExternalHoverSource.on('leave', () =&gt; card.leave());</code></pre>
         <code>prefers-reduced-motion</code> by skipping auto-init entirely
         (an explicit <code>Spotlight.initAll()</code> call still works if
         you want it anyway).
+      </p>
+      <p>
+        <strong>Profiles:</strong> the demo page's control panel opens with
+        a Profile dropdown holding six preset combinations, each a
+        different job the same effect can do - Default (White), Stage Warm
+        (the warm amber this shipped with as its default, on a narrow
+        emitter and a deep dim), Soft Overhead (a wide near-vertical panel
+        with the atmosphere stripped back), Focus Mode (page blur doing the
+        work, beam barely there, element almost still so it stays clickable
+        under the pointer), Interrogation (a cold point source raking in
+        from the left with very little easing) and Searchlight (tuned for
+        the hand-off rather than the resting state - a long lazy sweep, so
+        moving along the gallery swings the beam across instead of cutting
+        to each element). Picking one just sets the controls below it,
+        which stay freely editable afterward.
       </p>
       <p>
         <strong>Combining with Liftoff:</strong> both effects scale the

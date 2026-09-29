@@ -373,6 +373,15 @@ main {
   accent-color: #000;
 }
 
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;

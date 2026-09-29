@@ -187,7 +187,12 @@
     sweep: 240,            // ms time-constant the beam retargets between elements over
     scale: 1.06,           // scale factor at full spotlight
     lift: 12,              // px the element rises toward the light at full spotlight
-    color: '#ffd9a0',      // beam, bloom, floor pool and element halo color
+    // Beam, bloom, floor pool and element halo color. White is the neutral
+    // default - it reads as a plain stage light on any page's palette,
+    // where a tinted one (this was a warm amber for a while) quietly
+    // recolors whatever it lands next to. The demo page's Stage Warm
+    // profile is that amber, kept as one option among several.
+    color: '#ffffff',
     angle: 18,             // degrees off vertical; positive = light from the upper right
     beamOpacity: 0.72,     // beam brightness where it lands, at full spotlight
     sourceWidth: 40,       // px width of the emitter along the window's top edge
