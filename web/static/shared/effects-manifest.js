@@ -100,6 +100,14 @@
       docsPath: '/docs/background/fireflies.html',
     },
     {
+      slug: 'outer-worlds',
+      name: 'Outer Worlds',
+      category: 'background',
+      demoPath: '/background/outer-worlds/index.html',
+      jsPath: '/background/outer-worlds/outer-worlds.js',
+      docsPath: '/docs/background/outer-worlds.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

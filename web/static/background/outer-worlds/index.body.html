@@ -1,30 +1,29 @@
 
   <main>
-    <section class="circuit-intro">
-      <p class="eyebrow">Background 01 — Continuous</p>
+    <section class="world-intro">
+      <p class="eyebrow">Background 05 — Interactive</p>
       <h1>Outer Worlds</h1>
       <p class="intro">
-        A black &amp; white background of PCB traces that only exist because
-        a dot is lighting them up. Each dot leaves a fading tail as it
-        travels, the trace it's drawn dims out once it's done, and a new one
-        appears somewhere else — nothing repeats in the same spot twice.
+        A randomly generated planet that turns under the cursor and coasts to
+        a stop when you let go, with no edge and no seam to reach in any
+        direction. The same world draws three ways — halftone <em>Dots</em>,
+        a relief <em>Wireframe</em>, or a filled <em>Map</em> — as a globe or
+        as an endless flat plane.
       </p>
     </section>
 
-    <section class="circuit-hero bg-circuit-board" aria-label="Circuit board background, full width">
-      <span class="label">Applied to a full section</span>
-    </section>
+    <section class="world-hero bg-outer-worlds" aria-label="Outer Worlds background, full width"></section>
 
     <p class="section-label">Applied to a smaller element</p>
-    <div class="circuit-card-row">
-      <div class="circuit-card bg-circuit-board">
-        <p>Same class, same script — just a smaller box.</p>
+    <div class="world-card-row">
+      <div class="world-card bg-outer-worlds">
+        <p>Same class, same script — its own planet, from its own seed.</p>
       </div>
-      <div class="circuit-card bg-circuit-board">
-        <p>The grid and traces regenerate to fit whatever size it's given.</p>
+      <div class="world-card bg-outer-worlds">
+        <p>Zoom is set relative to the element's diagonal, so a small box frames the same amount of world as the hero.</p>
       </div>
     </div>
   </main>
 
-  <script src="circuit-board.js"></script>
+  <script src="outer-worlds.js"></script>
   <script src="demo.js"></script>

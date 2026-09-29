@@ -2,7 +2,7 @@ main {
   margin-right: 300px;
 }
 
-.circuit-intro {
+.world-intro {
   min-height: 50vh;
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@ main {
   opacity: 0.55;
 }
 
-.circuit-intro h1 {
+.world-intro h1 {
   margin: 0;
   font-size: clamp(40px, 7vw, 84px);
   letter-spacing: -0.03em;
@@ -42,10 +42,10 @@ main {
   opacity: 0.55;
 }
 
-/* The `.bg-circuit-board` effect's own CSS ships inside
-   ./circuit-board.js and is injected automatically — nothing to
+/* The `.bg-outer-worlds` effect's own CSS ships inside
+   ./outer-worlds.js and is injected automatically — nothing to
    define here. Everything below is this demo page's own staging. */
-.circuit-hero {
+.world-hero {
   height: 70vh;
   min-height: 420px;
   display: flex;
@@ -56,20 +56,14 @@ main {
   border-bottom: 1px solid #000;
 }
 
-.circuit-hero .label {
-  font-size: clamp(28px, 6vw, 64px);
-  letter-spacing: -0.02em;
-  font-weight: 700;
-}
-
-.circuit-card-row {
+.world-card-row {
   display: flex;
   flex-wrap: wrap;
   gap: 24px;
   padding: 0 10vw 10vh;
 }
 
-.circuit-card {
+.world-card {
   width: 320px;
   height: 220px;
   display: flex;
@@ -78,11 +72,23 @@ main {
   border: 1px solid #000;
 }
 
-.circuit-card p {
+/* Unlike the other background demos, this one is dense enough over a
+   continent to swallow plain text — but a solid panel behind it would
+   block out the world it is sitting on. A halo of the background color
+   instead: it only touches the few px around each glyph, so the map still
+   runs behind the words. Both custom properties are kept in step with the
+   control panel's color pickers by demo.js, so the halo goes on working
+   the moment a dark background is picked. */
+.world-card p {
   margin: 0;
+  color: var(--world-ink, #000);
+  text-shadow:
+    0 0 5px var(--world-paper, #fff),
+    0 0 5px var(--world-paper, #fff),
+    0 0 10px var(--world-paper, #fff),
+    0 0 10px var(--world-paper, #fff);
   font-size: 13px;
   line-height: 1.5;
-  opacity: 0.85;
 }
 
 /* --- Control panel, matching the rest of the lab --- */
@@ -112,6 +118,14 @@ main {
 .control-row {
   position: relative;
   margin-bottom: 16px;
+}
+
+/* demo.js hides the rows that have nothing to act on in the current style
+   (see syncVisibility). Spelled out rather than left to the UA default,
+   since anything that later gives .control-row a display would silently
+   override `hidden`. */
+.control-row[hidden] {
+  display: none;
 }
 
 .control-row label {
@@ -201,9 +215,41 @@ main {
   accent-color: #000;
 }
 
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
 .controls .value {
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
+}
+
+.t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
 }
 
 .control-inline {
@@ -239,6 +285,14 @@ main {
 
 .toggle-button[aria-pressed="true"]:hover {
   background: #222;
+}
+
+.seed-readout {
+  margin: -6px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
 }
 
 @media (max-width: 720px) {

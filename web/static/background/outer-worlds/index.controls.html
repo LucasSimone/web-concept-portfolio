@@ -1,39 +1,128 @@
 
     <div class="control-row">
-      <label><span class="label-text">Max traces <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxTraces">?<span class="hint" role="tooltip" id="hint-maxTraces">The most traces that can be lit up and moving at once.</span></span></span><span id="maxTracesVal" class="value"></span></label>
-      <input type="range" id="maxTracesRange" min="2" max="250" step="1" value="80" />
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets covering both drawing styles. Picking one sets every control below it, which all stay freely editable afterward.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="atlas" selected>Atlas</option>
+        <option value="wireframe">Wireframe</option>
+        <option value="reliefGlobe">Relief Globe</option>
+        <option value="cartograph">Cartograph</option>
+        <option value="paperMap">Paper Map</option>
+        <option value="continents">Continents</option>
+        <option value="archipelago">Archipelago</option>
+        <option value="nightWatch">Night Watch</option>
+      </select>
     </div>
 
     <div class="control-row">
-      <label><span class="label-text">Grid size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cell">?<span class="hint" role="tooltip" id="hint-cell">Spacing between the grid points traces bend at.</span></span></span><span id="cellVal" class="value"></span></label>
-      <input type="range" id="cellRange" min="18" max="60" step="2" value="34" />
-    </div>
-
-    <div class="control-row">
-      <label><span class="label-text">Max length <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxLength">?<span class="hint" role="tooltip" id="hint-maxLength">The longest a trace can randomly grow, in grid steps.</span></span></span><span id="maxLengthVal" class="value"></span></label>
-      <input type="range" id="maxLengthRange" min="6" max="60" step="1" value="30" />
-    </div>
-
-    <div class="control-row">
-      <label><span class="label-text">Speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-speed">?<span class="hint" role="tooltip" id="hint-speed">How fast each dot travels along its trace.</span></span></span><span id="speedVal" class="value"></span></label>
-      <input type="range" id="speedRange" min="10" max="200" step="5" value="20" />
-    </div>
-
-    <div class="control-row">
-      <label><span class="label-text">Fade out <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fadeDuration">?<span class="hint" role="tooltip" id="hint-fadeDuration">How long a finished trace takes to disappear before a new one appears elsewhere.</span></span></span><span id="fadeDurationVal" class="value"></span></label>
-      <input type="range" id="fadeDurationRange" min="0.5" max="4" step="0.1" value="0.5" />
+      <label for="styleSelect">Style
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-style">?<span class="hint" role="tooltip" id="hint-style">Dots draws the world as a halftone field. Wireframe draws it as a mesh pushed outward wherever it crosses land. Map fills the landmasses and draws a coastline around them.</span></span>
+      </label>
+      <select id="styleSelect">
+        <option value="dots" selected>Dots</option>
+        <option value="wire">Wireframe</option>
+        <option value="map">Map</option>
+      </select>
     </div>
 
     <div class="control-row">
       <div class="control-inline">
-        <button id="overlapToggle" type="button" class="toggle-button" aria-pressed="false">Overlap: Off</button>
-        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-overlap">?<span class="hint" role="tooltip" id="hint-overlap">On lets new traces cross existing ones; off keeps every trace self-contained.</span></span>
+        <button id="projectionToggle" type="button" class="toggle-button" aria-pressed="false">View: Globe</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-projection">?<span class="hint" role="tooltip" id="hint-projection">Globe shows the world as a sphere, with the curvature that implies. Flat is an endless plane instead — no curvature, no poles, no edge in any direction — and a different world rather than the globe unrolled. It usually wants a much lower Zoom.</span></span>
       </div>
     </div>
 
     <div class="control-row">
       <div class="control-inline">
-        <button id="randomizeButton" type="button">Randomize traces</button>
-        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-randomize">?<span class="hint" role="tooltip" id="hint-randomize">Instantly retires every trace on the board and starts fresh ones.</span></span>
+        <button id="pointerToggle" type="button" class="toggle-button" aria-pressed="true">Pointer: On</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-pointer">?<span class="hint" role="tooltip" id="hint-pointer">Whether the cursor can turn the world. Off leaves it spinning on its own at Idle spin and ignoring the pointer entirely — what you want behind anything meant to be read.</span></span>
       </div>
     </div>
+
+    <div class="control-row" data-pointer>
+      <label><span class="label-text">Momentum <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-momentum">?<span class="hint" role="tooltip" id="hint-momentum">How long the world keeps gliding after the cursor stops pushing it. 0 stops it almost immediately.</span></span></span><span id="momentumVal" class="value"></span></label>
+      <input type="range" id="momentumRange" min="0" max="3" step="0.1" value="1.1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Idle spin <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoSpin">?<span class="hint" role="tooltip" id="hint-autoSpin">How fast the planet turns on its own once it has finished coasting. 0 leaves it still until you touch it.</span></span></span><span id="autoSpinVal" class="value"></span></label>
+      <input type="range" id="autoSpinRange" min="0" max="6" step="0.1" value="0.8" />
+    </div>
+
+    <div class="control-row" data-pointer>
+      <label><span class="label-text">Grab strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sensitivity">?<span class="hint" role="tooltip" id="hint-sensitivity">How much of the cursor's movement the world follows. At 1 the ground tracks the cursor exactly.</span></span></span><span id="sensitivityVal" class="value"></span></label>
+      <input type="range" id="sensitivityRange" min="0.2" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Zoom <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scale">?<span class="hint" role="tooltip" id="hint-scale">Globe radius relative to the element. Below 1 the whole planet comes into frame with its edge showing; higher flattens the view out. It still means the globe's radius in a flat view, so that wants much lower values to cover a useful span.</span></span></span><span id="scaleVal" class="value"></span></label>
+      <input type="range" id="scaleRange" min="0.15" max="3" step="0.05" value="1.25" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Detail <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dotSpacing">?<span class="hint" role="tooltip" id="hint-dotSpacing">How finely the world is sampled, in px — the dot spacing in Dots, the detail along each line in Wireframe, the cell size in Map. It is also the resolution the planet is generated at, so finer means more detailed rather than closer. Large elements stop a few px short of the lowest settings, where the points would be crowding into the same pixels anyway.</span></span></span><span id="dotSpacingVal" class="value"></span></label>
+      <input type="range" id="dotSpacingRange" min="3" max="26" step="1" value="13" />
+    </div>
+
+    <div class="control-row" data-style="wire">
+      <label><span class="label-text">Mesh spacing <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-meshSpacing">?<span class="hint" role="tooltip" id="hint-meshSpacing">How far apart the mesh lines sit, in px. Tighter reads as a finer net and defines coastlines more sharply.</span></span></span><span id="meshSpacingVal" class="value"></span></label>
+      <input type="range" id="meshSpacingRange" min="14" max="90" step="2" value="34" />
+    </div>
+
+    <div class="control-row" data-style="wire">
+      <label><span class="label-text">Relief <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-relief">?<span class="hint" role="tooltip" id="hint-relief">How far land is pushed out from the sphere's surface. 0 lays the mesh flat on the globe; higher makes continents bulge out of it.</span></span></span><span id="reliefVal" class="value"></span></label>
+      <input type="range" id="reliefRange" min="0" max="0.15" step="0.005" value="0.05" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Sea level <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-seaLevel">?<span class="hint" role="tooltip" id="hint-seaLevel">Where the waterline sits. It re-floods the same planet rather than generating a new one, so dragging it down uncovers the ocean floor of the world already on screen.</span></span></span><span id="seaLevelVal" class="value"></span></label>
+      <input type="range" id="seaLevelRange" min="-0.3" max="0.45" step="0.01" value="0.1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Continent size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-frequency">?<span class="hint" role="tooltip" id="hint-frequency">How large the landmasses are. Low values give a few big continents; high values break the world up into archipelagos. Changing it generates a new planet.</span></span></span><span id="frequencyVal" class="value"></span></label>
+      <input type="range" id="frequencyRange" min="0.8" max="6" step="0.1" value="2.3" />
+    </div>
+
+    <div class="control-row" data-style="map">
+      <label><span class="label-text">Land fill <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fillAlpha">?<span class="hint" role="tooltip" id="hint-fillAlpha">How solidly landmasses are filled inside their coastline. Low values give the classic look — a light tint in a crisp outline.</span></span></span><span id="fillAlphaVal" class="value"></span></label>
+      <input type="range" id="fillAlphaRange" min="0" max="1" step="0.02" value="0.16" />
+    </div>
+
+    <div class="control-row">
+      <label for="landColorPicker">Land color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-landColor">?<span class="hint" role="tooltip" id="hint-landColor">Ink for everything above the waterline — the dots in Dots, the heavier mesh lines in Wireframe, the fill inside the coastline in Map.</span></span>
+      </label>
+      <input type="color" id="landColorPicker" class="t-swatch" value="#000000" />
+    </div>
+
+    <div class="control-row" data-style="map">
+      <label for="borderColorPicker">Border color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-borderColor">?<span class="hint" role="tooltip" id="hint-borderColor">The coastline drawn around each landmass, independent of the fill inside it.</span></span>
+      </label>
+      <input type="color" id="borderColorPicker" class="t-swatch" value="#000000" />
+    </div>
+
+    <div class="control-row">
+      <label for="oceanColorPicker">Ocean color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-oceanColor">?<span class="hint" role="tooltip" id="hint-oceanColor">Ink for open water — a faint reference grid in Dots and Wireframe, the solid sea in Map.</span></span>
+      </label>
+      <input type="color" id="oceanColorPicker" class="t-swatch" value="#000000" />
+    </div>
+
+    <div class="control-row" data-hide-when="flat-map">
+      <label for="backgroundPicker">Background
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-background">?<span class="hint" role="tooltip" id="hint-background">Canvas color behind the world. Pair a dark one with pale ink for a night view. In Map it is only the space around the globe, so a flat Map covers it completely and hides this control.</span></span>
+      </label>
+      <input type="color" id="backgroundPicker" class="t-swatch" value="#ffffff" />
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="newWorldButton" type="button">New world</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-newWorld">?<span class="hint" role="tooltip" id="hint-newWorld">Generates a fresh planet under the current viewpoint, leaving everything else alone.</span></span>
+      </div>
+    </div>
+
+    <p class="seed-readout">Hero seed <span id="seedVal" class="value"></span></p>

@@ -34,9 +34,11 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 	// Rolodex and Type Pan's source is split into three shared building
 	// blocks (shared/hover-scroll-source.js, shared/sequence-stepper.js,
 	// shared/scroll-progress.js - in that order, since scroll-progress.js
-	// calls SequenceStepper.clamp) plus each effect's own file, but the URL
-	// every page loads and every "Download JS" button links to still needs
-	// to serve one self-contained script - see bundle.go.
+	// calls SequenceStepper.clamp) plus each effect's own file, and Outer
+	// Worlds is split into the reusable map generator (shared/world-map.js)
+	// plus its own renderer, but the URL every page loads and every
+	// "Download JS" button links to still needs to serve one self-contained
+	// script - see bundle.go.
 	bundled := map[string]http.HandlerFunc{
 		"/text-effects/rolodex/rolodex.js": bundledScript(staticFS,
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
@@ -44,6 +46,8 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 		"/text-effects/type-pan/type-pan.js": bundledScript(staticFS,
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
 			"text-effects/type-pan/type-pan.js"),
+		"/background/outer-worlds/outer-worlds.js": bundledScript(staticFS,
+			"shared/world-map.js", "background/outer-worlds/outer-worlds.js"),
 	}
 	for path, handler := range bundled {
 		h := handler

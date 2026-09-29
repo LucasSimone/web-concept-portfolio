@@ -250,6 +250,14 @@ Vacuum.initAll('.liftoff-card.bg-vacuum', {
 Fireflies.initAll('.liftoff-card.bg-fireflies', {
   count: 16, glowSize: 6,
 });
+// Finer dots than the demo page's default, since the card is a fraction of
+// the size and 13px spacing would leave a continent only a few dots wide.
+// A high sea level keeps the card mostly open water: at full-size defaults
+// a continent fills it edge to edge in solid black, and the card's own
+// title has to stay readable on top of it.
+OuterWorlds.initAll('.liftoff-card.bg-outer-worlds', {
+  dotSpacing: 7, autoSpin: 1.6, seaLevel: 0.2,
+});
 
 // Whether the OS has "reduce motion" set - shared by the Liftoff wiring
 // below and the Transition Lab loop further down, both of which skip their

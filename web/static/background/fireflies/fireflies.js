@@ -148,12 +148,45 @@
       this._resizeObserver = new ResizeObserver(this._resize);
       this._resizeObserver.observe(this.el);
 
+      // Stop the loop once the element has scrolled out of view.
+      // requestAnimationFrame pauses itself for a hidden tab but not for an
+      // element that has merely scrolled past, so without this a background
+      // near the top of a long page keeps painting every frame while the
+      // reader is far below it. The margin starts it a screenful early, so
+      // it is already running by the time it is scrolled to.
+      this._onScreen = true;
+      this._intersectionObserver = new IntersectionObserver((entries) => {
+        const on = entries[entries.length - 1].isIntersecting;
+        if (on === this._onScreen) return;
+        this._onScreen = on;
+        if (on) this._start();
+        else this._stop();
+      }, { rootMargin: '200px' });
+      this._intersectionObserver.observe(this.el);
+
       this._resize();
       if (this._reduced) {
         this._render();
       } else {
-        this._raf = requestAnimationFrame(this._tick);
+        this._start();
       }
+    }
+
+    // Safe to call when already running; does nothing under reduced motion
+    // or while the element is off screen.
+    _start() {
+      if (this._raf || this._reduced || !this._onScreen) return;
+      // Restart the clock rather than carrying the paused gap into the first
+      // frame back, which would spend it all at once just as the element
+      // comes into view.
+      this._lastNow = performance.now();
+      this._raf = requestAnimationFrame(this._tick);
+    }
+
+    _stop() {
+      if (!this._raf) return;
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
     }
 
     // clientWidth/clientHeight (not getBoundingClientRect) because the host
@@ -324,8 +357,9 @@
     }
 
     destroy() {
-      if (this._raf) cancelAnimationFrame(this._raf);
+      this._stop();
       this._resizeObserver.disconnect();
+      this._intersectionObserver.disconnect();
       this.canvas.remove();
     }
   }

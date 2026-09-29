@@ -1,0 +1,475 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Interactive</p>
+      <h1>Outer Worlds</h1>
+      <p>
+        A canvas showing a patch of a randomly generated planet. Moving the
+        cursor across it turns the globe under your hand; letting go hands
+        the motion to momentum, so the world keeps gliding and coasts back
+        down to its own slow idle rotation. There is no edge to reach and
+        no seam to cross — the terrain is 3D noise sampled on a sphere, so
+        every point on the planet already has an elevation waiting to be
+        asked for and you can keep panning in any direction forever. Purely
+        decorative — it sits behind the element's content and never touches
+        real page elements.
+      </p>
+      <p>
+        The same world draws in any of three styles, set by
+        <code>mode</code>:
+      </p>
+      <ul>
+        <li>
+          <strong><code>'dots'</code></strong> — a halftone field. Open
+          ocean is a faint lattice, coastlines dither in as the dots grow,
+          and continental interiors and mountain chains close up into solid
+          ink.
+        </li>
+        <li>
+          <strong><code>'wire'</code></strong> — a mesh of parallels and
+          meridians laid over the globe and pushed outward wherever it
+          crosses land, so continents rise out of the grid as relief.
+        </li>
+        <li>
+          <strong><code>'map'</code></strong> — the classic one: three
+          flat inks and an outline. <code>landColor</code> fills the
+          landmasses, <code>borderColor</code> draws the coastline around
+          them, <code>oceanColor</code> is the sea they sit in. The
+          coastline is a traced contour, not a stepped approximation, so it
+          stays a smooth line at any zoom.
+        </li>
+      </ul>
+      <p>
+        And in either of two projections, set by <code>projection</code>:
+        <code>'globe'</code> views the planet as a sphere, with the
+        curvature that implies; <code>'flat'</code> is an endless plane —
+        no curvature, no poles, and no edge in any direction. Every style
+        works in both, so there are six looks from one option pair. Note
+        that <code>scale</code> means the same thing in each (the globe's
+        radius in px), so a flat view usually wants a much lower one to
+        cover a useful span.
+      </p>
+      <p>
+        A flat view is a <em>different world</em> from the globe, not the
+        same one unrolled. Flattening a sphere leaves a top and a bottom
+        where its poles were, and a map that should simply keep going
+        cannot have those — so a flat view samples the generator's planar
+        terrain instead of its spherical terrain. The seed drives both, but
+        switching projection changes what is under you, the same way
+        changing <code>frequency</code> does.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/outer-worlds/index.html">View Demo</a>
+        <a class="btn" href="/background/outer-worlds/outer-worlds.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#generator">The map generator</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="outer-worlds.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required
+        to render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it. The downloaded file is
+        self-contained: it carries the map generator
+        (<code>WorldMap</code>) with it, so there is nothing else to fetch.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-outer-worlds" aria-label="Outer Worlds background"&gt;&lt;/section&gt;
+&lt;script src="outer-worlds.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No text/data attribute needed — just apply the class to a container
+        with a size of its own. Every element gets its own planet from its
+        own random seed. A <code>ResizeObserver</code> on the host element
+        rebuilds the globe to fit, keeping the viewpoint you were already
+        looking at. Auto-initializes against every
+        <code>.bg-outer-worlds</code> element. To configure options:
+      </p>
+      <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  momentum: 2,
+  dotSpacing: 9,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Heavy world, long glide</h3>
+        <p>
+          A long <code>momentum</code> with a strong grab makes the planet
+          feel massive: one pass of the cursor sends it turning for several
+          seconds afterward.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  momentum: 2.6,
+  sensitivity: 1.8,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Look, don't touch</h3>
+        <p>
+          <code>interactive: false</code> stops the cursor driving the
+          world entirely, leaving it turning at <code>autoSpin</code> and
+          nothing else. Worth reaching for behind text: a background that
+          reacts to the pointer competes with whatever is being read on top
+          of it.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  interactive: false,
+  autoSpin: 1.5,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Fixed to the cursor</h3>
+        <p>
+          Drop <code>momentum</code> to 0 and the world stops the instant
+          the cursor does, which reads as a map being dragged rather than a
+          globe being spun. Pair it with <code>autoSpin: 0</code> to leave
+          the view exactly where it was left.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  momentum: 0,
+  autoSpin: 0,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Wireframe instead of dots</h3>
+        <p>
+          <code>mode: 'wire'</code> swaps the halftone for a mesh. Nothing
+          about the planet changes — the same seed gives the same world in
+          either style, so the two can be switched between live.
+          <code>meshSpacing</code> sets how far apart the lines sit and
+          <code>relief</code> how far land lifts off the sphere.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  mode: 'wire',
+  meshSpacing: 34,
+  relief: 0.05,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A cartographer's globe</h3>
+        <p>
+          <code>mode: 'map'</code> fills the landmasses and draws a
+          coastline around them. Give the three parts their own colors and
+          it reads as an atlas plate; pull <code>scale</code> under 1 and
+          the sea becomes the planet's own disc, horizon and all, with
+          <code>background</code> as the space around it.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  mode: 'map',
+  scale: 0.82,
+  landColor: '239, 232, 216',
+  borderColor: '20, 24, 28',
+  oceanColor: '207, 223, 232',
+  oceanAlpha: 1,
+  fillAlpha: 1,
+});</code></pre>
+        <p>
+          Leave <code>borderColor</code> and <code>oceanColor</code> unset
+          and both borrow <code>landColor</code>, which with the default
+          <code>fillAlpha</code> gives the one-color version: a light tint
+          inside a crisp outline of the same ink.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>A paper map</h3>
+        <p>
+          <code>projection: 'flat'</code> lays the world out on paper.
+          There is no edge to reach in any direction and no pole to stop
+          at: pan as far as you like, up, down or sideways, and the
+          generator keeps producing terrain. Drop <code>scale</code> a long
+          way, since it is still the globe's radius in px.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  mode: 'map',
+  projection: 'flat',
+  scale: 0.3,
+  background: '#fbf7ef',
+  oceanColor: '79, 125, 153',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A relief globe</h3>
+        <p>
+          Wireframe with the whole planet in frame and the relief pushed
+          hard: continents stand off a fine mesh, and the lift fades out
+          toward the limb so the silhouette stays a clean edge.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  mode: 'wire',
+  scale: 0.78,
+  dotSpacing: 8,
+  meshSpacing: 26,
+  relief: 0.09,
+  autoSpin: 2.2,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>The whole globe in frame</h3>
+        <p>
+          <code>scale</code> is the globe's radius as a multiple of half the
+          element's diagonal, so at 1 the planet's limb touches the corners
+          and anything lower brings the entire sphere into view with
+          <code>background</code> showing around it.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  scale: 0.8,
+  dotSpacing: 9,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>An ocean planet, or a dry one</h3>
+        <p>
+          <code>seaLevel</code> is a threshold on an already-generated
+          world rather than part of generating it, so it floods and drains
+          the same planet instead of making a new one. Raise it for
+          scattered islands, drop it to expose the ocean floor.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', { seaLevel: 0.3 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>The same world every time</h3>
+        <p>
+          Pin the <code>seed</code> and the planet is reproducible: the same
+          number always generates the same terrain, on every machine.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', { seed: 20260928 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Flat graphic continents</h3>
+        <p>
+          A short <code>landRange</code> reaches full-size dots just past
+          the waterline, so landmasses read as solid shapes with a tight
+          dither at the coast instead of a long halftone ramp across the
+          interior. The cleanest-looking version of the dot style.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  landRange: 0.16,
+  frequency: 1.6,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Color</h3>
+        <p>
+          <code>landColor</code>, <code>oceanColor</code> and
+          <code>background</code> are independent, and every style uses the
+          same set (<code>borderColor</code> joins them in Map). Leave
+          <code>oceanColor</code> unset and the water borrows the land's
+          ink, so a single color is enough until the parts should differ.
+          <code>oceanAlpha: 0</code> drops the open-water lattice entirely
+          for a flatter look.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  mode: 'wire',
+  background: '#0b0d12',
+  landColor: '244, 244, 242',
+  oceanColor: '111, 151, 180',
+  oceanAlpha: 0.32,
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>mode</code></td><td><code>'dots'</code></td><td>How the world is drawn: <code>'dots'</code> for the halftone field, <code>'wire'</code> for the relief-displaced mesh, <code>'map'</code> for filled land with a drawn coastline. All three read the same terrain</td></tr>
+          <tr><td><code>projection</code></td><td><code>'globe'</code></td><td><code>'globe'</code> views the world as a sphere; <code>'flat'</code> is an endless plane with no curvature, no poles and no edges. A flat view is a different world from the globe rather than the same one unrolled. <code>scale</code> means the same in both, so a flat view wants a much lower one</td></tr>
+          <tr><td><code>dotSpacing</code></td><td><code>13</code></td><td>Distance between sample points at the view centre, in px — the dot spacing in <code>'dots'</code>, the detail along each line in <code>'wire'</code>. Also the resolution the world is generated at, so a finer spacing is a more detailed planet rather than a closer one. Floored per element at what one frame can afford to draw — roughly <code>sqrt(width * height / 25000)</code> px — so a very low value on a large element settles at that floor instead of asking for a million points a frame. Nearly all of the cost is rasterizing the samples rather than placing them, so this is the setting that decides what the effect costs on a slow device</td></tr>
+          <tr><td><code>scale</code></td><td><code>1.25</code></td><td>Globe radius as a multiple of half the element's diagonal, so it means the same at any aspect ratio. At 1 the planet's limb touches the corners; below that the whole globe comes into frame</td></tr>
+          <tr><td><code>interactive</code></td><td><code>true</code></td><td>Whether the cursor can turn the world. <code>false</code> leaves it to <code>autoSpin</code> alone — a background that moves but never reacts. <code>momentum</code> and <code>sensitivity</code> stop meaning anything when it is off</td></tr>
+          <tr><td><code>sensitivity</code></td><td><code>1</code></td><td>Fraction of the cursor's movement the world follows. At 1 the ground tracks the cursor exactly</td></tr>
+          <tr><td><code>momentum</code></td><td><code>1.1</code></td><td>Seconds of glide after the cursor stops — the time constant of the decay back to the idle spin, so roughly 3x this is how long a fling stays visibly in motion. 0 stops it almost immediately</td></tr>
+          <tr><td><code>autoSpin</code></td><td><code>0.8</code></td><td>Idle rotation in degrees of longitude per second, always eastward. 0 leaves the world still until the cursor touches it</td></tr>
+          <tr><td><code>maxLat</code></td><td><code>78</code></td><td>How far toward the poles the view can be pushed, in degrees. Globe only — a plane has no pole to stop at</td></tr>
+          <tr><td><code>seaLevel</code></td><td><code>0.1</code></td><td>Elevation that counts as the waterline. A threshold on an already-generated world, so changing it re-floods the same planet instead of generating another</td></tr>
+          <tr><td><code>landRange</code></td><td><code>0.42</code></td><td>Elevation above <code>seaLevel</code> at which land reaches full strength — full-size dots, or full relief. Wider keeps interior relief visible as texture instead of flooding to a solid mass; shorter gives flat graphic continents</td></tr>
+          <tr><td><code>meshSpacing</code></td><td><code>34</code></td><td><code>'wire'</code> only: distance between mesh lines at the view centre, in px. Deliberately coarser than <code>dotSpacing</code>, which is the detail running along each line</td></tr>
+          <tr><td><code>relief</code></td><td><code>0.05</code></td><td><code>'wire'</code> only: how far full-elevation land is pushed out from the sphere, as a fraction of the globe's radius. 0 lays the mesh flat on the surface</td></tr>
+          <tr><td><code>lineWidth</code></td><td><code>1</code></td><td>Stroke width in px of the ocean mesh in <code>'wire'</code> and of the coastline in <code>'map'</code>. Land mesh lines are drawn 1.4x heavier so coastlines carry weight</td></tr>
+          <tr><td><code>fillAlpha</code></td><td><code>0.16</code></td><td><code>'map'</code> only: how solidly land is filled inside its coastline. Low values give the classic look — a light tint in a crisp outline, both from <code>landColor</code>. 1 fills land solid</td></tr>
+          <tr><td><code>oceanAlpha</code></td><td><code>0.13</code></td><td>Opacity of everything over open water — the lattice in <code>'dots'</code>, the mesh in <code>'wire'</code>, the flat sea wash in <code>'map'</code> — which is what carries the rotation over empty ocean. 0 leaves the oceans blank</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>Canvas fill color drawn behind the world each frame</td></tr>
+          <tr><td><code>landColor</code></td><td><code>'0, 0, 0'</code></td><td>RGB triplet (no <code>rgb()</code> wrapper) for everything above the waterline</td></tr>
+          <tr><td><code>oceanColor</code></td><td><code>null</code></td><td>RGB triplet for open water, drawn at <code>oceanAlpha</code>. <code>null</code> reuses <code>landColor</code></td></tr>
+          <tr><td><code>borderColor</code></td><td><code>null</code></td><td><code>'map'</code> only: RGB triplet for the coastline drawn around each landmass, independent of the fill inside it. <code>null</code> reuses <code>landColor</code></td></tr>
+          <tr><td><code>seed</code></td><td><code>null</code></td><td>Which planet to generate. <code>null</code> picks a random one; any number is reproducible</td></tr>
+          <tr><td><code>frequency</code></td><td><code>2.3</code></td><td>How large the landmasses are. Low gives a few big continents, high breaks the world into archipelagos</td></tr>
+          <tr><td><code>octaves</code></td><td><code>6</code></td><td>Levels of terrain detail. Fewer is smoother and cheaper; more adds fine coastline structure</td></tr>
+          <tr><td><code>warp</code></td><td><code>0.38</code></td><td>How far the terrain is distorted before elevation is read — what turns round blobs into coastlines with peninsulas and bays. 0 disables it</td></tr>
+          <tr><td><code>ridge</code></td><td><code>0.5</code></td><td>Strength of the mountain-chain term added on land. 0 leaves the interiors smooth</td></tr>
+          <tr><td><code>landBias</code></td><td><code>0</code></td><td>Shifts the whole elevation field up (more land) or down (more ocean). Unlike <code>seaLevel</code> this regenerates the world</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. A world-generating option (<code>seed</code>, <code>frequency</code>, <code>octaves</code>, <code>warp</code>, <code>ridge</code>, <code>landBias</code>) builds a new planet; <code>dotSpacing</code>, <code>scale</code> and <code>relief</code> rebuild the globe geometry; everything else — <code>mode</code>, the colors and <code>seaLevel</code> included — just applies on the next frame, so switching style or repainting mid-glide costs nothing and disturbs neither the world nor the viewpoint.</td></tr>
+          <tr><td><code>.newWorld(seed)</code></td><td>Replaces the planet, keeping the current viewpoint and motion. Omit <code>seed</code> for a random one. Returns the seed actually used, so it can be stored and passed back later to get this world again.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize and visibility observers, removes the pointer listeners, and removes the canvas.</td></tr>
+          <tr><td><code>OuterWorlds.get(elOrSelector)</code> / <code>OuterWorlds.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="generator">The map generator</h2>
+      <p>
+        The terrain itself is a standalone piece — <code>WorldMap</code>,
+        bundled into <code>outer-worlds.js</code> and reusable on its own
+        for anything else that wants procedural terrain. It samples seeded
+        3D gradient noise at points on a sphere, which is what buys the
+        unbounded panning: longitude wraps at ±180° for free because both
+        sides are literally the same point in 3D, the poles are ordinary
+        points rather than stretched rows, and any coordinate can be asked
+        for at any time without having generated its neighbours first.
+        Everything is a pure function of the seed, so the same seed gives
+        the same planet on every machine, in whatever order the points are
+        requested.
+      </p>
+      <pre><code>const world = new WorldMap({ seed: 1234, frequency: 2.3 });
+
+world.heightAtLonLat(lon, lat);  // signed elevation; lon/lat in radians
+world.heightAt(x, y, z);         // same, from a unit vector
+world.heightAt2D(x, y);          // the same terrain on a flat plane
+world.isLand(h);                 // h &gt; seaLevel
+world.landFactor(h);             // 0 at the coast, 1 landRange above it
+world.reseed();                  // new planet in place, returns its seed</code></pre>
+      <p>
+        <code>WorldMap.SphereLattice</code> comes with it: an equal-area
+        grid of points covering the whole sphere, each one's elevation
+        sampled at most once and cached for the lattice's lifetime. Unlike
+        a plain longitude/latitude grid it doesn't crowd points together at
+        the poles, so coverage is uniform everywhere. It is what keeps this
+        effect cheap — panning across the world pays for each point one
+        time no matter how many frames it stays on screen.
+        <code>WorldMap.LonLatGrid</code> is the other trade: plain
+        longitude/latitude cells, which is what contour tracing's quad cells
+        need. It stores nothing of its own and reads the lattice's cache, so
+        either way there is one copy of the world in memory.
+        <code>WorldMap.PlaneGrid</code> is the third, and the one every
+        <code>'flat'</code> view runs on: a square grid on an endless plane,
+        drawn from the generator's planar sampling rather than its spherical
+        one. Its row and column indices are plain signed integers with no
+        range, so elevations live in a rolling window of slots addressed
+        modulo its own size — panning re-uses every slot still in view and
+        overwrites the ones that scrolled off, which is what keeps memory
+        flat however far the map travels.
+      </p>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Pointer movement drives the viewpoint directly while the cursor is
+        moving, so the ground tracks it exactly and the world feels grabbed
+        rather than nudged; the moment it stops, the velocity it had built
+        takes over and decays. Both halves are expressed as exponential
+        decay over the frame's elapsed time and the position is integrated
+        in closed form, so a glide covers exactly the same ground at 30fps
+        as at 144, and a dropped frame doesn't produce a jump. Longitude
+        wraps forever; latitude stops at <code>maxLat</code> short of the
+        poles, where the view would otherwise flip over the top. Leaving
+        the element does not stop the world — whatever momentum it was
+        handed keeps carrying it, which is the point of throwing it.
+        Respects <code>prefers-reduced-motion</code> by skipping the
+        animation loop entirely: the world holds still, with no idle spin
+        and no glide, and redraws only in response to the cursor. On touch,
+        where there is no hover, the planet simply drifts at
+        <code>autoSpin</code>; nothing about the effect competes with page
+        scrolling.
+      </p>
+      <p>
+        The loop also stops when the element scrolls out of view, and picks
+        up where it left off when it comes back — a screenful early, so it
+        is already turning by the time it is looked at. This matters more
+        than it sounds: <code>requestAnimationFrame</code> pauses itself for
+        a hidden tab but not for an element that has merely scrolled past,
+        so a background at the top of a long page would otherwise go on
+        drawing every frame in full while the reader is far below it. On a
+        phone that is the difference between a background and a battery
+        drain.
+      </p>
+      <p>
+        In <code>'wire'</code>, the mesh is anchored to the world rather
+        than the screen — parallels are lines of latitude, meridians lines
+        of longitude — so it turns with the planet instead of sitting still
+        in front of it. Two things follow from that and are handled for
+        you. Relief fades out as the surface turns away from the viewer,
+        because pushing a point off the sphere moves it across the screen
+        by an amount that grows with its distance from the view centre;
+        without that fade, highlands at the limb would fling out past the
+        horizon as loose spikes. And the meridians thin by halves as they
+        climb — every second one stops, then every second one of those —
+        since they converge toward the pole and would otherwise pile into a
+        solid starburst directly over it.
+      </p>
+      <p>
+        In <code>'flat'</code> nothing is clamped or wrapped at all: the
+        viewpoint keeps going in every direction, and elevations come from
+        a rolling window of cells sized to the element rather than to the
+        world, so travelling a long way costs no more memory than standing
+        still. <code>maxLat</code> does not apply. Its terrain is also
+        generated a few times larger than the globe's, because a flat view
+        has to be zoomed well out to frame a useful span — at matching
+        scale it would cross from sea to solid land inside a single cell,
+        and since a flat grid is perfectly axis-aligned, those one-cell
+        steps line up into straight vertical edges instead of a coastline.
+        A flat view wants finer <code>dotSpacing</code> than a globe for
+        the same reason.
+      </p>
+      <p>
+        The demo page's control panel adds a Profile dropdown with eight
+        presets spanning the styles and both projections (Atlas, Wireframe,
+        Relief Globe, Cartograph, Paper Map, Continents, Archipelago, Night
+        Watch) as a starting point — picking one sets every control below
+        it, which all stay freely editable afterward. Those presets also
+        set <code>landRange</code>, which has no slider of its own; reach
+        for it in code when the coast dither is too long or too abrupt.
+      </p>
+      <p>
+        Zoom, Detail and Mesh spacing are remembered separately for each
+        projection there, since a flat view needs a much lower zoom and
+        finer spacing than a globe to frame and draw the same sort of map —
+        flipping View moves those three sliders to the values that view was
+        last left at, rather than carrying one set across and landing badly
+        in whichever direction it was flipped.
+      </p>
+      <p>
+        That panel only shows the controls that have something to act on:
+        Mesh spacing and Relief appear for Wireframe, Land fill and Border
+        color for Map, Background disappears for a flat Map (whose sea
+        covers the canvas, leaving nothing behind it to tint),
+        and Momentum and Grab strength disappear altogether once Pointer is
+        switched off. The Pointer toggle is the one control a preset leaves
+        alone — whether the cursor drives is a decision about the page the
+        background sits on rather than about how the world looks, so it
+        survives flipping through presets to compare them.
+      </p>
+    </div>
+  </div>
