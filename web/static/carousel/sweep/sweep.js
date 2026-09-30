@@ -218,6 +218,34 @@
         const index = this._cards.indexOf(card);
         if (index !== -1) this._hoverIndex = index;
       });
+      // The delegate above only resolves a target while the pointer is
+      // directly over a rendered card, which breaks down at either end of
+      // the strip: an end card hasn't slid flush with the track's edge
+      // until it's actually focused, and once enough cards are packed in
+      // that the strip is wider than the track, the outermost card or two
+      // are clipped out of reach entirely (overflow-x: clip). Sweeping the
+      // mouse straight for an edge routinely overshoots into that dead
+      // space and leaves hoverIndex null, stalling wherever it was instead
+      // of reaching the end - the "jiggle to find it" problem. Bound after
+      // the delegate (so its own mouseleave->null runs first) and on both
+      // mousemove and mouseleave: whenever nothing's resolved and the
+      // pointer is at or past the track's own left/right edge - not some
+      // particular card's edge, since that's exactly what's unreachable -
+      // treat it as hovering the first/last card instead of losing the
+      // target. mouseleave is what actually fires in the common case,
+      // since overshooting past a card usually exits the track first.
+      this._onTrackEdgeHover = (event) => {
+        if (!this._hoverFollowEnabled() || this._dragging || this._hoverIndex !== null) return;
+        const rect = this.track.getBoundingClientRect();
+        if (event.clientY < rect.top || event.clientY > rect.bottom) return;
+        if (event.clientX <= rect.left) {
+          this._hoverIndex = 0;
+        } else if (event.clientX >= rect.right) {
+          this._hoverIndex = this._maxIndex;
+        }
+      };
+      this.track.addEventListener('mousemove', this._onTrackEdgeHover);
+      this.track.addEventListener('mouseleave', this._onTrackEdgeHover);
       global.addEventListener('resize', this._onResize);
 
       // Stop the loop once the track has scrolled out of view - see
@@ -491,6 +519,8 @@
       this.root.removeEventListener('pointerdown', this._onPointerDown);
       this.track.removeEventListener('click', this._onClickCapture, true);
       this._hoverDelegate.destroy();
+      this.track.removeEventListener('mousemove', this._onTrackEdgeHover);
+      this.track.removeEventListener('mouseleave', this._onTrackEdgeHover);
       global.removeEventListener('resize', this._onResize);
       global.removeEventListener('pointermove', this._onPointerMove);
       global.removeEventListener('pointerup', this._onPointerUp);
