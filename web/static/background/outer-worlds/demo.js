@@ -250,11 +250,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Object.values(pickers).forEach((picker) => picker.addEventListener('input', syncColors));
 
+  // `controls` is the one place that lists every slider (also true of the
+  // individual input listeners above), so a new slider only ever has to be
+  // added there and to `labels`/syncLabels - this loop picks it up with
+  // nothing else to edit. Only the non-slider parts of a profile (drawing
+  // style, projection, the two range-less options, and the color pickers)
+  // stay hand-listed below.
   function applyProfile(name) {
     const profile = PROFILES[name];
     if (!profile) return;
 
-    Object.keys(controls).forEach((key) => { controls[key].value = profile[key]; });
+    const options = {};
+    Object.keys(controls).forEach((key) => {
+      controls[key].value = profile[key];
+      options[key] = Number(controls[key].value);
+    });
+
     pickers.land.value = profile.land;
     pickers.border.value = profile.border || profile.land;
     pickers.ocean.value = profile.ocean;
@@ -271,18 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     apply({
+      ...options,
       mode: profile.mode,
       projection: profile.projection,
-      fillAlpha: profile.fillAlpha,
-      momentum: profile.momentum,
-      autoSpin: profile.autoSpin,
-      sensitivity: profile.sensitivity,
-      scale: profile.scale,
-      dotSpacing: profile.dotSpacing,
-      meshSpacing: profile.meshSpacing,
-      relief: profile.relief,
-      seaLevel: profile.seaLevel,
-      frequency: profile.frequency,
       landRange: profile.landRange,
       oceanAlpha: profile.oceanAlpha,
       landColor: hexToRgbString(profile.land),

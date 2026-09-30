@@ -19,8 +19,9 @@
     background: 'Background',
     transitions: 'Transitions',
     concepts: 'Concepts',
+    carousel: 'Carousel',
   };
-  var CATEGORY_ORDER = ['text-effects', 'background', 'transitions', 'concepts'];
+  var CATEGORY_ORDER = ['text-effects', 'background', 'transitions', 'concepts', 'carousel'];
 
   var HAMBURGER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
     + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'

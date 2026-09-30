@@ -1001,14 +1001,24 @@
 
     // Ink for the parts the world is drawn in. Ocean and border both fall
     // back to the land color, so a single `landColor` is enough unless they
-    // are meant to differ.
+    // are meant to differ. Cached and only rebuilt when a color option
+    // actually changes, since this is called from the per-frame render path.
     _ink() {
-      const land = this.options.landColor;
-      return {
-        land: `rgb(${land})`,
-        ocean: `rgb(${this.options.oceanColor || land})`,
-        border: `rgb(${this.options.borderColor || land})`,
-      };
+      const { landColor, oceanColor, borderColor } = this.options;
+      if (!this._inkCache
+        || this._inkLand !== landColor
+        || this._inkOcean !== oceanColor
+        || this._inkBorder !== borderColor) {
+        this._inkLand = landColor;
+        this._inkOcean = oceanColor;
+        this._inkBorder = borderColor;
+        this._inkCache = {
+          land: `rgb(${landColor})`,
+          ocean: `rgb(${oceanColor || landColor})`,
+          border: `rgb(${borderColor || landColor})`,
+        };
+      }
+      return this._inkCache;
     }
 
     _render() {

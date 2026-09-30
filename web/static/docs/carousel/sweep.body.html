@@ -1,0 +1,314 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Carousel · Wheel / Drag / Hover</p>
+      <h1>Sweep</h1>
+      <p>
+        A strip of absolutely-positioned cards driven by wheel, drag, or
+        pointer position. Unlike a normal slider, the focused card's own
+        on-screen anchor sweeps across the viewport as you move through the
+        list - flush against the left edge at the first card, centered at
+        the midpoint, flush against the right edge at the last - and every
+        card's width shrinks with distance from focus on an exponential
+        curve, packed edge to edge so there's never a gap even as the strip
+        compresses toward the background. Wheel/drag input tracks 1:1 with
+        zero resistance while it's arriving; the moment it goes idle, a
+        damped spring takes over and always settles exactly on a card.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/carousel/sweep/index.html">View Demo</a>
+        <a class="btn" href="/carousel/sweep/sweep.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#events">Events</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="sweep.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Depends on <code>bindHoverDelegate</code> for its pointer-follow
+        tracking - the downloaded file above already has that bundled in, so
+        it's the one script tag above and nothing else. (Building from this
+        repo's own source instead, that's <code>shared/hover-delegate.js</code>,
+        loaded before <code>sweep.js</code>.) Injects its own
+        <code>&lt;style&gt;</code> tag defining <code>.sweep</code>,
+        <code>.sweep-track</code>, <code>.sweep-line</code> and
+        <code>.sweep-card</code>, so no companion CSS file is required -
+        but the host still supplies its own size and card chrome (width,
+        height, border, background), the same as it would for any other
+        element on the page.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;div class="sweep" style="height:240px"&gt;
+  &lt;div class="sweep-line" data-sweep-line="top"&gt;&lt;/div&gt;
+  &lt;div class="sweep-line" data-sweep-line="bottom"&gt;&lt;/div&gt;
+  &lt;div class="sweep-track"&gt;
+    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;One&lt;/div&gt;
+    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;Two&lt;/div&gt;
+    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;Three&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;script src="sweep.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.sweep:not(.is-empty)</code>
+        element. The two <code>.sweep-line</code> elements are optional
+        guide rails placed at a distance-1 neighbor's height (skip them if
+        you don't want the lines); every direct child of
+        <code>.sweep-track</code> is treated as a card regardless of its
+        own class, but <code>.sweep-card</code> is what the injected CSS
+        positions - drop it and you're supplying that positioning yourself.
+        To configure options:
+      </p>
+      <pre><code>Sweep.initAll('.sweep', {
+  cardStep: 260,
+  friction: 0.7,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Snappier or lazier</h3>
+        <p>
+          <code>friction</code> and <code>snapStrength</code> together shape
+          the idle coast: <code>friction</code> is how much velocity decays
+          each frame once input stops, <code>snapStrength</code> is how hard
+          the constant pull toward the nearest card is folded in on top of
+          that decay. High friction and high snap strength stop almost dead
+          the instant you let go; low friction and low snap strength coast a
+          long way and settle gently.
+        </p>
+        <pre><code>// Stops almost immediately
+Sweep.initAll('.sweep', { friction: 0.95, snapStrength: 0.09 });
+
+// Coasts a long way before catching
+Sweep.initAll('.sweep', { friction: 0.7, snapStrength: 0.02 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>How far a scroll/drag travels</h3>
+        <p>
+          <code>cardStep</code> is the pixels of wheel delta or drag distance
+          that move the focus by exactly one card - lower reads as light and
+          fast, higher as heavy, needing more input to cover the same
+          ground. <code>wheelSensitivity</code> is a separate multiplier
+          applied before that conversion, useful for tuning wheel and drag
+          independently of each other since drag reads directly in pixels.
+        </p>
+        <pre><code>Sweep.initAll('.sweep', { cardStep: 120, wheelSensitivity: 1.3 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Turning off an input mode</h3>
+        <p>
+          <code>hoverFollow</code> and <code>wheelEnabled</code> each turn
+          off one way of driving the strip, independently of each other and
+          of card count - drag always stays live. Useful when something
+          else on the page already owns the pointer or the wheel over that
+          area (a page that scrolls its own content inside the strip, say),
+          or when the pointer-chases-the-card motion just isn't wanted.
+        </p>
+        <pre><code>// Wheel and drag only, no hover-follow
+Sweep.initAll('.sweep', { hoverFollow: false });
+
+// Drag and hover only - scrolling over the strip scrolls the page instead
+Sweep.initAll('.sweep', { wheelEnabled: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Filtering the cards</h3>
+        <p>
+          There's no built-in filter UI - hide cards the normal way (a
+          <code>hidden</code> attribute, or anything that removes them from
+          layout) and call <code>.refresh()</code>. It re-reads which
+          children are visible, recomputes the guide lines off whichever one
+          is now first, and jumps back to card 0.
+        </p>
+        <pre><code>const [instance] = Sweep.initAll('#mySweep');
+document.getElementById('typeFilter').addEventListener('change', (e) =&gt; {
+  document.querySelectorAll('.sweep-card').forEach((card) =&gt; {
+    card.hidden = e.target.value !== 'all' &amp;&amp; card.dataset.type !== e.target.value;
+  });
+  instance.refresh();
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Reacting to the focused card</h3>
+        <p>
+          Listen for the bubbling <code>sweep-settle</code> event instead
+          of polling position - it fires on a card once it's actually at
+          rest in the focus slot, not on every card passed through while
+          moving, so it's the right hook for resetting a per-card preview
+          animation whenever the visitor browses back to it.
+        </p>
+        <pre><code>document.getElementById('mySweep').addEventListener('sweep-settle', (e) =&gt; {
+  resetPreview(e.target);
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>An empty shelf before the first card</h3>
+        <p>
+          Add <code>.is-empty</code> and drop both
+          <code>.sweep-line</code> elements - there's nothing yet to
+          measure their height against. Auto-init skips anything matching
+          <code>.is-empty</code>, so an empty shelf just sits there inert
+          until a real card is dropped in and the class removed.
+        </p>
+        <pre><code>&lt;div class="sweep is-empty"&gt;
+  &lt;div class="sweep-track"&gt;&lt;/div&gt;
+  &lt;p class="sweep-empty"&gt;Nothing here yet&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A tight stack instead of a shallow fan</h3>
+        <p>
+          <code>minScale</code> and <code>scaleDecay</code> together shape
+          how quickly neighbors shrink away from the focused card.
+          <code>scaleDecay</code> is the falloff rate per step of distance;
+          <code>minScale</code> is the floor it falls toward. A low
+          <code>minScale</code> with a high <code>scaleDecay</code> reads as
+          a small focused card standing apart from a tightly packed,
+          near-miniature stack behind it, rather than a shallow fan of
+          similarly-sized neighbors.
+        </p>
+        <pre><code>Sweep.initAll('.sweep', { minScale: 0.18, scaleDecay: 1.3 });</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>cardStep</code></td><td><code>200</code></td><td>Pixels of wheel delta or drag distance that move the focus by exactly one card</td></tr>
+          <tr><td><code>minScale</code></td><td><code>0.42</code></td><td>The smallest a card ever shrinks to, arbitrarily far from focus</td></tr>
+          <tr><td><code>scaleDecay</code></td><td><code>0.75</code></td><td>Falloff rate of scale per step of distance from focus - higher drops neighbors away faster</td></tr>
+          <tr><td><code>wheelSensitivity</code></td><td><code>1</code></td><td>Multiplier on raw wheel delta before it's converted to a card distance via <code>cardStep</code></td></tr>
+          <tr><td><code>wheelIdleDelay</code></td><td><code>140</code></td><td>Milliseconds of no wheel events before wheel input is treated as having stopped, switching over to the idle coast/snap</td></tr>
+          <tr><td><code>maxVelocity</code></td><td><code>0.4</code></td><td>Ceiling on velocity (in cards per frame) a single wheel tick or drag frame can hand to the coast</td></tr>
+          <tr><td><code>friction</code></td><td><code>0.8</code></td><td>How much velocity decays each frame once input goes idle</td></tr>
+          <tr><td><code>snapStrength</code></td><td><code>0.045</code></td><td>How hard the idle spring pulls toward the nearest (or hovered) card each frame, folded in on top of friction</td></tr>
+          <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer movement before a press counts as a drag rather than a click straight through to the card</td></tr>
+          <tr><td><code>hoverFollow</code></td><td><code>true</code></td><td>Whether moving the pointer across the strip pulls the nearest card to focus. <code>false</code> leaves wheel and drag as the only ways to move it, regardless of card count</td></tr>
+          <tr><td><code>wheelEnabled</code></td><td><code>true</code></td><td>Whether scrolling over the strip moves it. <code>false</code> leaves wheel events alone entirely - the page scrolls straight through instead of the strip capturing it. Drag and hover still work</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>new Sweep(root, options)</code></td><td>Constructs directly against a root element carrying <code>.sweep-track</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
+          <tr><td><code>.refresh()</code></td><td>Re-reads which cards are currently visible (skips anything <code>hidden</code>), remeasures the guide lines, and jumps back to card 0 - call after changing which cards are shown.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in - every option is read fresh each frame or event, so nothing else needs rewiring on a live change.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop and removes every bound listener, including the hover delegate. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
+          <tr><td><code>Sweep.initAll(selector, options)</code></td><td>Default selector <code>'.sweep:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
+          <tr><td><code>Sweep.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+          <tr><td><code>Sweep.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="events">Events</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Event</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>sweep-settle</code></td><td>Bubbles from a card once it's actually at rest in the focus position - not fired on every card passed through while moving. <code>event.target</code> is the settled card.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>The anchor sweeps, it isn't fixed to center:</strong> a
+        normal centered carousel wastes the first and last card's own
+        approach - half the track is empty space on either side just to let
+        the end cards reach the middle. Here the focused card's anchor point
+        instead sweeps between the two positions where a full-width card
+        sits flush against the left or right edge of the track, linearly
+        interpolated by how far through the list the current position is -
+        so the strip uses its full width at every point in the browse, not
+        just at the ends.
+      </p>
+      <p>
+        <strong>Packing is cumulative, not per-card:</strong> every card's
+        on-screen center is the running sum of its own and every prior
+        card's half-width (each already scaled by its own distance from
+        focus), rather than a fixed slot width. That's what keeps cards
+        packed edge to edge with zero gap as the strip compresses toward the
+        background, at any <code>scaleDecay</code>. The continuous focus
+        position - which sits between two integer cards while moving -
+        interpolates those two cards' packed centers to find the point in
+        the strip that should land on the anchor, then shifts the whole
+        strip by the difference.
+      </p>
+      <p>
+        <strong>Two-phase input, not one continuous model:</strong> while
+        wheel or drag input is actively arriving, position tracks it
+        directly, 1:1, with zero resistance - what you scroll or drag is
+        exactly what moves. The moment input goes idle (a short pause for
+        wheel, <code>pointerup</code> for drag), a damped-spring coast takes
+        over: the velocity already built up decays via <code>friction</code>
+        while a constant pull toward the nearest card
+        (<code>snapStrength</code>) is folded in, so it always ends up
+        resting exactly on a card rather than wherever the input happened to
+        stop.
+      </p>
+      <p>
+        <strong>Wheel capture respects the page's own scroll:</strong> wheel
+        events are only captured (<code>preventDefault</code>) while there's
+        room left to move in that direction - at either boundary the event
+        is left alone, so scrolling past one that's already at its first or
+        last card continues scrolling the page instead of trapping the
+        cursor.
+      </p>
+      <p>
+        <strong>Hover drives focus too, above a card-count floor:</strong>
+        while the pointer sits over a card (and nothing's being dragged or
+        actively wheeled), that card becomes the settle spring's target
+        instead of the nearest integer position - mousing across the strip
+        pulls the focused card along with it the same way scrolling to it
+        would. Below <code>MIN_HOVER_FOLLOW_CARDS</code> (5, not exposed as
+        an option) this is disabled entirely: with only a couple of cards on
+        screen, that tracking reads as fighting the pointer rather than
+        helping navigate. Wheel and drag both stay live regardless of count.
+      </p>
+      <p>
+        <strong>Position is remembered per instance, per tab:</strong> the
+        focused card's index is written to <code>sessionStorage</code>,
+        keyed by the root element's own <code>id</code> (skipped entirely if
+        it has none), every time a card settles. Navigating away to a card's
+        own page and back restores that same card as focused instead of
+        resetting to the first one - <code>sessionStorage</code> rather than
+        <code>localStorage</code> so it fades once the tab or session ends.
+        Restored only once, on an instance's first <code>refresh()</code> (the
+        one the constructor itself triggers); a later <code>refresh()</code>
+        call, e.g. from a type filter changing which cards are visible,
+        always resets to card 0 instead.
+      </p>
+      <p>
+        <strong>A drag past the threshold suppresses the click:</strong> the
+        track captures clicks (in the capture phase, ahead of a card's own
+        link) and cancels them once a drag has moved past
+        <code>dragThreshold</code> pixels - otherwise releasing a swipe on
+        top of a card would also fire that card's own navigation. Below the
+        threshold, a press-and-release in place still reaches the card
+        normally.
+      </p>
+    </div>
+  </div>

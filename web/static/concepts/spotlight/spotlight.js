@@ -143,11 +143,21 @@
 
   // Mixes a color toward white. The rim lines and the emitter bloom are
   // the hottest part of the light and read wrong in the same flat tone as
-  // the beam's own fill.
+  // the beam's own fill. Called from the beam's per-frame render path with
+  // a color that's constant for the life of an options object, so results
+  // are cached - the number of distinct colors used on a page is small and
+  // fixed, so this cache never has reason to be evicted.
+  const mixWithWhiteCache = new Map();
   function mixWithWhite(hex, amount) {
-    const { r, g, b } = hexToRgb(hex);
-    const mix = (c) => Math.round(c + (255 - c) * amount);
-    return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+    const key = `${hex}|${amount}`;
+    let mixed = mixWithWhiteCache.get(key);
+    if (mixed === undefined) {
+      const { r, g, b } = hexToRgb(hex);
+      const mix = (c) => Math.round(c + (255 - c) * amount);
+      mixed = `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+      mixWithWhiteCache.set(key, mixed);
+    }
+    return mixed;
   }
 
   function rgba(hex, alpha) {
@@ -854,12 +864,18 @@
       // clicked again" from "the pointer happens to be over it".
       this.latched = false;
       this._lastT = performance.now();
+      // Current --sp-lift offset in px, written every frame by _render()
+      // and read back by _restRect() to undo it (see _onPointerLeave()).
+      this._offsetY = 0;
+      this._watching = false;
 
       this.stage = getStage();
       this.stage.register(this);
 
       this._onPointerEnter = this._onPointerEnter.bind(this);
       this._onPointerLeave = this._onPointerLeave.bind(this);
+      this._onWatchMove = this._onWatchMove.bind(this);
+      this._onWindowLeave = this._onWindowLeave.bind(this);
       this._onClick = this._onClick.bind(this);
       this._tick = this._tick.bind(this);
 
@@ -906,6 +922,7 @@
 
     leave() {
       this.target = 0;
+      this._unwatchRestRect();
       this.stage.release(this);
       this._wake();
     }
@@ -917,9 +934,75 @@
 
     _onPointerEnter(event) {
       if (event.pointerType && event.pointerType !== 'mouse') return;
+      this._unwatchRestRect();
       this.enter();
     }
-    _onPointerLeave() { this.leave(); }
+
+    // A lifted/scaled element translates out from under a stationary
+    // pointer, which fires a native `pointerleave` even though the
+    // pointer never moved - see liftoff.js's identical comment on its own
+    // _onPointerLeave() for the full oscillation story. So a `pointerleave`
+    // only counts once the pointer has actually left the element's
+    // *resting* footprint (no --sp-lift/--sp-scale applied); inside that
+    // footprint _watchRestRect() takes over until the pointer genuinely
+    // leaves it.
+    _onPointerLeave(event) {
+      // focusout has no pointer coordinates; it's always a real leave.
+      if (event && typeof event.clientX === 'number' && this._pointerInRestRect(event)) {
+        this._watchRestRect();
+        return;
+      }
+      this.leave();
+    }
+
+    // The element's layout box in viewport coordinates with its --sp-lift
+    // translation undone (--sp-scale doesn't move the center, since it
+    // scales about it). Recomputed per event rather than cached so
+    // scrolling and reflow stay accounted for.
+    _restRect() {
+      const rect = this.el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2 - this._offsetY;
+      const halfW = this.el.offsetWidth / 2;
+      const halfH = this.el.offsetHeight / 2;
+      return { left: cx - halfW, right: cx + halfW, top: cy - halfH, bottom: cy + halfH };
+    }
+
+    _pointerInRestRect(event) {
+      const r = this._restRect();
+      return event.clientX >= r.left && event.clientX <= r.right
+        && event.clientY >= r.top && event.clientY <= r.bottom;
+    }
+
+    // Pointer tracking for the window of time where the element has moved
+    // off the pointer but the pointer is still over where it started.
+    // Capture phase so it still sees moves consumed by whatever element
+    // the card vacated.
+    _watchRestRect() {
+      if (this._watching) return;
+      this._watching = true;
+      global.addEventListener('pointermove', this._onWatchMove, true);
+      document.addEventListener('pointerleave', this._onWindowLeave);
+    }
+
+    _unwatchRestRect() {
+      if (!this._watching) return;
+      this._watching = false;
+      global.removeEventListener('pointermove', this._onWatchMove, true);
+      document.removeEventListener('pointerleave', this._onWindowLeave);
+    }
+
+    _onWatchMove(event) {
+      if (this._pointerInRestRect(event)) return;
+      this.leave();
+    }
+
+    // The pointer left the window entirely, so no further pointermove is
+    // coming to tell us it left the resting footprint.
+    _onWindowLeave() {
+      this.leave();
+    }
+
     _onClick() { this.toggle(); }
 
     _tick(now) {
@@ -942,9 +1025,13 @@
       const a = this.amount;
       const style = this.el.style;
 
+      // Kept for _restRect(), which subtracts it back off the live
+      // bounding rect to recover where the element sits untransformed.
+      this._offsetY = -o.lift * a;
+
       style.setProperty('--sp-amount', a.toFixed(4));
       style.setProperty('--sp-scale', (1 + (o.scale - 1) * a).toFixed(4));
-      style.setProperty('--sp-lift', `${(-o.lift * a).toFixed(2)}px`);
+      style.setProperty('--sp-lift', `${this._offsetY.toFixed(2)}px`);
 
       if (a < 0.004) {
         style.setProperty('--sp-shadow', 'none');
@@ -980,6 +1067,7 @@
 
     destroy() {
       cancelAnimationFrame(this._raf);
+      this._unwatchRestRect();
       this._unbindTrigger();
       this.stage.unregister(this);
       this.el.style.removeProperty('--sp-scale');

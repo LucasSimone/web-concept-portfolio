@@ -204,28 +204,28 @@
    its public API only - no hand-authored shadow/glow markup or CSS here,
    liftoff.js injects both itself onto any .liftoff-card element (see
    home.js). Applied to every card on the homepage, each with an inner
-   wrapper instead of the anchor itself: the carousel writes
+   wrapper instead of the anchor itself: the sweep writes
    `transform`/`z-index` directly onto `.variation-card` every frame to
-   position it in the strip (see carousel.js _render()), so Liftoff's own
-   lift/tilt/glow motion needs a paint target the carousel never touches -
+   position it in the strip (see sweep.js _render()), so Liftoff's own
+   lift/tilt/glow motion needs a paint target the sweep never touches -
    and since the whole card (not just its text) has to visibly lift, the
    card's actual chrome (border/background/padding, plus any per-card
    effect - background canvases, transition cover/reveal - that needs to
    move and lift with it) moves off the anchor and onto that same wrapper,
-   leaving the anchor an invisible, carousel-owned hit box. Hover is driven
+   leaving the anchor an invisible, sweep-owned hit box. Hover is driven
    by shared/hover-delegate.js instead of native pointerenter/pointerleave
    (see home.js) for the same reason the Transition Lab cards need it: the
-   carousel's hover-follow slides a hovered card toward center under a
+   sweep's hover-follow slides a hovered card toward center under a
    stationary cursor, which would otherwise retrigger native hover on its
    own. */
-.carousel .variation-card.liftoff-host {
+.sweep .variation-card.liftoff-host {
   border: none;
   background: none;
   padding: 0;
   /* Lifted, the card's border sits right at this box's edge and the
      scale/translate would otherwise clip it away against `overflow:
      hidden` (inherited from the base .variation-card rule) - the
-     carousel's own overflow is horizontal-only (see .carousel below), so
+     sweep's own overflow is horizontal-only (see .sweep below), so
      nothing clips it vertically either. */
   overflow: visible;
 }
@@ -317,84 +317,60 @@
 
 /* Spotlight draws through page-level fixed overlays sitting above the
    whole document, while the card being lit is just another card in the
-   carousel - so a spotlit card that happens to sit behind its focused
+   sweep - so a spotlit card that happens to sit behind its focused
    neighbour gets its own beam, halo and scrim cut-out painted over the top
    of that neighbour: the light in front of the thing it is lighting.
    Raising the card for as long as it is lit puts the two back in
-   agreement. 1100 clears the carousel's own range (up to ~1000 for the
-   focused card) and still can't escape .carousel's stacking context, so
+   agreement. 1100 clears the sweep's own range (up to ~1000 for the
+   focused card) and still can't escape .sweep's stacking context, so
    the sitewide nav keeps covering it.
 
-   !important because carousel.js's _render() writes z-index inline on
+   !important because sweep.js's _render() writes z-index inline on
    every .variation-card on every frame (it never parks its rAF loop), and
    an inline declaration outranks any normal stylesheet rule - so this is
-   the one way to win it without home.js racing the carousel frame by
+   the one way to win it without home.js racing the sweep frame by
    frame. home.js toggles the class off Spotlight's own enter/leave; see
    there for why it is held through the fade-out. */
-.carousel .variation-card.is-spotlit {
+.sweep .variation-card.is-spotlit {
   z-index: 1100 !important;
 }
 
-/* The concept carousel is the last thing on the page, and its Liftoff card
-   is the only homepage card with its falling dashes actually visible (see
-   home.js) - those stream down up to ~70px below the card. With nothing
-   below the carousel to hold that space open, the page's scrollable height
-   grows and shrinks as the card lifts/settles, toggling the scrollbar and
-   making the whole page visibly shake. This bottom margin reserves that
-   room permanently instead. */
+/* The Hover & Click sweep's Liftoff card is the only homepage card with
+   its falling dashes actually visible (see home.js) - those stream down up
+   to ~70px below the card, past the sweep's own box. This bottom margin
+   reserves that room permanently, so the dashes fall into empty space
+   rather than across the next lab's heading. (It also predates the labs
+   below it, when this was the last sweep on the page and the unreserved
+   overflow grew and shrank the page's scrollable height as the card
+   lifted/settled, toggling the scrollbar and shaking the whole page.) */
 #conceptCarousel {
   margin-bottom: 100px;
 }
 
-.carousel {
-  position: relative;
-  /* Establishes a stacking context so the focused card's z-index (up to
-     ~1000, to layer over its own neighbors - see carousel.js _render())
-     stays contained here instead of competing directly with the sitewide
-     nav's z-index (20, in shared/site.css) once the carousel scrolls
-     under it - without this, the focused card would paint on top of the
-     nav instead of being covered by it. */
-  z-index: 0;
-  width: 100%;
+/* A lab with no cards yet keeps the sweep's box - so the section reads
+   as a shelf waiting to be filled rather than a heading with nothing under
+   it - and swaps the cards for a centered note (see .sweep-empty,
+   injected by sweep.js). The guide lines are left out of the markup
+   entirely: sweep.js positions those off the first card's measured
+   height, which an empty track can't provide. */
+.sweep.is-empty {
+  margin-bottom: 60px;
+}
+
+/* .sweep, .sweep-track, .sweep-line, .sweep.is-dragging and .sweep-card
+   (the positioning every .variation-card here picks up alongside its own
+   chrome below) all ship inside sweep.js and are injected automatically -
+   this page only supplies the page-specific sizing (height here matches
+   .variation-card's own height) and each card's own chrome, same as any
+   other page consuming the component. */
+.sweep {
   height: 240px;
-  /* Horizontal-only: cards need clipping as they slide past the strip's
-     left/right edges, but nothing here relies on vertical clipping (see
-     carousel.js's header comment) - visible so a lifted card (liftoff-host
-     above) can rise past the track's top edge without being cut off.
-     `clip` rather than `hidden` on the x-axis: per the CSS overflow spec,
-     pairing `hidden` with a `visible` value on the other axis silently
-     promotes that `visible` to `auto` (a real scroll container, which
-     still clips) - `clip` doesn't trigger that promotion. */
-  overflow-x: clip;
-  overflow-y: visible;
-  touch-action: pan-y;
-  cursor: grab;
 }
-.carousel.is-dragging { cursor: grabbing; }
-.carousel-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-.carousel-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #000;
-  z-index: 0;
-  pointer-events: none;
-}
-.carousel .variation-card {
-  position: absolute;
-  top: 50%;
-  left: 0;
+.sweep .variation-card {
   width: min(320px, 78vw);
   height: 240px;
   padding: 22px;
   border: 1px solid #000;
-  will-change: transform, opacity;
-  user-select: none;
 }
 .filter-bar {
   display: flex;
@@ -416,4 +392,6 @@
   color: #000;
   font-size: 13px;
 }
-.variation-card[hidden] { display: none; }
+/* [hidden] display:none for these cards ships as .sweep-card[hidden]
+   inside sweep.js's injected CSS - every card here carries that class
+   alongside .variation-card. */

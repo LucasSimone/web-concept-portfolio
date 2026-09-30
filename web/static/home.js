@@ -1,7 +1,7 @@
 /**
- * Home page wiring: carousel filters, the axis/progress-driver adapters
- * that let carousel wheel/drag input stand in for each effect's normal
- * scroll input, and the per-effect initAll() calls tuned for card size.
+ * Home page wiring: Sweep filters, the axis/progress-driver adapters that
+ * let Sweep's wheel/drag input stand in for each effect's normal scroll
+ * input, and the per-effect initAll() calls tuned for card size.
  *
  * Must be loaded as a plain synchronous <script src="home.js"> (no
  * async/defer). The shared effect scripts loaded just above this one
@@ -26,26 +26,34 @@ function setupFilter(filterId, gridId, onChange) {
   });
 }
 
-const variationCarousel = new Carousel(document.getElementById('variationCarousel'));
-const conceptCarousel = new Carousel(document.getElementById('conceptCarousel'));
-new Carousel(document.getElementById('transitionCarousel'));
-new Carousel(document.getElementById('backgroundCarousel'));
+const [variationCarousel] = Sweep.initAll('#variationCarousel');
+const [conceptCarousel] = Sweep.initAll('#conceptCarousel');
+Sweep.initAll('#transitionCarousel');
+Sweep.initAll('#backgroundCarousel');
+// #carouselLabCarousel needs no custom options, so it's left for
+// sweep.js's own blanket auto-init (on DOMContentLoaded) to pick up -
+// the same as any other page just dropping the effect in.
+
+// The plain element, not the Sweep instance's own internal `.root` - kept
+// separate so every card-effect wiring below reaches Sweep only through
+// its public surface (initAll/get/refresh/update), the same as any other
+// effect on this page.
+const variationCarouselEl = document.getElementById('variationCarousel');
 
 setupFilter('typeFilter', 'variationGrid', () => variationCarousel.refresh());
 setupFilter('conceptTypeFilter', 'conceptGrid', () => conceptCarousel.refresh());
 
-// Tracks a horizontal pointer drag starting on `carouselEl` and calls
+// Tracks a horizontal pointer drag starting on `sweepEl` and calls
 // `onDelta(dx)` with each frame's movement in px (negative = dragged
-// left) - the drag half of "wheel or drag over the carousel drives
-// whatever's currently on screen", shared by every carousel-driven card
-// below. pointermove/pointerup listen on window rather than carouselEl so
-// a drag keeps tracking even if the pointer slides off the carousel
-// mid-drag.
-function bindCarouselDrag(carouselEl, onDelta) {
+// left) - the drag half of "wheel or drag over the sweep drives whatever's
+// currently on screen", shared by every sweep-driven card below.
+// pointermove/pointerup listen on window rather than sweepEl so a drag
+// keeps tracking even if the pointer slides off the sweep mid-drag.
+function bindSweepDrag(sweepEl, onDelta) {
   let dragging = false;
   let lastX = 0;
 
-  carouselEl.addEventListener('pointerdown', (event) => {
+  sweepEl.addEventListener('pointerdown', (event) => {
     dragging = true;
     lastX = event.clientX;
   });
@@ -61,10 +69,10 @@ function bindCarouselDrag(carouselEl, onDelta) {
 // While scrolling the page normally, a card's lag effect uses its
 // default (vertical) profile, driven by the instance's own window-
 // scroll listener. While the user is actively wheeling/dragging the
-// carousel itself, we temporarily switch it to the horizontal profile
+// sweep itself, we temporarily switch it to the horizontal profile
 // and drive the offset directly from that wheel/drag input instead —
-// then revert to vertical once carousel input goes idle.
-function bindCarouselAxisSwitch(carouselEl, instance, verticalProfile, horizontalProfile) {
+// then revert to vertical once sweep input goes idle.
+function bindSweepAxisSwitch(sweepEl, instance, verticalProfile, horizontalProfile) {
   const SCALE_X = 1;
   const DRAG_SCALE = 6;
   const IDLE_DELAY = 350;
@@ -85,20 +93,20 @@ function bindCarouselAxisSwitch(carouselEl, instance, verticalProfile, horizonta
     scheduleRevert();
   }
 
-  carouselEl.addEventListener('wheel', (event) => {
+  sweepEl.addEventListener('wheel', (event) => {
     const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
     nudge(raw);
   }, { passive: true });
 
-  bindCarouselDrag(carouselEl, (dx) => nudge(-dx * DRAG_SCALE));
+  bindSweepDrag(sweepEl, (dx) => nudge(-dx * DRAG_SCALE));
 }
 
 // In Flight Out and Type Pan Vertical normally derive their progress
 // (0-1) from the element's position in the viewport as the page
 // scrolls. On these cards that's disabled entirely (see below) and
-// progress is driven only by wheel/drag input on the carousel itself,
+// progress is driven only by wheel/drag input on the sweep itself,
 // easing back to a resting value once that input goes idle.
-function bindCarouselProgressDriver(carouselEl, instance, options = {}) {
+function bindSweepProgressDriver(sweepEl, instance, options = {}) {
   const sensitivity = options.sensitivity ?? 0.0015;
   const dragSensitivity = options.dragSensitivity ?? 0.004;
   const restProgress = options.restProgress ?? 0.5;
@@ -142,12 +150,12 @@ function bindCarouselProgressDriver(carouselEl, instance, options = {}) {
     scheduleIdleRevert();
   }
 
-  carouselEl.addEventListener('wheel', (event) => {
+  sweepEl.addEventListener('wheel', (event) => {
     const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
     nudge(raw * sensitivity);
   }, { passive: true });
 
-  bindCarouselDrag(carouselEl, (dx) => nudge(-dx * dragSensitivity));
+  bindSweepDrag(sweepEl, (dx) => nudge(-dx * dragSensitivity));
 
   setProgress(restProgress);
 }
@@ -156,14 +164,14 @@ const DOUBLE_SPEAK_VERTICAL = { offsetX: 0, offsetY: 14, lag: 0.15, opacity: 0.5
 const DOUBLE_SPEAK_HORIZONTAL = { offsetX: 14, offsetY: 0, lag: 0.15, opacity: 0.5 };
 const [doubleSpeakCard] = DoubleSpeak.initAll('.variation-card h2.double-speak', DOUBLE_SPEAK_VERTICAL);
 if (doubleSpeakCard) {
-  bindCarouselAxisSwitch(variationCarousel.root, doubleSpeakCard, DOUBLE_SPEAK_VERTICAL, DOUBLE_SPEAK_HORIZONTAL);
+  bindSweepAxisSwitch(variationCarouselEl, doubleSpeakCard, DOUBLE_SPEAK_VERTICAL, DOUBLE_SPEAK_HORIZONTAL);
 }
 
 const TRIPLE_VISION_VERTICAL = { offsetX: 0, offsetY: 100, lag: 0.15, opacity: 0.6 };
 const TRIPLE_VISION_HORIZONTAL = { offsetX: 100, offsetY: 0, lag: 0.15, opacity: 0.6 };
 const [tripleVisionCard] = TripleVisionText.initAll('.variation-card h2.triple-vision', TRIPLE_VISION_VERTICAL);
 if (tripleVisionCard) {
-  bindCarouselAxisSwitch(variationCarousel.root, tripleVisionCard, TRIPLE_VISION_VERTICAL, TRIPLE_VISION_HORIZONTAL);
+  bindSweepAxisSwitch(variationCarouselEl, tripleVisionCard, TRIPLE_VISION_VERTICAL, TRIPLE_VISION_HORIZONTAL);
 }
 WaveForm.initAll('.variation-card h2.wave-form', {
   amplitude: 6, frequency: 0.8, spread: 1.1, drift: 0.6,
@@ -174,8 +182,8 @@ WaveForm.initAll('.variation-card h2.wave-form', {
 // value tuned for the demo's much larger headline text.
 // zIndex is pulled below the sitewide nav's z-index: 20 (shared/site.css)
 // so the trail's fixed, page-level overlay canvas - which sits directly on
-// document.body and so isn't contained by the carousel's own stacking
-// context - doesn't paint on top of the nav once the carousel scrolls
+// document.body and so isn't contained by the sweep's own stacking
+// context - doesn't paint on top of the nav once the sweep scrolls
 // under it.
 PaintDrag.initAll('.variation-card h2.paint-drag', {
   smearLength: 0, spread: 0, blur: 2, fadeTime: 0.1, density: 0, zIndex: 10,
@@ -186,11 +194,11 @@ const [inFlightOutCard] = InFlightOut.initAll('.variation-card h2.in-flight-out'
 if (inFlightOutCard) {
   window.removeEventListener('scroll', inFlightOutCard._onScroll);
   window.removeEventListener('resize', inFlightOutCard._onScroll);
-  bindCarouselProgressDriver(variationCarousel.root, inFlightOutCard, { restProgress: 0.5 });
+  bindSweepProgressDriver(variationCarouselEl, inFlightOutCard, { restProgress: 0.5 });
 }
 
 // Type Pan normally types from real page scroll position. That's replaced
-// here with the same carousel-driven progress approach as the other cards.
+// here with the same sweep-driven progress approach as the other cards.
 const [typePanCard] = TypePan.initAll('.variation-card h2.type-pan', {
   sensitivity: 1, panPosition: 0.75,
 });
@@ -201,19 +209,19 @@ if (typePanCard) {
   // real scroll/hover input feeds internally) rather than poking
   // _progress directly, so an in-flight nextChar()/goTo() step still
   // gets cancelled correctly and _maxProgress still tracks.
-  bindCarouselProgressDriver(variationCarousel.root, typePanCard, {
+  bindSweepProgressDriver(variationCarouselEl, typePanCard, {
     restProgress: 1,
     set: (value) => typePanCard.pushProgress(value),
   });
 }
 // Wheel input needs no custom wiring at all: 'hover' driveMode is
 // Rolodex's own built-in way to take input from wheel/trackpad over some
-// other element instead of page scroll (see rolodex.js), and the carousel
+// other element instead of page scroll (see rolodex.js), and the sweep
 // is tagged data-rolodex-hover="rolodexCardTitle" in index.body.html to be
 // that element. loopScroll makes the word list circular (wheeling past
 // the last word flips straight into the first instead of stopping), loop
-// keeps it cycling on its own once the carousel goes idle - same as any
-// other page using the effect, just fed by the carousel instead of the
+// keeps it cycling on its own once the sweep goes idle - same as any
+// other page using the effect, just fed by the sweep instead of the
 // page scrolling.
 const [rolodexCard] = Rolodex.initAll('.variation-card h2.rolodex', {
   mode: 'split-flap', flipWidth: 55, perspective: 900, shading: 0.05,
@@ -226,15 +234,15 @@ if (rolodexCard) {
   // same shape as those, just calling .pushProgress() directly since
   // there's no separate get/set indirection to thread through here.
   const ROLODEX_DRAG_DISTANCE = 400; // px of drag to sweep the whole word list
-  bindCarouselDrag(variationCarousel.root, (dx) => {
+  bindSweepDrag(variationCarouselEl, (dx) => {
     rolodexCard.pushProgress(rolodexCard._progress - dx / ROLODEX_DRAG_DISTANCE);
   });
 
-  // Once this card settles into focus (see the 'carousel-settle' event on
-  // Carousel), flip it back to its opening word - so browsing away and
+  // Once this card settles into focus (see the 'sweep-settle' event on
+  // Sweep), flip it back to its opening word - so browsing away and
   // back always finds it freshly reset rather than wherever a previous
   // visit left it.
-  rolodexCard.el.closest('.variation-card').addEventListener('carousel-settle', () => {
+  rolodexCard.el.closest('.variation-card').addEventListener('sweep-settle', () => {
     rolodexCard.goTo(0);
   });
 }
@@ -270,7 +278,7 @@ const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers
 // skips its own native pointerenter/pointerleave/focusin/focusout
 // binding, and .enter()/.leave() are called instead from bindHoverDelegate
 // - same reasoning as the Transition Lab cards further down: the
-// carousel's hover-follow slides a hovered card toward center under a
+// sweep's hover-follow slides a hovered card toward center under a
 // stationary cursor, which would otherwise retrigger native hover on its
 // own. Skipped under reduced motion, same as liftoff.js's own default
 // auto-init and the Transition Lab loop below - otherwise these cards
@@ -292,7 +300,7 @@ if (!prefersReducedMotion) {
   // included - instead of the subdued HOMEPAGE_PRESET every other card
   // below uses, since this one card's job is to actually show what the
   // effect looks like. shadowAtRest stays off, same as the homepage preset,
-  // so the card doesn't sit with a shadow while idle in the carousel.
+  // so the card doesn't sit with a shadow while idle in the sweep.
   // Initializing it first claims the element so the broader initAll()
   // below (which skips already-initialized elements) leaves it alone.
   Liftoff.initAll('#conceptGrid .liftoff-card', { hoverEvents: false, shadowAtRest: false });
@@ -310,13 +318,13 @@ if (!prefersReducedMotion) {
     if (instance) instance[method]();
   }
 
-  // Raising the spotlit card above its carousel neighbours - see
-  // style.css's .carousel .variation-card.is-spotlit rule for what goes
+  // Raising the spotlit card above its sweep neighbours - see
+  // style.css's .sweep .variation-card.is-spotlit rule for what goes
   // wrong without it. Kept here rather than inside spotlight.js on
   // purpose: the effect has no business knowing about this page's
-  // carousel, and this is driven entirely through its public
+  // sweep, and this is driven entirely through its public
   // enter/leave/amount surface. The class goes on the anchor, not the
-  // card - the carousel writes a transform onto every .variation-card,
+  // card - the sweep writes a transform onto every .variation-card,
   // which makes it a stacking context its children can never escape.
   const SPOTLIT = 'is-spotlit';
   let spotlitHost = null;
@@ -361,23 +369,25 @@ if (!prefersReducedMotion) {
     else lowerSpotlitWhenDark(host, instance);
   }
 
-  // One delegate per carousel track (bindHoverDelegate is scoped to a
+  // Every homepage hover/focus-reactive effect a card can carry, so adding
+  // one only means adding it here instead of hunting down every hover/focus
+  // call site below.
+  const HOVER_EFFECTS = [liftoffOn, spotlightOn];
+  function hoverPopOn(card, method) {
+    HOVER_EFFECTS.forEach((effectOn) => effectOn(card, method));
+  }
+
+  // One delegate per sweep track (bindHoverDelegate is scoped to a
   // single container) resolving each hovered .liftoff-card to its own
   // Liftoff (and, where present, Spotlight) instance via .get() -
   // Transition Lab's transitionGrid gets one too, entirely independent of
   // that grid's own cover/reveal hover delegate further down.
-  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid'].forEach((gridId) => {
+  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid', 'carouselLabGrid'].forEach((gridId) => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     bindHoverDelegate(grid, '.liftoff-card', (el, prevEl) => {
-      if (prevEl) {
-        liftoffOn(prevEl, 'leave');
-        spotlightOn(prevEl, 'leave');
-      }
-      if (el) {
-        liftoffOn(el, 'enter');
-        spotlightOn(el, 'enter');
-      }
+      if (prevEl) hoverPopOn(prevEl, 'leave');
+      if (el) hoverPopOn(el, 'enter');
     });
     // hoverEvents:false above also skips LiftoffCard's own native
     // focusin/focusout binding, so keyboard focus is wired here to give
@@ -387,14 +397,12 @@ if (!prefersReducedMotion) {
     grid.addEventListener('focusin', (event) => {
       const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
       if (!card) return;
-      liftoffOn(card, 'enter');
-      spotlightOn(card, 'enter');
+      hoverPopOn(card, 'enter');
     });
     grid.addEventListener('focusout', (event) => {
       const card = event.target.querySelector && event.target.querySelector('.liftoff-card');
       if (!card) return;
-      liftoffOn(card, 'leave');
-      spotlightOn(card, 'leave');
+      hoverPopOn(card, 'leave');
     });
   });
 }
@@ -422,7 +430,7 @@ if (!prefersReducedMotion) {
     if (!engine) return;
     // Covers the card's .liftoff-card wrapper, not the anchor (`card`
     // itself) - see style.css's Liftoff comment: the anchor is an
-    // invisible, carousel-owned hit box, so the cover/reveal motion has to
+    // invisible, sweep-owned hit box, so the cover/reveal motion has to
     // target the same wrapper that carries the card's actual chrome in
     // order to lift along with it instead of staying flat on the page.
     const surface = card.querySelector('.liftoff-card');
@@ -443,7 +451,7 @@ if (!prefersReducedMotion) {
     //
     // Borrows that same "gen" idea for the loop wrapper itself: enter()
     // can land while a natural cycle()'s cover()->reveal() promise chain
-    // is still in flight (now routine, since the carousel's hover-follow
+    // is still in flight (now routine, since the sweep's hover-follow
     // fires enter/leave far more often than a one-off manual hover did).
     // Without a generation check, that stale chain keeps running after
     // enter() takes over and, if hovering has already ended again by the
@@ -490,8 +498,8 @@ if (!prefersReducedMotion) {
     scheduleCycle(gen);
   });
 
-  // See shared/hover-delegate.js: the transition carousel's own
-  // hover-follow (see carousel.js) animates cards by sliding them under
+  // See shared/hover-delegate.js: the Transition Lab sweep's own
+  // hover-follow (see sweep.js) animates cards by sliding them under
   // the pointer, which needs this same mousemove-based delegation instead
   // of each card's own mouseenter/mouseleave to avoid sending this loop's
   // cover/reveal rapidly back and forth as cards slide underneath a
@@ -509,8 +517,8 @@ if (!prefersReducedMotion) {
 // card through to an effect page and then back via the nav's Home link
 // (a normal navigation, not a back-button one - the browser's own scroll
 // restoration doesn't apply here) doesn't dump them back at the top. Same
-// sessionStorage-per-tab approach as the carousel position caching in
-// carousel.js - fades once the tab/session ends rather than sticking around
+// sessionStorage-per-tab approach as the position caching in sweep.js -
+// fades once the tab/session ends rather than sticking around
 // indefinitely. Restored here at the end of the script, after every card
 // preview above has finished initializing, so nothing still to come can
 // shift the page's height out from under the restored position.

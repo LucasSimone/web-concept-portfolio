@@ -144,28 +144,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   controls.color.addEventListener('input', () => apply({ color: controls.color.value }));
 
-  // One pass over the same tables the individual listeners use, so a
-  // profile can only ever set what a control could have set by hand.
+  // See shared/demo-shared.js: one pass over the same tables the individual
+  // listeners use, so a profile can only ever set what a control could
+  // have set by hand.
   function applyProfile(name) {
     const profile = PROFILES[name];
     if (!profile) return;
-
-    const options = { color: profile.color };
-    numeric.forEach(([key, option, transform]) => {
-      controls[key].value = profile[key];
-      // Read back off the input rather than using the profile's own
-      // number: a range input snaps whatever it's given to its own
-      // min/step grid, and applying the unsnapped value would leave the
-      // slider reading one thing while the effect ran on another.
-      const value = Number(controls[key].value);
-      options[option] = transform ? transform(value) : value;
+    const options = applyProfileFromTable({
+      profile, controls, numeric, toggles, directs: ['color'],
     });
-    toggles.forEach((key) => {
-      controls[key].checked = profile[key];
-      options[key] = profile[key];
-    });
-    controls.color.value = profile.color;
-
     apply(options);
     syncLabels();
   }

@@ -1,6 +1,6 @@
 /**
- * Carousel
- * --------
+ * Sweep
+ * -----
  * Drives a set of absolutely-positioned cards with wheel/drag input. Unlike
  * a normal slider, the "enlarged" (focused) card's on-screen anchor point
  * itself sweeps across the viewport as you move through the list: its left
@@ -23,7 +23,7 @@
  *
  * Input has two distinct phases. While wheel/drag input is actively
  * arriving, position tracks it directly, 1:1, with zero resistance. Once
- * input goes idle (wheel: a short pause; drag: pointerup), the carousel
+ * input goes idle (wheel: a short pause; drag: pointerup), the sweep
  * switches to a damped-spring coast: the velocity built up during input
  * decays via friction while a gentle constant pull toward the nearest card
  * is folded in, so it always settles exactly on a card instead of just
@@ -31,23 +31,105 @@
  *
  * Wheel input is only captured while there's room left to move — at either
  * boundary the event is left alone so normal page scroll continues past
- * the carousel instead of trapping the cursor.
+ * the sweep instead of trapping the cursor.
  *
  * Once a card actually comes to rest in the focus position (not just
- * passed through while moving), it gets a bubbling 'carousel-settle'
+ * passed through while moving), it gets a bubbling 'sweep-settle'
  * event - lets a page react to "this card just became the focused one"
- * without reaching into the carousel's own position tracking.
+ * without reaching into the sweep's own position tracking.
  *
  * The pointer also drives focus directly: while it's over a card (and
  * nothing's being dragged or actively wheeled), that card is the settle
  * spring's target instead of the nearest integer to the current position,
  * so mousing across the strip pulls the focused card along with it the
  * same way scrolling to it would.
+ *
+ * Usage: wrap cards in `<div class="sweep"><div class="sweep-track">
+ * <div class="sweep-card">...</div>...</div></div>`, then load this
+ * file - it injects the structural/positioning CSS (`.sweep`,
+ * `.sweep-track`, `.sweep-line`, `.sweep-card`) automatically, and
+ * auto-initializes against every `.sweep:not(.is-empty)` on the page.
+ * The host still supplies its own size and card chrome (width, height,
+ * border, background) - the injected CSS only ever sets what the mechanism
+ * itself needs to function, same as every other effect on this site. Add
+ * `.is-empty` (and drop the `.sweep-line` elements, which have nothing
+ * to measure against with no cards present) to keep a lab's shelf on the
+ * page before it has its first card.
  */
 (function (global) {
+  const STYLE_ID = 'sweep-styles';
+
+  const CSS = `
+.sweep {
+  position: relative;
+  /* Establishes a stacking context so the focused card's z-index (up to
+     ~1000, see _render() below) stays contained here instead of competing
+     directly with whatever the host page stacks above it. */
+  z-index: 0;
+  width: 100%;
+  /* Horizontal-only: cards need clipping as they slide past the strip's
+     left/right edges, but nothing here relies on vertical clipping - a
+     lifted or popped card (e.g. paired with Liftoff/Spotlight) can rise
+     past the track's top edge without being cut off. \`clip\` rather than
+     \`hidden\` on the x-axis: per the CSS overflow spec, pairing \`hidden\`
+     with a \`visible\` value on the other axis silently promotes that
+     \`visible\` to \`auto\` (a real scroll container, which still clips) -
+     \`clip\` doesn't trigger that promotion. */
+  overflow-x: clip;
+  overflow-y: visible;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.sweep.is-dragging { cursor: grabbing; }
+.sweep.is-empty { cursor: default; }
+.sweep-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.sweep-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #000;
+  z-index: 0;
+  pointer-events: none;
+}
+.sweep-empty {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.4;
+  pointer-events: none;
+}
+.sweep-card {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  will-change: transform, opacity;
+  user-select: none;
+}
+.sweep-card[hidden] { display: none; }
+`;
+
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
+
   // Below this many (visible) cards, hover-follow (pulling the focused
   // card to whatever's under the pointer) is disabled - see the
-  // _hoverFollowEnabled field. Wheel/drag stay live regardless of count.
+  // _hoverFollowEnabled() method. Wheel/drag stay live regardless of count.
   const MIN_HOVER_FOLLOW_CARDS = 5;
 
   const DEFAULTS = {
@@ -60,15 +142,18 @@
     friction: 0.8,
     snapStrength: 0.045,
     dragThreshold: 6,
+    hoverFollow: true,
+    wheelEnabled: true,
   };
 
-  class Carousel {
+  class Sweep {
     constructor(root, options = {}) {
-      if (!root) throw new Error('Carousel: root element is required');
+      if (!root) throw new Error('Sweep: root element is required');
+      injectStyles();
       this.root = root;
-      this.track = root.querySelector('.carousel-track');
-      this.topLine = root.querySelector('[data-carousel-line="top"]');
-      this.bottomLine = root.querySelector('[data-carousel-line="bottom"]');
+      this.track = root.querySelector('.sweep-track');
+      this.topLine = root.querySelector('[data-sweep-line="top"]');
+      this.bottomLine = root.querySelector('[data-sweep-line="bottom"]');
       this.options = { ...DEFAULTS, ...options };
 
       this._pos = 0;
@@ -84,14 +169,6 @@
       this._dragPrevPos = 0;
       this._wheelActive = false;
       this._wheelIdleTimer = null;
-      // Below MIN_HOVER_FOLLOW_CARDS, mousing over an off-focus card no
-      // longer pulls it to center - with only a few cards, that tracking
-      // reads as fighting the pointer rather than helping navigate.
-      // Wheel/drag and Liftoff both stay live regardless: this only
-      // gates the hover-follow itself. Computed in refresh() from the
-      // current visible card count, so a type filter that drops a grid
-      // below the threshold disables it too.
-      this._hoverFollowEnabled = true;
       // Index of the card currently under the pointer, or null when the
       // pointer isn't over any card - see the _hoverDelegate binding below.
       // While set, it's the settle spring's target instead of the nearest
@@ -101,14 +178,19 @@
       this._hoverIndex = null;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
-      // Remembers the focused card per carousel (by element id) across page
+      // Remembers the focused card per instance (by element id) across page
       // loads within the same tab, so navigating to an effect and back to
       // the homepage doesn't dump you back at card 0. sessionStorage (not
       // localStorage) so it fades once the tab/session ends rather than
       // sticking around indefinitely. Restored once, on the first refresh()
       // - later refresh() calls (e.g. from a type filter change) still
       // reset to card 0 as before.
-      this._persistKey = root.id ? `carousel-pos:${root.id}` : null;
+      this._persistKey = root.id ? `sweep-pos:${root.id}` : null;
+      // This effect was renamed from "carousel" to "sweep"; a tab already
+      // open from before that rename still has its position saved under
+      // the old key. Read it as a fallback so that deploy doesn't reset
+      // anyone's carousel back to card 0.
+      this._legacyPersistKey = root.id ? `carousel-pos:${root.id}` : null;
       this._restored = false;
 
       this._onWheel = this._onWheel.bind(this);
@@ -127,8 +209,8 @@
       // Ignored while dragging - a swipe shouldn't also go chasing
       // whatever card the pointer happens to cross on its way past
       // (_onPointerDown clears any pre-drag hover target of its own).
-      this._hoverDelegate = bindHoverDelegate(this.track, '.variation-card', (card) => {
-        if (!this._hoverFollowEnabled || this._dragging) return;
+      this._hoverDelegate = bindHoverDelegate(this.track, '.sweep-card', (card) => {
+        if (!this._hoverFollowEnabled() || this._dragging) return;
         if (!card) {
           this._hoverIndex = null;
           return;
@@ -138,8 +220,22 @@
       });
       global.addEventListener('resize', this._onResize);
 
+      // Stop the loop once the track has scrolled out of view - see
+      // background/fireflies/fireflies.js for why (requestAnimationFrame
+      // pauses for a hidden tab but not for an element merely scrolled
+      // past). The margin starts it a screenful early.
+      this._onScreen = true;
+      this._intersectionObserver = new IntersectionObserver((entries) => {
+        const on = entries[entries.length - 1].isIntersecting;
+        if (on === this._onScreen) return;
+        this._onScreen = on;
+        if (on) this._start();
+        else this._stop();
+      }, { rootMargin: '200px' });
+      this._intersectionObserver.observe(this.root);
+
       this.refresh();
-      this._raf = requestAnimationFrame(this._tick);
+      this._start();
     }
 
     // Re-reads which cards are visible (e.g. after a filter change) and
@@ -149,7 +245,6 @@
     refresh() {
       this._cards = Array.from(this.track.children).filter((el) => !el.hidden);
       this._maxIndex = Math.max(0, this._cards.length - 1);
-      this._hoverFollowEnabled = this._cards.length >= MIN_HOVER_FOLLOW_CARDS;
       this._measure();
 
       let startIndex = 0;
@@ -167,11 +262,28 @@
       this._render();
     }
 
+    // Merges new option values in - all of them are read fresh every
+    // frame/event, so there's nothing else to rewire on a live change
+    // (unlike an effect whose trigger listeners depend on its options).
+    update(options = {}) {
+      Object.assign(this.options, options);
+    }
+
+    // Live rather than cached: reads options.hoverFollow (an explicit
+    // on/off the host controls) and the current visible card count fresh
+    // every time, so both an update({hoverFollow: false}) call and a
+    // refresh() that changes the visible count take effect immediately
+    // with nothing extra to recompute.
+    _hoverFollowEnabled() {
+      return this.options.hoverFollow && this._cards.length >= MIN_HOVER_FOLLOW_CARDS;
+    }
+
     _readStoredIndex() {
       if (!this._persistKey) return null;
       try {
-        const raw = sessionStorage.getItem(this._persistKey);
-        if (raw === null) return null;
+        const raw = sessionStorage.getItem(this._persistKey)
+          ?? (this._legacyPersistKey && sessionStorage.getItem(this._legacyPersistKey));
+        if (raw === null || raw === undefined) return null;
         const index = parseInt(raw, 10);
         return Number.isFinite(index) ? index : null;
       } catch (e) {
@@ -188,18 +300,18 @@
       }
     }
 
-    // Fires a 'carousel-settle' event (bubbling) on the card at `index`
+    // Fires a 'sweep-settle' event (bubbling) on the card at `index`
     // once it's the one actually at rest in the focus position - not on
     // every card passed through while moving. Lets a page react to "this
     // specific card just became the focused one" (e.g. resetting a
-    // preview's animation) without reaching into the carousel's own
+    // preview's animation) without reaching into the sweep's own
     // position tracking.
     _setSettledIndex(index) {
       if (index === this._settledIndex) return;
       this._settledIndex = index;
       this._writeStoredIndex(index);
       const card = this._cards[index];
-      if (card) card.dispatchEvent(new CustomEvent('carousel-settle', { bubbles: true }));
+      if (card) card.dispatchEvent(new CustomEvent('sweep-settle', { bubbles: true }));
     }
 
     _onResize() {
@@ -225,6 +337,10 @@
     }
 
     _onWheel(event) {
+      // Disabled outright: don't even look at the event, so it's left
+      // entirely alone and normal page scroll behaves exactly as if this
+      // listener weren't attached at all.
+      if (!this.options.wheelEnabled) return;
       const raw = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
       const deltaIndex = (raw * this.options.wheelSensitivity) / this.options.cardStep;
       const atStart = this._pos <= 0.0005 && deltaIndex < 0;
@@ -287,6 +403,18 @@
         event.stopPropagation();
       }
       this._dragMoved = 0;
+    }
+
+    // Safe to call when already running; does nothing while off screen.
+    _start() {
+      if (this._raf || !this._onScreen) return;
+      this._raf = requestAnimationFrame(this._tick);
+    }
+
+    _stop() {
+      if (!this._raf) return;
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
     }
 
     _tick() {
@@ -356,7 +484,8 @@
     }
 
     destroy() {
-      cancelAnimationFrame(this._raf);
+      this._stop();
+      this._intersectionObserver.disconnect();
       clearTimeout(this._wheelIdleTimer);
       this.root.removeEventListener('wheel', this._onWheel);
       this.root.removeEventListener('pointerdown', this._onPointerDown);
@@ -372,5 +501,34 @@
     return Math.max(min, Math.min(max, value));
   }
 
-  global.Carousel = Carousel;
+  function initAll(selector = '.sweep:not(.is-empty)', options = {}) {
+    injectStyles();
+    return Array.from(document.querySelectorAll(selector))
+      .filter((el) => !el.__sweepInstance)
+      .map((el) => {
+        const instance = new Sweep(el, options);
+        el.__sweepInstance = instance;
+        return instance;
+      });
+  }
+
+  function get(elOrSelector) {
+    const el = typeof elOrSelector === 'string' ? document.querySelector(elOrSelector) : elOrSelector;
+    return el ? el.__sweepInstance || null : null;
+  }
+
+  function getAll(selector = '.sweep:not(.is-empty)') {
+    return Array.from(document.querySelectorAll(selector))
+      .map((el) => el.__sweepInstance)
+      .filter(Boolean);
+  }
+
+  Sweep.initAll = initAll;
+  Sweep.get = get;
+  Sweep.getAll = getAll;
+  Sweep.DEFAULTS = DEFAULTS;
+
+  global.Sweep = Sweep;
+
+  document.addEventListener('DOMContentLoaded', () => initAll());
 })(window);

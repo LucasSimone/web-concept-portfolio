@@ -147,5 +147,13 @@
       jsPath: '/concepts/spotlight/spotlight.js',
       docsPath: '/docs/concepts/spotlight.html',
     },
+    {
+      slug: 'sweep',
+      name: 'Sweep',
+      category: 'carousel',
+      demoPath: '/carousel/sweep/index.html',
+      jsPath: '/carousel/sweep/sweep.js',
+      docsPath: '/docs/carousel/sweep.html',
+    },
   ];
 })(window);
