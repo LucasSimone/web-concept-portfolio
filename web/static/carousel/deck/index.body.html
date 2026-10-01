@@ -1,0 +1,263 @@
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">One engine, any transition</p>
+      <h1>Deck</h1>
+      <p class="direction">A frame changer. One box, a stack of frames inside it, and a transition that decides what the move from one to the next looks like — a slide, a crossfade, a cube face turning, a card dealt off the top, or the arc of a View-Master reel. Everything else is the same whichever you pick: click, scroll, swipe, arrows, dots, keyboard. Change the transition in the panel.</p>
+
+      <div class="dk-device">
+        <div class="deck" id="deckDemo" data-transition="slide" aria-label="Deck demo">
+          <div class="deck-port">
+            <div class="deck-frame dk-slide dk-art--1"></div>
+            <div class="deck-frame dk-slide dk-art--2"></div>
+            <div class="deck-frame dk-slide dk-art--3"></div>
+            <div class="deck-frame dk-slide dk-art--4"></div>
+            <div class="deck-frame dk-slide dk-art--5"></div>
+            <div class="deck-frame dk-slide dk-art--6"></div>
+            <div class="deck-frame dk-slide dk-art--7"></div>
+          </div>
+        </div>
+
+        <!-- Driven entirely by the bubbling deck-settle event rather than by
+             polling position: it fires once a frame is parked, not for every
+             frame passed on the way there. -->
+        <p class="dk-plate">
+          <span class="dk-plate__count" id="deckCount">01 / 07</span>
+          <span class="dk-plate__title" id="deckTitle">The Aperture</span>
+        </p>
+      </div>
+
+      <p class="dk-help">Click to advance · drag or scroll sideways · <kbd>←</kbd> <kbd>→</kbd> · <kbd>Shift</kbd>-click to go back</p>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">No JavaScript on this row</p>
+      <h2>Six built in</h2>
+      <p class="direction">Each of these is the same component with a different <code>data-transition</code> in the markup. A transition is a function from one number — how far a frame is from the one in view — to a transform and an opacity, so adding one is a dozen lines rather than a fork. Five of the six track a drag 1:1 and settle where you let go; the arc doesn't, because a frame parked halfway through a swing isn't a pose anything can rest in.</p>
+
+      <div class="dk-grid">
+        <figure class="dk-sample">
+          <div class="deck" data-transition="slide" aria-label="Slide transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--1"></div>
+              <div class="deck-frame dk-slide dk-art--4"></div>
+              <div class="deck-frame dk-slide dk-art--6"></div>
+            </div>
+          </div>
+          <figcaption><b>slide</b> Frames side by side on a line. The default.</figcaption>
+        </figure>
+
+        <figure class="dk-sample">
+          <div class="deck" data-transition="fade" aria-label="Fade transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--2"></div>
+              <div class="deck-frame dk-slide dk-art--5"></div>
+              <div class="deck-frame dk-slide dk-art--7"></div>
+            </div>
+          </div>
+          <figcaption><b>fade</b> A crossfade that never dips through the background.</figcaption>
+        </figure>
+
+        <figure class="dk-sample">
+          <div class="deck" data-transition="zoom" aria-label="Zoom transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--3"></div>
+              <div class="deck-frame dk-slide dk-art--6"></div>
+              <div class="deck-frame dk-slide dk-art--1"></div>
+            </div>
+          </div>
+          <figcaption><b>zoom</b> The same crossfade with scale on it.</figcaption>
+        </figure>
+
+        <figure class="dk-sample">
+          <div class="deck" data-transition="stack" aria-label="Stack transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--4"></div>
+              <div class="deck-frame dk-slide dk-art--7"></div>
+              <div class="deck-frame dk-slide dk-art--2"></div>
+            </div>
+          </div>
+          <figcaption><b>stack</b> A dealt deck — the only one that shows more than two frames at once.</figcaption>
+        </figure>
+
+        <figure class="dk-sample">
+          <div class="deck" data-transition="cube" aria-label="Cube transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--5"></div>
+              <div class="deck-frame dk-slide dk-art--1"></div>
+              <div class="deck-frame dk-slide dk-art--3"></div>
+            </div>
+          </div>
+          <figcaption><b>cube</b> Faces of a box turning. Needs perspective on the port, which it sets itself.</figcaption>
+        </figure>
+
+        <figure class="dk-sample">
+          <div class="deck" data-transition="stereoscope" aria-label="Stereoscope transition">
+            <div class="deck-port">
+              <div class="deck-frame dk-slide dk-art--6"></div>
+              <div class="deck-frame dk-slide dk-art--3"></div>
+              <div class="deck-frame dk-slide dk-art--5"></div>
+            </div>
+          </div>
+          <figcaption><b>stereoscope</b> The View-Master: frames on a disc pivoting off screen below.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">Two custom properties and one option</p>
+      <h2>Or no box at all</h2>
+      <p class="direction">The box is only as visible as you make it. <code>--dk-body: transparent</code> takes the slab out from behind the frames, and <code>clip: false</code> stops the box being a window they can't leave — so a stack becomes loose cards lying on the page, with the page's own background between them. Nothing about the component changes; the cards below are the same <code>stack</code> transition as the one above, with the deck's background removed and a shadow added by this page's CSS.</p>
+
+      <div class="deck dk-loose" id="deckLoose" data-transition="stack" aria-label="Unclipped stack demo">
+        <div class="deck-port">
+          <div class="deck-frame dk-card">
+            <h3>Dealt onto the page</h3>
+            <p>No background, no clipping — the frames are just boxes the deck happens to be positioning.</p>
+          </div>
+          <div class="deck-frame dk-card">
+            <h3>The pile is real</h3>
+            <p>Each waiting card is the next frame, scaled and offset. It isn't decoration behind the top one.</p>
+          </div>
+          <div class="deck-frame dk-card">
+            <h3>Fades before it leaves</h3>
+            <p>With nothing to clip it, the thrown card has to reach zero opacity exactly one frame out — which is what the transition does.</p>
+          </div>
+          <div class="deck-frame dk-card">
+            <h3>Same everything else</h3>
+            <p>Click, drag, arrows, dots, keyboard. Only the look changed.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">A dozen lines</p>
+      <h2>Or write your own</h2>
+      <p class="direction">A transition is a plain object on <code>Deck.transitions</code>. It gets the frame, its signed distance from the one in view, and a context carrying the measured box, the resolved options and the direction of travel. The deck below runs this exact code: <code>demo.js</code> registers it at load, and the markup asks for it by name with <code>data-transition="flip"</code> like any built-in.</p>
+
+      <pre class="dk-code"><code>Deck.transitions.flip = {
+  scrub: true,
+  cull: 1.05,
+  defaults: { flipTilt: 90 },
+  measure(ctx, frames) {
+    ctx.port.style.perspective = `${Math.round(ctx.w * 2)}px`;
+    frames.forEach((f) =&gt; { f.style.transformOrigin = '50% 50%'; });
+  },
+  style(frame, delta, ctx) {
+    frame.style.transform =
+      `rotateX(${(-delta * ctx.options.flipTilt).toFixed(2)}deg)`
+      + ` translate3d(0, ${(delta * 100).toFixed(2)}%, 0)`;
+  },
+};</code></pre>
+
+      <div class="deck dk-custom" id="deckFlip" data-transition="flip" aria-label="Custom transition demo">
+        <div class="deck-port">
+          <div class="deck-frame dk-slide dk-art--7"></div>
+          <div class="deck-frame dk-slide dk-art--2"></div>
+          <div class="deck-frame dk-slide dk-art--4"></div>
+          <div class="deck-frame dk-slide dk-art--6"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">A frame holds anything</p>
+      <h2>It isn't a photo viewer</h2>
+      <p class="direction">A frame is an empty box that fills the deck — put markup in it. These hold text, a link and a stat, with no sizing of their own: <code>.deck</code> is a container-query context, so everything inside is measured in <code>cqw</code> and scales with the deck rather than the viewport. Only the frame at rest is interactive — try tabbing to the link, then advancing.</p>
+
+      <div class="deck dk-content" id="deckContent" data-transition="fade" aria-label="Content frames demo">
+        <div class="deck-port">
+          <article class="deck-frame dk-panel dk-panel--a">
+            <p class="dk-panel__kicker">01 — Markup</p>
+            <h3>Any HTML you like</h3>
+            <p>Headings, copy, forms, a video, an <code>&lt;img&gt;</code> — the component only positions the box.</p>
+          </article>
+          <article class="deck-frame dk-panel dk-panel--b">
+            <p class="dk-panel__kicker">02 — Links</p>
+            <h3>Interactive, but only in focus</h3>
+            <p>Every frame off the detent gets <code>inert</code>, so there are never five invisible copies of this link in the tab order.</p>
+            <a class="dk-panel__link" href="/docs/carousel/deck.html">Read the docs →</a>
+          </article>
+          <article class="deck-frame dk-panel dk-panel--c">
+            <p class="dk-panel__kicker">03 — Numbers</p>
+            <h3 class="dk-panel__stat">0<span>deps</span></h3>
+            <p>One file, nothing to install, its own structural CSS injected on load.</p>
+          </article>
+          <article class="deck-frame dk-panel dk-panel--d">
+            <p class="dk-panel__kicker">04 — Mixed</p>
+            <h3>Or a picture behind the words</h3>
+            <div class="dk-panel__art dk-art--5"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">Bring your own buttons</p>
+      <h2>Drive it from your own controls</h2>
+      <p class="direction">Any element on the page can drive a deck with no JavaScript of your own: <code>data-deck-next</code>, <code>data-deck-prev</code> and <code>data-deck-to="N"</code> are picked up by one delegated listener, scoped by the deck they sit in or by <code>data-deck-for="#id"</code>. The built-in arrows and dots use those very same hooks — this one just has them switched off. The lever is a <code>&lt;span data-deck-lever&gt;</code> styled entirely by this page: while you pull it, the component publishes <code>--dk-pull</code> on it, and that's all its CSS needs.</p>
+
+      <div class="dk-rig">
+        <div class="deck dk-rig__view" id="deckCustom" data-transition="stereoscope" aria-label="Custom controls demo">
+          <div class="deck-port">
+            <div class="deck-frame dk-slide dk-art--6"></div>
+            <div class="deck-frame dk-slide dk-art--3"></div>
+            <div class="deck-frame dk-slide dk-art--5"></div>
+            <div class="deck-frame dk-slide dk-art--1"></div>
+          </div>
+        </div>
+
+        <!-- Everything below is this page's own markup. data-deck-for points the
+             whole group at the deck above, so none of it has to be inside. -->
+        <div class="dk-rig__rail" data-deck-for="#deckCustom">
+          <div class="dk-thumbs">
+            <button type="button" class="dk-thumb dk-art--6" data-deck-to="0" aria-label="Frame 1"></button>
+            <button type="button" class="dk-thumb dk-art--3" data-deck-to="1" aria-label="Frame 2"></button>
+            <button type="button" class="dk-thumb dk-art--5" data-deck-to="2" aria-label="Frame 3"></button>
+            <button type="button" class="dk-thumb dk-art--1" data-deck-to="3" aria-label="Frame 4"></button>
+          </div>
+          <div class="dk-rig__row">
+            <button type="button" class="dk-btn" data-deck-prev>← Back</button>
+            <button type="button" class="dk-btn" data-deck-next>Forward →</button>
+            <span class="dk-lever" data-deck-lever aria-label="Pull to advance"><i></i></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">Two custom properties</p>
+      <h2>Sizing is a ratio and a max width</h2>
+      <p class="direction">A deck is <code>width: 100%</code> at <code>aspect-ratio: var(--dk-aspect, 3 / 2)</code>, so it fills whatever you put it in and keeps its shape at every width — set <code>--dk-aspect</code>, cap it with <code>max-width</code>, and you're done. Set an explicit <code>height</code> instead and that wins. These three are the same component, sized inline, in a grid that reflows on a narrow screen. The hit targets on the small ones shrink themselves with a container query.</p>
+
+      <div class="dk-sizes">
+        <div class="deck" data-transition="stack" style="--dk-aspect: 3 / 4; --dk-radius: 14px" aria-label="Portrait deck">
+          <div class="deck-port">
+            <div class="deck-frame dk-slide dk-art--2"></div>
+            <div class="deck-frame dk-slide dk-art--4"></div>
+            <div class="deck-frame dk-slide dk-art--7"></div>
+          </div>
+        </div>
+        <div class="deck" id="deckSquare" data-transition="zoom" style="--dk-aspect: 1 / 1; --dk-radius: 50%" aria-label="Square deck">
+          <div class="deck-port">
+            <div class="deck-frame dk-slide dk-art--5"></div>
+            <div class="deck-frame dk-slide dk-art--1"></div>
+            <div class="deck-frame dk-slide dk-art--3"></div>
+            <div class="deck-frame dk-slide dk-art--6"></div>
+          </div>
+        </div>
+        <div class="deck" data-transition="slide" style="--dk-aspect: 21 / 9; --dk-radius: 14px" aria-label="Wide deck">
+          <div class="deck-port">
+            <div class="deck-frame dk-slide dk-art--3"></div>
+            <div class="deck-frame dk-slide dk-art--6"></div>
+            <div class="deck-frame dk-slide dk-art--4"></div>
+          </div>
+        </div>
+      </div>
+      <p class="dk-help">The round one is <code>--dk-radius: 50%</code> with <code>autoplay</code> on, which pauses the moment you hover or focus it.</p>
+    </section>
+  </main>
+
+  <script src="deck.js"></script>
+  <script src="demo.js"></script>

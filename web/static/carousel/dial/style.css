@@ -1,0 +1,493 @@
+main {
+  margin-right: 300px;
+  overflow: clip;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 5vh 5vw 5vh;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 110px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
+.direction {
+  max-width: 62ch;
+  margin: 0;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+/* Structural CSS (.dial, .dial-face, .dial-card, and the injected
+   rim/hub/gate) ships inside dial.js and is applied automatically - this
+   page only supplies the box's size and the cards' own chrome.
+
+   The box wants to be about 2:1 for the default half circle: the disc is
+   as big as min(width / 2, pivot height) allows, so at 700x375 with the
+   hub on the bottom edge it comes out 350 across with 25px of headroom
+   above the rim. */
+#dialDemo {
+  width: min(700px, 92vw);
+  aspect-ratio: 700 / 375;
+}
+
+/* Square, with the hub lifted to the middle - see demo.js. */
+#dialFull {
+  width: min(440px, 88vw);
+  aspect-ratio: 1;
+}
+
+/* Bigger cards want a bigger disc and a wider cardAngle to sit apart on
+   it - the angle is set in demo.js. At 900x490 the disc is 450 across,
+   which puts the 200x230 cards on a 299 ring and leaves a 205px chord
+   between neighbors at 40deg - just clear of their 200px width. */
+#dialContent {
+  width: min(900px, 94vw);
+  aspect-ratio: 900 / 490;
+}
+
+#dialMixed {
+  width: min(860px, 94vw);
+  aspect-ratio: 860 / 430;
+}
+
+.dl-device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 1.5rem;
+}
+
+.dl-device--full {
+  margin-top: 1rem;
+}
+
+/* The reel's printed label, outside the disc. Updated from the
+   dial-settle event in demo.js. */
+.dl-plate {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.dl-plate__count {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}
+
+.dl-plate__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dl-help {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.dl-help kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 4px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* --- Cards ----------------------------------------------------------- */
+
+.dl-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7cqw;
+  /* Sized against the dial's own width, not the viewport's: dial.js sets
+     container-type on .dial, so 1cqw is 1% of this dial. 96/700 and
+     126/700 are the proportions the geometry was tuned at, and holding
+     them keeps the cards at the same share of the disc at every width
+     instead of crowding together as it shrinks. */
+  width: 13.71cqw;
+  height: 18cqw;
+  padding: 1cqw 1cqw 0.85cqw;
+  border: 1px solid #000;
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+}
+
+.dl-card__num {
+  font-size: clamp(7px, 1.29cqw, 9px);
+  letter-spacing: 0.12em;
+  opacity: 0.45;
+}
+
+.dl-card__art {
+  width: 100%;
+  flex: 1;
+  border: 1px solid #000;
+}
+
+/* The title keeps its space at all times and only fades - revealing it on
+   selection by changing the layout would resize the card, and the disc's
+   ring radius is measured off that size. */
+.dl-card__title {
+  height: 2.2em;
+  font-size: clamp(7px, 1.29cqw, 9px);
+  line-height: 1.1;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+/* dial.js puts .is-selected on whichever card is nearest the gate, live -
+   it tracks the spin rather than waiting for it to stop. */
+.dl-card.is-selected .dl-card__title { opacity: 1; }
+
+.dl-card--mini {
+  width: 14.55cqw;
+  height: 18.18cqw;
+  padding: 1.1cqw;
+  gap: 0;
+  cursor: pointer;
+}
+
+.dl-art--a { background: linear-gradient(135deg, #000, #fff); }
+.dl-art--b { background: radial-gradient(circle at 32% 30%, #fff, #000 78%); }
+.dl-art--c { background: repeating-linear-gradient(45deg, #000, #000 2px, #fff 2px, #fff 8px); }
+.dl-art--d { background: linear-gradient(#fff 0 48%, #000 48% 52%, #4a4a4a 52%); }
+.dl-art--e { background: repeating-radial-gradient(circle at 50% 50%, #000 0 1px, #fff 1px 7px); }
+.dl-art--f { background: linear-gradient(0deg, #000, #fff); }
+
+/* --- Big content cards ----------------------------------------------- */
+
+/* None of this is known to dial.js. These are ordinary blocks - including
+   a real <figure> and <blockquote> - that happen to carry .dial-card, so
+   the disc positions them and touches nothing else about them. */
+.dl-big {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9cqw;
+  width: 22.22cqw;
+  height: 25.56cqw;
+  margin: 0;
+  padding: 1.67cqw;
+  border: 1px solid #000;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.dl-big code { font-size: clamp(7px, 1.11cqw, 10px); }
+
+.dl-big__h {
+  margin: 0;
+  font-size: clamp(11px, 1.67cqw, 15px);
+  letter-spacing: -0.01em;
+}
+
+.dl-big__p {
+  margin: 0;
+  font-size: clamp(8px, 1.22cqw, 11px);
+  line-height: 1.45;
+  opacity: 0.7;
+}
+
+/* min-height: 0 so a flexed media box can actually shrink inside the card
+   rather than forcing it taller than its declared height - which would
+   also push its ring radius in, since that's measured off card height. */
+.dl-big__img,
+.dl-big__video {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #000;
+}
+
+.dl-big__img {
+  display: block;
+  object-fit: cover;
+}
+
+.dl-big__video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d0d0d, #7a7a7a);
+}
+
+.dl-play {
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 16px solid #fff;
+}
+
+.dl-big__cap {
+  font-size: clamp(7px, 1.11cqw, 10px);
+  line-height: 1.35;
+  opacity: 0.6;
+}
+
+.dl-big--quote { justify-content: center; }
+
+.dl-big__quote {
+  margin: 0;
+  font-size: clamp(10px, 1.56cqw, 14px);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.dl-big__cite {
+  font-size: clamp(7px, 1.11cqw, 10px);
+  font-style: normal;
+  opacity: 0.5;
+}
+
+.dl-big--stat {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.dl-big__num {
+  font-size: clamp(30px, 6cqw, 54px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.dl-big__list {
+  margin: 0;
+  padding-left: 1.8cqw;
+  font-size: clamp(8px, 1.22cqw, 11px);
+  line-height: 1.7;
+  opacity: 0.7;
+}
+
+.dl-big--cta { justify-content: space-between; }
+
+.dl-big__link {
+  align-self: flex-start;
+  padding-bottom: 1px;
+  border-bottom: 1px solid #000;
+  font-size: clamp(8px, 1.22cqw, 11px);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* --- Mismatched cards ------------------------------------------------ */
+
+.dl-free {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+  background: #fff;
+  font-size: clamp(7px, 1.16cqw, 10px);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.dl-free span {
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+  transition: opacity 0.18s ease;
+}
+
+.dl-free.is-selected span { opacity: 1; }
+
+/* The labels name each card's size at the dial's 860px design width;
+   expressed in cqw they hold those proportions at any width. */
+.dl-free--1 { width: 17.44cqw; height: 12.79cqw; }
+.dl-free--2 { width: 11.16cqw; height: 25.58cqw; }
+.dl-free--3 { width: 19.77cqw; height: 17.44cqw; }
+.dl-free--4 { width: 13.95cqw; height: 10.47cqw; }
+.dl-free--5 { width: 16.28cqw; height: 22.09cqw; }
+.dl-free--6 { width: 9.30cqw; height: 15.12cqw; }
+.dl-free--7 { width: 19.19cqw; height: 27.91cqw; }
+.dl-free--8 { width: 12.79cqw; height: 18.60cqw; }
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 4vh 8vw 16vh;
+}
+
+.gallery h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

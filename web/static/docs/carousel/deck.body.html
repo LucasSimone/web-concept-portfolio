@@ -1,0 +1,533 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Carousel · Click / Scroll / Swipe</p>
+      <h1>Deck</h1>
+      <p>
+        A frame changer. One box, a stack of frames inside it, and a
+        transition that decides what the move from one to the next looks
+        like — a slide, a crossfade, a cube face turning, a card dealt off
+        the top, or the arc of a View-Master reel. Everything else is the
+        same whichever you pick: click, scroll, swipe, arrows, dots,
+        keyboard, autoplay, the lot. Six transitions ship with it, and
+        writing a seventh is a dozen lines.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/carousel/deck/index.html">View Demo</a>
+        <a class="btn" href="/carousel/deck/deck.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#transitions">Transitions</a>
+        <a href="#writing">Writing One</a>
+        <a href="#sizing">Sizing</a>
+        <a href="#controls">Controls</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#properties">Custom Properties</a>
+        <a href="#methods">Methods</a>
+        <a href="#events">Events</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="deck.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        One script tag and nothing else. The deck shares its wrap-around
+        arithmetic, its per-tab position memory and its
+        <code>initAll</code>/<code>get</code>/<code>getAll</code> surface
+        with the other three carousels here, and the file above already has
+        that bundled in - so there is nothing extra to fetch. (Building from
+        this repo's own source instead, that part is
+        <code>shared/carousel-kit.js</code>, loaded before
+        <code>deck.js</code>.) Injects its own <code>&lt;style&gt;</code>
+        tag defining <code>.deck</code>, <code>.deck-port</code> and
+        <code>.deck-frame</code> plus the controls it builds for itself, so
+        no companion CSS file is required.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;div class="deck" data-transition="slide"&gt;
+  &lt;div class="deck-port"&gt;
+    &lt;div class="deck-frame"&gt;&lt;img src="1.jpg" alt="" /&gt;&lt;/div&gt;
+    &lt;div class="deck-frame"&gt;&lt;img src="2.jpg" alt="" /&gt;&lt;/div&gt;
+    &lt;div class="deck-frame"&gt;&lt;img src="3.jpg" alt="" /&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;script src="deck.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        That is a complete, working carousel — arrows, dots, click, drag,
+        sideways scroll and the arrow keys, at a sensible size, with no CSS
+        and no JavaScript of your own. Auto-initializes against every
+        <code>.deck:not(.is-empty)</code> element. Only direct children of
+        <code>.deck-port</code> carrying <code>.deck-frame</code> count as
+        frames, and anything <code>hidden</code> is skipped. A frame is an
+        empty box that fills the deck, so put whatever you like in one: a
+        single <code>&lt;img&gt;</code> or <code>&lt;video&gt;</code> is made
+        to fill it for you, and anything else is yours to style.
+      </p>
+      <pre><code>Deck.initAll('.deck', {
+  transition: 'cube',
+  duration: 420,
+});</code></pre>
+
+      <h2 id="transitions">Transitions</h2>
+      <p>
+        Name one in markup with <code>data-transition</code>, or pass it as
+        the <code>transition</code> option. Switching at runtime —
+        <code>deck.update({ transition: 'fade' })</code> — is safe at any
+        time, including mid-move.
+      </p>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Transition</th><th>Drag</th><th>Own options</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>slide</code></td><td>scrubs</td><td><code>gap</code></td><td>Frames side by side on a line. The default, and the only one where <code>gap</code> is literally empty space</td></tr>
+          <tr><td><code>fade</code></td><td>scrubs</td><td>—</td><td>A crossfade that never dips through the background (see the notes)</td></tr>
+          <tr><td><code>zoom</code></td><td>scrubs</td><td><code>zoomScale</code></td><td>The same crossfade with scale on it: the arriving frame grows into place, the leaving one pushes past</td></tr>
+          <tr><td><code>stack</code></td><td>scrubs</td><td><code>stackInset</code>, <code>stackOffset</code>, <code>stackScale</code>, <code>stackFade</code>, <code>stackTilt</code></td><td>A dealt deck. The only built-in that shows more than two frames at once, and the only one where the frame in view doesn't fill the box</td></tr>
+          <tr><td><code>cube</code></td><td>scrubs</td><td>—</td><td>Faces of a box turning about its vertical axis. Sets perspective on the port itself</td></tr>
+          <tr><td><code>stereoscope</code></td><td>ratchets</td><td><code>arc</code>, <code>gap</code></td><td>The View-Master: frames mounted radially on a disc whose pivot is off screen below the deck</td></tr>
+        </tbody>
+      </table>
+      <p>
+        <strong>Scrub or ratchet.</strong> Five of the six track a drag 1:1
+        and settle where you let go, carrying on to the next frame if you
+        flick. <code>stereoscope</code> doesn't, because a frame parked
+        halfway through an arc isn't a pose anything can rest in — a drag
+        there gives by a fifth of a step and then either commits a whole
+        frame or springs back. Every other input moves in whole frames
+        regardless.
+      </p>
+      <p>
+        <strong>Transition options belong to the transition.</strong>
+        <code>gap</code> means reel material to the arc, dead space to a
+        slide, and nothing at all to a crossfade — so each transition
+        declares its own defaults, and switching transitions re-seeds them.
+        An option you set yourself survives for as long as the transition
+        that owns it is running.
+      </p>
+
+      <h2 id="writing">Writing One</h2>
+      <p>
+        The whole engine runs on a single number: <code>delta</code>, a
+        frame's signed, wrapped distance from the position in view (0 is in
+        view, +1 is one ahead, -0.5 is halfway out backward). A transition
+        is that number turned into appearance, and nothing else:
+      </p>
+      <pre><code>Deck.transitions.flip = {
+  scrub: true,                  // can a drag track it 1:1?
+  cull: 1.05,                   // hide frames further out than this
+  defaults: { flipTilt: 90 },   // options this transition owns
+  measure(ctx, frames) {        // optional: re-derive on resize
+    ctx.port.style.perspective = `${Math.round(ctx.w * 2)}px`;
+  },
+  style(frame, delta, ctx) {    // required: paint one frame
+    frame.style.transform =
+      `rotateX(${(-delta * ctx.options.flipTilt).toFixed(2)}deg)`
+      + ` translate3d(0, ${(delta * 100).toFixed(2)}%, 0)`;
+  },
+  setup(ctx) {}, teardown(ctx) {},   // optional: per-instance DOM/CSS
+};
+
+&lt;div class="deck" data-transition="flip"&gt;…&lt;/div&gt;</code></pre>
+      <p>
+        Register it before the deck initializes (a plain
+        <code>&lt;script&gt;</code> after <code>deck.js</code> is early
+        enough) and it is indistinguishable from a built-in — the markup can
+        name it, the options panel can tune it, and it inherits every
+        control, input mode and accessibility behaviour on this page. You
+        can also pass a transition object inline as the
+        <code>transition</code> option without registering it at all.
+      </p>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Member</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>style(frame, delta, ctx)</code></td><td>Required. Sets the frame's appearance for that distance. Called for every non-culled frame on every animation tick.</td></tr>
+          <tr><td><code>measure(ctx, frames)</code></td><td>Called on init, on resize, and whenever an option changes. The place for anything derived from the box's pixel size — a transform-origin, a perspective, a cached angle on <code>ctx.state</code>.</td></tr>
+          <tr><td><code>setup(ctx)</code> / <code>teardown(ctx)</code></td><td>Called when the transition is attached to and detached from an instance. Frame styles are reset for you between transitions; anything you put on the port is yours to clean up.</td></tr>
+          <tr><td><code>defaults</code></td><td>Options this transition owns, merged under the host's own values. Also what the demo page reads to know which sliders to show.</td></tr>
+          <tr><td><code>scrub</code></td><td><code>false</code> makes a drag ratchet rather than track. Default true.</td></tr>
+          <tr><td><code>cull</code></td><td>Frames further out than this many steps are hidden. Default 1.6 — raise it for a transition that shows a pile.</td></tr>
+          <tr><td><code>ctx</code></td><td><code>{ root, port, w, h, options, state, dir }</code>: the elements, the measured box, the resolved options, a scratch object of your own, and the direction of travel (+1, -1, or 0 at rest).</td></tr>
+        </tbody>
+      </table>
+      <p>
+        One constraint: a frame's <code>z-index</code> must stay below 200.
+        The port isn't a stacking context of its own, so a frame competes
+        with the glare overlay at 200 and the controls at 250 rather than
+        only with its sibling frames.
+      </p>
+
+      <h2 id="sizing">Sizing</h2>
+      <p>
+        A deck is <code>width: 100%</code> at
+        <code>aspect-ratio: var(--dk-aspect, 3 / 2)</code>, so it fills
+        whatever you put it in and keeps its shape at every width. Sizing one
+        is two decisions, both on your side of the line — the component has
+        no size options at all:
+      </p>
+      <pre><code>.my-deck {
+  --dk-aspect: 16 / 10;   /* the shape */
+  max-width: 680px;       /* how big it may get */
+}
+
+/* Or ignore the ratio entirely - an explicit height wins. */
+.my-banner { height: 320px; }</code></pre>
+      <p>
+        Nothing inside needs to change when it resizes. Frames fill the deck
+        by definition, every transition re-measures itself from a
+        <code>ResizeObserver</code> (so a sidebar opening or a font loading
+        is handled, not just a window resize), and the arrows and dots shrink
+        their own hit targets below 400px with a container query.
+        <code>.deck</code> is itself a container-query context, so frame
+        content sized in <code>cqw</code> tracks the deck rather than the
+        viewport:
+      </p>
+      <pre><code>.my-caption { font-size: 4cqw; padding: 6cqw; }</code></pre>
+
+      <h2 id="controls">Controls</h2>
+      <p>
+        Out of the box: prev/next arrows, a row of dots, click or tap to
+        advance (shift-click to go back), drag, horizontal wheel or trackpad,
+        and <code>←</code> <code>→</code> <code>↑</code> <code>↓</code>
+        <code>Home</code> <code>End</code> on the keyboard. Turn any of it
+        off with <code>arrows</code>, <code>dots</code>, <code>click</code>,
+        <code>drag</code> and <code>wheel</code>.
+      </p>
+      <p>
+        Beyond that, any element on the page can drive a deck with no
+        JavaScript — one delegated listener handles all of them, however many
+        decks are on the page and whenever the elements appear. The built-in
+        arrows and dots are nothing but these same hooks.
+      </p>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Attribute</th><th>Does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-deck-next</code></td><td>Advances one frame on click</td></tr>
+          <tr><td><code>data-deck-prev</code></td><td>Goes back one frame on click</td></tr>
+          <tr><td><code>data-deck-to="N"</code></td><td>Goes to frame N by the shortest way around</td></tr>
+          <tr><td><code>data-deck-lever</code></td><td>Turns the element into a pull lever (drag down, or tap)</td></tr>
+          <tr><td><code>data-deck-for="#id"</code></td><td>Points a hook — or a whole container of them — at a deck it isn't inside</td></tr>
+          <tr><td><code>data-transition</code></td><td>On the deck itself: which transition to start with</td></tr>
+        </tbody>
+      </table>
+      <pre><code>&lt;div class="deck" id="tour"&gt;...&lt;/div&gt;
+
+&lt;!-- Anywhere on the page --&gt;
+&lt;div class="my-rail" data-deck-for="#tour"&gt;
+  &lt;button data-deck-prev&gt;Back&lt;/button&gt;
+  &lt;button data-deck-to="0"&gt;&lt;img src="1-thumb.jpg" alt="" /&gt;&lt;/button&gt;
+  &lt;button data-deck-to="1"&gt;&lt;img src="2-thumb.jpg" alt="" /&gt;&lt;/button&gt;
+  &lt;button data-deck-next&gt;Forward&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+      <p>
+        A hook inside a deck needs no <code>data-deck-for</code> — it drives
+        the deck it sits in. Outside one, put <code>data-deck-for</code> on
+        the hook itself or on any ancestor of it. These hooks fire on click,
+        so use a real <code>&lt;button&gt;</code> — the keyboard and
+        assistive technology get that for free, and nothing is added for you.
+        (<code>data-deck-lever</code> is the exception: it's a drag gesture
+        rather than a click, so a non-interactive element carrying one does
+        get <code>role="button"</code> and a tab stop.)
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Carrying text rather than pictures</h3>
+        <p>
+          The defaults are tuned for images. Copy wants a longer step, no
+          rebound (text that overshoots and settles is hard to start
+          reading) and usually a crossfade rather than anything with
+          geometry in it.
+        </p>
+        <pre><code>Deck.initAll('.testimonials', {
+  transition: 'fade',
+  duration: 460,
+  bounce: 0,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Cards on the page, not in a box</h3>
+        <p>
+          <code>stack</code> holds the whole pile in from the edges by
+          <code>stackInset</code>, because a card that covers every pixel
+          leaves nothing for the ones behind it to peek out of — so what
+          surrounds it is <code>--dk-body</code>, the deck's own background.
+          Leave that dark and it reads as cards in a window. Make it
+          transparent and turn <code>clip</code> off and the same transition
+          reads as loose cards lying on the page: nothing behind them, and
+          nothing stopping the thrown one from leaving the box. Give the
+          frames a background and a shadow of their own, since there's no
+          longer a deck behind them, and leave room below the deck for the
+          pile to hang into.
+        </p>
+        <pre><code>&lt;div class="deck my-cards" data-transition="stack"&gt;…&lt;/div&gt;
+
+&lt;style&gt;
+  .my-cards { --dk-body: transparent; margin-bottom: 4rem; }
+  .my-cards .deck-frame {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .16);
+  }
+&lt;/style&gt;
+&lt;script&gt;Deck.initAll('.my-cards', { clip: false });&lt;/script&gt;</code></pre>
+        <p>
+          <code>clip: false</code> is only sensible for a transition that
+          keeps its frames near the box and fades them out before they leave
+          it — which <code>stack</code> does, reaching zero opacity exactly
+          one frame out for this reason. Turn it off under
+          <code>slide</code> or <code>stereoscope</code> and you'll see the
+          entire strip of frames spread across the page at once.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Making scroll the primary driver</h3>
+        <p>
+          <code>wheel: 'x'</code>, the default, takes only horizontal
+          deltas — a two-finger sideways trackpad gesture — so a vertical
+          scroll always passes straight through to the page. A plain mouse
+          wheel produces no horizontal delta at all, so on a desktop with a
+          mouse the primary driver is the click. If you want the wheel
+          itself to drive a deck, <code>'any'</code> takes vertical deltas
+          too, at the cost of capturing page scroll while the pointer is
+          over it — reasonable for a full-height hero, bad for a carousel
+          halfway down a long article.
+        </p>
+        <pre><code>Deck.initAll('.hero-deck', { wheel: 'any' });
+Deck.initAll('.inline-deck', { wheel: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A slideshow that runs itself</h3>
+        <p>
+          <code>autoplay</code> is milliseconds between automatic steps. It
+          pauses while the deck is off screen, while the tab is hidden,
+          while the pointer is over it, and while anything inside it has
+          focus — and it skips a beat rather than restarting its interval,
+          so the cadence stays steady across a hover that begins and ends
+          mid-interval. It stays off entirely under
+          <code>prefers-reduced-motion: reduce</code>.
+        </p>
+        <pre><code>Deck.initAll('.deck', { transition: 'zoom', autoplay: 3200 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A lever of your own</h3>
+        <p>
+          <code>lever: true</code> draws the built-in one in the
+          bottom-right corner. Any element carrying
+          <code>data-deck-lever</code> is used instead, and gets the same
+          gesture: while a pull is live the component puts
+          <code>--dk-pull</code> (0 to 34deg) on that element and adds
+          <code>.is-pulling</code> to it — which is everything your CSS
+          needs. A tap on a lever advances too, so it never demands a drag.
+        </p>
+        <pre><code>&lt;span class="my-lever" data-deck-lever data-deck-for="#tour"&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;
+
+&lt;style&gt;
+  .my-lever { touch-action: none; } /* so a pull isn't also a page scroll */
+  .my-lever i {
+    transform-origin: 50% 100%;
+    transform: rotate(var(--dk-pull, 0deg));
+    transition: transform 220ms cubic-bezier(.22, 1.4, .4, 1);
+  }
+  .my-lever.is-pulling i { transition: none; }
+&lt;/style&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Reacting to the frame in view</h3>
+        <p>
+          Listen for the bubbling <code>deck-settle</code> event instead of
+          polling <code>.index</code> — it fires once a frame is actually
+          parked, not for every frame passed on the way there, so a
+          five-frame jump produces one event rather than five. The demo's
+          caption is driven entirely by it.
+        </p>
+        <pre><code>document.getElementById('tour').addEventListener('deck-settle', (e) =&gt; {
+  caption.textContent = e.target.dataset.title;
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <p>
+        Core options, which every transition has. The transition's own
+        options are listed in the table further up, and merge in underneath
+        these.
+      </p>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>transition</code></td><td><code>'slide'</code></td><td>A key on <code>Deck.transitions</code>, or a transition object. Falls back to the root's <code>data-transition</code></td></tr>
+          <tr><td><code>duration</code></td><td><code>320</code></td><td>Milliseconds for one frame of travel. A multi-frame jump takes longer but nothing like proportionally longer; a drag settling a fraction of a frame takes proportionally less</td></tr>
+          <tr><td><code>bounce</code></td><td><code>0.2</code></td><td>How hard a move rebounds as it lands, 0 to 1; 0 arrives dead</td></tr>
+          <tr><td><code>arrows</code></td><td><code>true</code></td><td>The prev/next buttons overlaid at the sides</td></tr>
+          <tr><td><code>dots</code></td><td><code>true</code></td><td>The row of dots, which shows the position and jumps to a frame. Suppressed automatically above 12 frames</td></tr>
+          <tr><td><code>lever</code></td><td><code>false</code></td><td>The built-in pull lever, bottom right. Ignored when the page supplies its own <code>data-deck-lever</code></td></tr>
+          <tr><td><code>click</code></td><td><code>true</code></td><td>Whether a click or tap on the frame advances (shift-click goes back). A press that lands on a link or button inside a frame stays a press on that</td></tr>
+          <tr><td><code>drag</code></td><td><code>true</code></td><td>Whether the frames can be dragged at all. Scrub or ratchet is the transition's call, not this one's</td></tr>
+          <tr><td><code>wheel</code></td><td><code>'x'</code></td><td><code>'x'</code> takes horizontal deltas only, so page scroll always passes through; <code>'any'</code> also takes vertical ones; <code>false</code> takes neither</td></tr>
+          <tr><td><code>autoplay</code></td><td><code>0</code></td><td>Milliseconds between automatic advances; 0 is off. Paused off screen, on a hidden tab, while hovered or focused, and under reduced-motion</td></tr>
+          <tr><td><code>clip</code></td><td><code>true</code></td><td>Whether the box clips its frames. <code>false</code> lets them spill onto the page — with <code>--dk-body: transparent</code>, what turns a stack into loose cards. Only sensible for a transition that fades its frames out before they leave the box</td></tr>
+          <tr><td><code>mask</code></td><td><code>'none'</code></td><td><code>'none'</code>, <code>'vignette'</code> (soft-edged all round), <code>'porthole'</code> (one oval) or <code>'binocular'</code> (two eyepieces; wants a roughly 2:1 deck)</td></tr>
+          <tr><td><code>glare</code></td><td><code>false</code></td><td>Lens sheen and vignette laid over the frames</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="properties">Custom Properties</h2>
+      <p>Set these on the root element, in your own CSS.</p>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Property</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>--dk-aspect</code></td><td><code>3 / 2</code></td><td>The deck's shape. Ignored if you give it an explicit height</td></tr>
+          <tr><td><code>--dk-radius</code></td><td><code>0px</code></td><td>Corner radius. <code>50%</code> on a square deck makes it round</td></tr>
+          <tr><td><code>--dk-body</code></td><td><code>#111</code></td><td>What shows behind the frames — between them for the transitions that separate them, under the pile for <code>stack</code>, and what a mask fades into</td></tr>
+          <tr><td><code>--dk-control</code></td><td><code>rgba(14,14,14,.5)</code></td><td>Background of the arrows and the dots' pill</td></tr>
+          <tr><td><code>--dk-control-fg</code></td><td><code>#fff</code></td><td>Chevron and dot color</td></tr>
+          <tr><td><code>--dk-control-inset</code></td><td><code>12px</code></td><td>How far the controls sit in from the edges</td></tr>
+          <tr><td><code>--dk-arrow-size</code></td><td><code>42px</code></td><td>Arrow diameter (the touch target extends 7px past it)</td></tr>
+          <tr><td><code>--dk-lever</code></td><td><code>#e8e8e8</code></td><td>Color of the built-in lever's arm</td></tr>
+          <tr><td><code>--dk-pull</code></td><td><code>0deg</code></td><td>Published, not consumed: how far the lever is currently pulled, for a lever of your own to animate off</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>new Deck(root, options)</code></td><td>Constructs directly against a root element containing <code>.deck-port</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
+          <tr><td><code>.next(count)</code> / <code>.prev(count)</code></td><td>Advances or retreats <code>count</code> frames (default 1), accumulating onto a move already in flight.</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>The same thing with an explicit sign. A no-op on a deck with fewer than two frames.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Goes to <code>index</code> by the shortest way around, in one sweep rather than one step at a time.</td></tr>
+          <tr><td><code>.index</code></td><td>Getter for the current frame's index among the visible frames, or <code>-1</code> when there are none.</td></tr>
+          <tr><td><code>.length</code></td><td>Getter for how many frames are in the deck.</td></tr>
+          <tr><td><code>.transition</code></td><td>Getter for the running transition's name, or <code>'custom'</code> for one passed inline as an object.</td></tr>
+          <tr><td><code>.refresh()</code></td><td>Re-reads which frames are present (skipping anything <code>hidden</code>), rebuilds the dots, remeasures and parks on frame 0 — call after changing which frames are there.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in, then rebuilds whatever they touched. Pass <code>transition</code> here to switch transitions, which is safe mid-move. Cheap enough to call on every slider tick.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the loop, tears the transition down, clears the autoplay timer, removes every bound listener, and takes back everything it added to your markup - the arrows, dots, lever and glare, the styles it wrote on each frame, and its own classes on the root. The element stays marked as claimed, so a later <code>initAll()</code> skips it.</td></tr>
+          <tr><td><code>Deck.transitions</code></td><td>The registry. Add your own, or read a built-in's <code>defaults</code> to know what it can be tuned with.</td></tr>
+          <tr><td><code>Deck.initAll(selector, options)</code></td><td>Default selector <code>'.deck:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
+          <tr><td><code>Deck.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+          <tr><td><code>Deck.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="events">Events</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Event</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>deck-settle</code></td><td>Bubbles from a frame once it's actually parked — so a five-frame jump fires it once, not five times. <code>event.target</code> is the settled frame.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>One number runs everything.</strong> Position is a float in
+        frames, integer at rest, and a frame's appearance is a function of
+        its wrapped distance from it. That is why a transition is a dozen
+        lines rather than a fork of the component, why switching one
+        mid-move is safe, and why a drag can scrub: the model has no notion
+        of "between slides" to be confused by.
+      </p>
+      <p>
+        <strong>Why the crossfade never dips.</strong> The obvious
+        implementation ramps both frames to 50% at the midpoint, which
+        leaves two half-transparent layers over the deck's background and
+        reads as a flash of the body color. Instead the arriving frame fades
+        in <em>over</em> an outgoing one left at full opacity. A pleasant
+        consequence: if the direction of travel flips mid-move — a scrub
+        released backward — the two swap roles with no visible jump, because
+        <code>a</code> over opaque and <code>1 − a</code> the other way
+        composite to exactly the same pixels.
+      </p>
+      <p>
+        <strong>The arc's pitch is derived, not configured.</strong> For
+        <code>stereoscope</code>, the angle between frames falls out of the
+        measured width and the disc radius, as the angle whose <em>chord</em>
+        spans one frame width plus <code>gap</code> — the chord rather than
+        the arc, because the chord is how far apart the frame centers
+        actually sit on screen. At <code>arc: 0.5</code> the radius is 2.4
+        deck widths and the pitch lands near 26°, which is a real
+        View-Master reel's 360/14. Some black always shows between frames
+        there, even at <code>gap: 0</code>: the frames share one pivot, so
+        they meet at the height of their centers and wedge apart above and
+        below it. That wedge is why a real reel has opaque cardboard between
+        its frames at all.
+      </p>
+      <p>
+        <strong>The loop parks itself.</strong> Nothing settles
+        asymptotically, so there's no reason to keep ticking between moves.
+        The animation loop runs only while a move is playing, a drag is live,
+        or leftover play is still decaying, and cancels itself otherwise — so
+        an idle deck costs nothing. An <code>IntersectionObserver</code>
+        stops it off screen as well, mostly to gate <code>autoplay</code>.
+      </p>
+      <p>
+        <strong>Only the frame in view is interactive.</strong> Every other
+        frame gets <code>inert</code> and <code>pointer-events: none</code>,
+        and nothing at all is interactive while the deck is moving. A link
+        half way out isn't a link anyone meant to click, and the ones fully
+        out are off screen — so leaving them focusable would put several
+        invisible copies of the same tab stop in the page. Frames beyond the
+        transition's <code>cull</code> distance are hidden outright, which
+        keeps a 40-frame deck from compositing 40 layers to paint one.
+      </p>
+      <p>
+        <strong>Click is the primary driver on purpose.</strong> It is the
+        one input every device has. A mouse has no horizontal wheel, a
+        trackpad has no detents, a phone has neither — so a tap advances, the
+        arrows cover backwards, and drag, wheel and the arrow keys are each
+        an addition rather than the only way through. Only the primary
+        button counts: a press that advanced the deck on a right- or
+        middle-click would be advancing it while the visitor was reaching
+        for a context menu.
+      </p>
+      <p>
+        <strong>The arrow keys stand down inside a form field.</strong>
+        <code>tabindex="0"</code> and <code>role="group"</code> go on the
+        root unless the host set them, and Left/Right/Up/Down plus Home/End
+        drive the deck — except when the key press landed in a text field, a
+        <code>&lt;select&gt;</code> or a contenteditable region inside the
+        frame in view. A frame can hold anything, and in there those keys
+        belong to the caret, not to the deck.
+      </p>
+      <p>
+        <strong>Position is remembered per instance, per tab.</strong> The
+        parked frame's index is written to <code>sessionStorage</code>, keyed
+        by the root element's own <code>id</code>, and restored once on an
+        instance's first <code>refresh()</code>. A deck with no
+        <code>id</code> doesn't persist.
+      </p>
+      <p>
+        <strong>Reduced motion.</strong> Under
+        <code>prefers-reduced-motion: reduce</code> a move becomes an instant
+        cut with no overshoot, the lever stops animating, and
+        <code>autoplay</code> stays off however it's configured. The media
+        query is read live, so a visitor changing the setting doesn't need a
+        reload.
+      </p>
+    </div>
+  </div>

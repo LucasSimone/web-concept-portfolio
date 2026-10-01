@@ -1,0 +1,434 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Carousel · Wheel / Drag / Click / Keys</p>
+      <h1>Reel</h1>
+      <p>
+        A View-Master-style carousel. Cards sit on a ring that curves back
+        and away behind a single focus point, dead center - the focused
+        card grows to full size exactly as it arrives there, rather than
+        sliding into a separately-sized center slot, while the rest curve
+        off into a halo behind it, shrinking and fading the further round
+        they sit. By default there's no first or last card - spin it either
+        direction as far as you like, same as a real reel's click wheel
+        never runs out of rotation - and <code>loop: false</code> gives it
+        two ends to stop against instead.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/carousel/reel/index.html">View Demo</a>
+        <a class="btn" href="/carousel/reel/reel.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#events">Events</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="reel.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        One script tag and nothing else. The ring shares its wrap-around
+        arithmetic, its per-tab position memory and its
+        <code>initAll</code>/<code>get</code>/<code>getAll</code> surface
+        with the other three carousels here, and the file above already has
+        that bundled in - so there is nothing extra to fetch. (Building from
+        this repo's own source instead, that part is
+        <code>shared/carousel-kit.js</code>, loaded before
+        <code>reel.js</code>.) Injects its own <code>&lt;style&gt;</code>
+        tag defining <code>.reel</code>, <code>.reel-track</code> and
+        <code>.reel-card</code>, so no companion CSS file is required -
+        but the host still supplies its own size and card chrome (width,
+        height, border, background, and whatever's inside it).
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;style&gt;
+  .my-reel { width: min(600px, 92vw); aspect-ratio: 600 / 500; }
+  /* cqw = 1% of the reel's own width, so cards scale with the ring */
+  .my-reel .reel-card { width: 33.3cqw; height: 38.3cqw; }
+&lt;/style&gt;
+
+&lt;div class="reel my-reel"&gt;
+  &lt;div class="reel-track"&gt;
+    &lt;div class="reel-card"&gt;One&lt;/div&gt;
+    &lt;div class="reel-card"&gt;Two&lt;/div&gt;
+    &lt;div class="reel-card"&gt;Three&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;script src="reel.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.reel:not(.is-empty)</code>
+        element. Give the root both a width and a height - unlike Sweep's
+        flat strip, the ring needs room above and below the focused card
+        as well as to its sides, and both radii are measured off this box.
+        Every direct child of <code>.reel-track</code> is treated as a
+        card regardless of its own class, but <code>.reel-card</code> is
+        what the injected CSS positions.
+      </p>
+      <p>
+        Card size is the host's and the ring's radii are measured off the
+        root's box, so the two don't track each other automatically -
+        fixed-pixel cards on a fluid reel take up more and more of the
+        ring as it shrinks. <code>.reel</code> is a container-query
+        context, so sizing cards in <code>cqw</code> (1% of the reel's own
+        width) keeps them proportional at any size. To configure options:
+      </p>
+      <pre><code>Reel.initAll('.reel', {
+  cardAngle: 24,
+  minScale: 0.2,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>How big the ring is</h3>
+        <p>
+          The ring is fitted to the root's box by default - as wide and
+          tall as it can be while still leaving the focused card room to
+          sit at full size inside it - so CSS sizing the element is
+          normally all it takes and the whole thing stays responsive for
+          free. <code>ringSize</code> scales that fit, and is deliberately
+          not clamped above 1: a ring wider than its own window is a
+          legitimate look, not a mistake.
+        </p>
+        <pre><code>// Drawn in tight around the focus
+Reel.initAll('.reel', { ringSize: 0.6 });
+
+// Swung out past the box's own edges
+Reel.initAll('.reel', { ringSize: 1.3 });</code></pre>
+        <p>
+          <code>radiusX</code> and <code>radiusY</code> read the effective
+          radii back in pixels, after fitting and scaling - useful for a
+          UI reporting what's actually being drawn rather than what was
+          asked for.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>A loop, or an arc with two ends</h3>
+        <p>
+          <code>loop</code> is on by default: card distances wrap at the
+          card count, <code>_pos</code> is never clamped, and the ring
+          turns forever in either direction. Off, distances stop wrapping
+          and position is clamped to the first and last card, so what's
+          left reads as an arc that runs out - and wheel capture is handed
+          back at either end the way Sweep's strip does, so a scroll that
+          can't turn the ring any further carries on down the page.
+        </p>
+        <pre><code>// A fan of cards with a beginning and an end
+Reel.initAll('.reel', { loop: false, maxDepth: 0.7 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Which scroll axis spins it</h3>
+        <p>
+          <code>wheelAxis</code> is Dial's control exactly, with the same
+          trade-off. <code>'both'</code> (the default) assigns each event
+          to whichever axis dominates it, which is what makes one ring
+          work for a mouse wheel - which only ever reports
+          <code>deltaY</code> - as well as a trackpad; the cost is that
+          taking the vertical axis means calling
+          <code>preventDefault</code> on it, so the page stops scrolling
+          while the pointer is over a looping ring.
+          <code>'horizontal'</code> never interferes with the page, but
+          then a mouse wheel does nothing. A large ring sitting partway
+          down a long page usually wants <code>'horizontal'</code>; a
+          deliberate widget the visitor came to use can take both.
+        </p>
+        <pre><code>// Never interrupts page scroll
+Reel.initAll('.reel', { wheelAxis: 'horizontal' });
+
+// Only a mouse wheel / vertical trackpad gesture
+Reel.initAll('.reel', { wheelAxis: 'vertical' });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Turning by itself</h3>
+        <p>
+          <code>autoAdvance</code> is milliseconds between automatic
+          steps, 0 for off. It pauses while the pointer is over the ring,
+          while it's being dragged or actively scrolled, while it's off
+          screen, in a hidden tab, or under
+          <code>prefers-reduced-motion</code> - and with
+          <code>loop</code> off it walks back the other way at the ends
+          rather than pressing silently against them.
+        </p>
+        <pre><code>Reel.initAll('.reel', { autoAdvance: 2200 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A denser or sparser ring</h3>
+        <p>
+          <code>cardAngle</code> is degrees of rotation per card step - the
+          one control that most changes how the ring reads. Low values
+          pack many cards into view at once, each only a short step apart;
+          high values spread them out, so fewer are visible before they
+          swing past the point directly behind the focus.
+        </p>
+        <pre><code>// A dozen cards crowded into a tight ring
+Reel.initAll('.reel', { cardAngle: 18 });
+
+// A wide, open fan - only a couple of neighbors visible at a time
+Reel.initAll('.reel', { cardAngle: 55 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>How much of the background stays visible</h3>
+        <p>
+          <code>maxDepth</code> is where a card fades out entirely, in
+          depth units (0 at the focus, 1 directly behind it). Paired with
+          <code>minScale</code> - how small a background card ever gets -
+          these two together are what make a card count sit comfortably
+          on the ring without turning into visual noise: a high
+          <code>maxDepth</code> keeps nearly the whole ring populated, a
+          low one declutters down to just the focus and its nearest
+          neighbors.
+        </p>
+        <pre><code>// Keep almost the entire ring visible, very small in the back
+Reel.initAll('.reel', { maxDepth: 0.98, minScale: 0.1 });
+
+// Only the focus and its immediate neighbors show at all
+Reel.initAll('.reel', { maxDepth: 0.55 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Snappier or lazier</h3>
+        <p>
+          Exactly Sweep's <code>friction</code> / <code>snapStrength</code>
+          pair: <code>friction</code> decays velocity each frame once
+          input goes idle, <code>snapStrength</code> is the constant pull
+          toward the nearest card folded in on top of that decay.
+        </p>
+        <pre><code>Reel.initAll('.reel', { friction: 0.95, snapStrength: 0.09 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Turning off an input mode</h3>
+        <p>
+          <code>wheelEnabled</code> and <code>clickToSelect</code> each
+          turn off one way of spinning the ring, independently of each
+          other - drag and the arrow keys always stay live.
+        </p>
+        <pre><code>// Drag, click and keys only - a scroll over the ring does nothing
+Reel.initAll('.reel', { wheelEnabled: false });
+
+// A card's own links fire on the first click, wherever it sits
+Reel.initAll('.reel', { clickToSelect: false });</code></pre>
+        <p>
+          With <code>clickToSelect</code> on (the default), a click on a
+          card that isn't in focus spins it there by the shortest way
+          round and is swallowed; a click on the focused card passes
+          straight through to whatever is inside it. So a card full of
+          links behaves like "bring it to the front, then use it" rather
+          than needing a separate control - the same rule as Dial's gate.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Reacting to the focused card</h3>
+        <p>
+          Listen for the bubbling <code>reel-settle</code> event instead of
+          polling position - it fires once a card is actually at rest in
+          focus, not on every card passed through while spinning past it.
+        </p>
+        <pre><code>document.getElementById('myReel').addEventListener('reel-settle', (e) =&gt; {
+  resetPreview(e.target);
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>cardAngle</code></td><td><code>34</code></td><td>Degrees of ring rotation per card step - lower packs more cards into view at once, higher spreads them further apart</td></tr>
+          <tr><td><code>ringSize</code></td><td><code>1</code></td><td>How big the ring is, as a multiple of the largest one that fits the root's box. Not clamped above 1, so cards can swing out past the box's own edges</td></tr>
+          <tr><td><code>loop</code></td><td><code>true</code></td><td>Whether the ring is a closed loop. <code>false</code> gives it a first and last card to stop against, and hands wheel capture back at either end</td></tr>
+          <tr><td><code>cardStep</code></td><td><code>140</code></td><td>Pixels of wheel delta or drag distance that spin the ring by exactly one card</td></tr>
+          <tr><td><code>minScale</code></td><td><code>0.32</code></td><td>The smallest a card ever shrinks to, directly behind the focused one</td></tr>
+          <tr><td><code>maxDepth</code></td><td><code>0.92</code></td><td>Depth (0 at focus, 1 directly behind it) beyond which a card is faded out entirely</td></tr>
+          <tr><td><code>wheelAxis</code></td><td><code>'both'</code></td><td>Which scroll axis spins the ring: <code>'both'</code> (whichever axis dominates a given event), <code>'vertical'</code> or <code>'horizontal'</code></td></tr>
+          <tr><td><code>wheelSensitivity</code></td><td><code>1</code></td><td>Multiplier on raw wheel delta before it's converted to a card distance via <code>cardStep</code></td></tr>
+          <tr><td><code>wheelIdleDelay</code></td><td><code>140</code></td><td>Milliseconds of no wheel events before wheel input is treated as having stopped, switching over to the idle coast/snap</td></tr>
+          <tr><td><code>maxVelocity</code></td><td><code>0.4</code></td><td>Ceiling on velocity (in cards per frame) a single wheel tick or drag frame can hand to the coast</td></tr>
+          <tr><td><code>friction</code></td><td><code>0.8</code></td><td>How much velocity decays each frame once input goes idle</td></tr>
+          <tr><td><code>snapStrength</code></td><td><code>0.045</code></td><td>How hard the idle spring pulls toward the nearest card each frame, folded in on top of friction</td></tr>
+          <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer movement before a press counts as a drag rather than a click straight through to the card</td></tr>
+          <tr><td><code>clickToSelect</code></td><td><code>true</code></td><td>Whether clicking a card that isn't in focus brings it there, swallowing that click. The focused card always passes its clicks through regardless</td></tr>
+          <tr><td><code>wheelEnabled</code></td><td><code>true</code></td><td>The master switch for scrolling over the ring, whatever <code>wheelAxis</code> says</td></tr>
+          <tr><td><code>autoAdvance</code></td><td><code>0</code></td><td>Milliseconds between automatic steps; 0 is off. Paused while the pointer is over the ring, while it's dragged or scrolled, off screen, in a hidden tab, or under <code>prefers-reduced-motion</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>new Reel(root, options)</code></td><td>Constructs directly against a root element carrying <code>.reel-track</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
+          <tr><td><code>.refresh()</code></td><td>Re-reads which cards are currently visible (skips anything <code>hidden</code>), remeasures the ring's radii, and jumps back to card 0 - call after changing which cards are shown.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in, then remeasures and redraws - the animation loop parks itself whenever the ring is still, so a live change can't wait for the next frame that happens to run.</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>Spins the ring by <code>count</code> cards (default 1) in <code>direction</code>. A nudge to the settle spring, not a queued step: several in a row blend into one spin.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> into focus - by the shortest way round while looping, resolved against the current position so a ring spun several laps doesn't unwind them all.</td></tr>
+          <tr><td><code>.index</code></td><td>The focused card's index, or -1 on an empty ring.</td></tr>
+          <tr><td><code>.radiusX</code> / <code>.radiusY</code></td><td>The ring's effective radii in pixels, after fitting to the box and scaling by <code>ringSize</code> - what's actually being drawn, rather than what was asked for.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, clears the auto-advance timer and removes every bound listener. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
+          <tr><td><code>Reel.initAll(selector, options)</code></td><td>Default selector <code>'.reel:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
+          <tr><td><code>Reel.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+          <tr><td><code>Reel.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="events">Events</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Event</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>reel-settle</code></td><td>Bubbles from a card once it's actually at rest in the focus position - not fired on every card passed through while spinning. <code>event.target</code> is the settled card.</td></tr>
+        </tbody>
+      </table>
+      <p>
+        <code>.is-focused</code> is the live counterpart to that event:
+        the mechanism puts it on whichever card is nearest the focus even
+        mid-spin, where <code>reel-settle</code> waits for the ring to
+        actually come to rest. Style it for anything that should track the
+        front card continuously - a title fading in, a border, a shadow -
+        and listen for the event for anything that should fire once.
+      </p>
+      <pre><code>.my-reel .reel-card.is-focused { box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.1); }</code></pre>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>Position and scale follow different curves on purpose:</strong>
+        every card except the one actually settling into focus sits at a
+        constant distance from center - a real ring, varying only by
+        angle - rather than spiraling inward as it shrinks toward the
+        back. Only the single card currently transitioning into or out of
+        focus interpolates its distance from center, linearly in index
+        distance, reaching full ring radius after just one card-step.
+        Scale and opacity instead follow <code>depth = (1 - cos(theta)) / 2</code>,
+        a gentler falloff by angle, where theta is a card's angular
+        distance from the focus. An earlier version drove *position* off
+        <code>depth</code> too, as a single cardioid radius - it looked
+        right in principle, but <code>x = depth * radiusX * sin(theta)</code>
+        is tangent to zero right at the focus no matter how <code>depth</code>
+        is shaped (<code>sin(theta)</code> itself vanishes linearly there),
+        so the nearest neighbor ended up sitting almost exactly behind the
+        focused card instead of visibly beside it. Ramping position to
+        full radius immediately - rather than growing it out from zero the
+        way scale does - is what keeps every other card visibly on the
+        ring instead of hidden behind the one in front.
+      </p>
+      <p>
+        <strong>Index distance, not angle, is what's unbounded:</strong>
+        while looping, <code>_pos</code> is a continuous real number
+        that's never clamped - spin it as many laps as you like in either
+        direction. Each card's actual on-screen angle comes from the
+        shortest circular distance between its index and <code>_pos</code>
+        (wrapping at the card count), then that angle is clamped to
+        +/-180deg. Without the clamp, a dense ring - many cards, or a
+        large <code>cardAngle</code> - could overshoot past the single
+        point directly behind the focus and start doubling back the wrong
+        way; with it, anything that far out just piles up at that one
+        back point instead. With <code>loop: false</code>, distances stop
+        wrapping entirely: a card far ahead of or behind the focus stays
+        far away rather than reappearing round the other side, and the
+        +/-180deg clamp is what parks it (faded out) at the back.
+      </p>
+      <p>
+        <strong>Wheel capture, and what gets handed back:</strong> a
+        closed loop never runs out of ring, so there's no boundary to
+        release wheel capture at the way Sweep's strip has one -
+        <code>wheelAxis</code> is the only thing deciding what passes
+        through to the page. Taking the vertical axis means calling
+        <code>preventDefault</code> on it, which stops page scroll while
+        the pointer is over the ring; the reason it's still the default is
+        that a mouse wheel reports nothing but <code>deltaY</code>, so
+        horizontal-only silently leaves the wheel dead for everyone not on
+        a trackpad. Turning <code>loop</code> off adds Sweep's boundary
+        release on top: at either end, a scroll that can't turn the ring
+        any further is left completely alone.
+      </p>
+      <p>
+        <strong>Two-phase input, same as Sweep:</strong> while wheel or
+        drag input is actively arriving, position tracks it directly, 1:1.
+        The moment it goes idle, a damped-spring coast takes over -
+        velocity decays via <code>friction</code> while a constant pull
+        toward the nearest card (<code>snapStrength</code>) is folded in,
+        settling exactly on a card rather than wherever input stopped.
+      </p>
+      <p>
+        <strong>There is deliberately no hover-follow:</strong> Sweep makes
+        whatever card is under the pointer the settle target, and on a flat
+        strip that reads as scrubbing. On a ring it feeds back on itself.
+        Turning the ring is itself what slides the next card under a
+        pointer that never moved, so re-reading "the card under the
+        pointer" every frame hands the spring a new destination on each
+        one, and the ring ends up chasing its own motion - racing through
+        cards far faster than the pointer actually crossed them. It was
+        tried here with two governors holding it down (a latch, so a new
+        card couldn't take over mid-flight, and a cap on how far one hover
+        could ask the ring to travel) and the honest conclusion was that a
+        mechanism needing two governors to stop fighting the pointer
+        doesn't belong on this one. Spinning a reel is a deliberate act:
+        wheel, drag, click a card, or the arrow keys. The pointer merely
+        being over the ring does exactly one thing - it pauses
+        <code>autoAdvance</code>, so a self-turning ring holds still while
+        someone is reading it.
+      </p>
+      <p>
+        <strong>Targets resolve through the shortest lap, not the raw
+        index:</strong> a settle target is a card index plus whatever whole
+        number of laps gets there by the shortest path from the current
+        position - so clicking a card never sends the ring spinning several
+        extra laps just to "arrive from the front" the way a naive
+        <code>target = index</code> would once <code>_pos</code> had
+        wandered far from zero. <code>to()</code> and click-to-select both
+        go through it.
+      </p>
+      <p>
+        <strong>The loop parks when the ring is still:</strong>
+        <code>requestAnimationFrame</code> only runs while something is
+        actually moving - a drag, a scroll, or a settle spring still more
+        than a hair from its target - and stops itself otherwise, same as
+        Dial. That's why <code>update()</code> remeasures and redraws
+        rather than leaving it to the next frame: on a parked ring there
+        isn't one. "The spring has arrived" is deliberately the same test
+        that finalizes the settle, rather than a second comparison
+        alongside it: as two separate comparisons the loop could quit a
+        hair short of the card, leaving the position at 1.0003 instead of 1
+        and never firing <code>reel-settle</code> or writing the remembered
+        index at all.
+      </p>
+      <p>
+        <strong>The root is focusable, and the arrow keys spin it:</strong>
+        unless the host already set them, <code>tabindex="0"</code> and
+        <code>role="group"</code> go on the root element, and
+        Left/Up/Right/Down call <code>step()</code> - so the ring is
+        reachable and operable without a pointer at all. Setting either
+        attribute yourself is respected and left alone. A key press that
+        landed in a text field, a <code>&lt;select&gt;</code> or a
+        contenteditable region inside a card is left entirely alone,
+        though: a card can hold anything, and the arrow keys belong to the
+        caret there, not to the ring.
+      </p>
+      <p>
+        <strong>Position is remembered per instance, per tab:</strong>
+        same as Sweep - the focused card's index is written to
+        <code>sessionStorage</code>, keyed by the root element's own
+        <code>id</code>, and restored once on an instance's first
+        <code>refresh()</code>.
+      </p>
+    </div>
+  </div>

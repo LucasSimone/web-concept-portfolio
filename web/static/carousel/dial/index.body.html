@@ -1,0 +1,140 @@
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Turn it, scroll it, or click a card</p>
+      <h1>Dial</h1>
+      <p class="direction">The View-Master reel itself, rather than the viewer. Cards are mounted radially around a hub on the bottom edge, so the top half of the disc arcs across the window. Twelve o'clock is the gate — and since a radially-mounted card is only upright at the top of its arc, the selected one is the only card the right way up. Grab the face anywhere and turn it like a knob.</p>
+
+      <div class="dl-device">
+        <div class="dial" id="dialDemo" aria-label="Dial demo reel">
+          <div class="dial-face" id="dialDemoFace">
+            <div class="dial-card dl-card"><span class="dl-card__num">01</span><span class="dl-card__art dl-art--a"></span><span class="dl-card__title">The Gate</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">02</span><span class="dl-card__art dl-art--b"></span><span class="dl-card__title">Radial Mount</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">03</span><span class="dl-card__art dl-art--c"></span><span class="dl-card__title">Turn the Face</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">04</span><span class="dl-card__art dl-art--d"></span><span class="dl-card__title">Click to Spin</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">05</span><span class="dl-card__art dl-art--e"></span><span class="dl-card__title">Shortest Way</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">06</span><span class="dl-card__art dl-art--f"></span><span class="dl-card__title">Over the Horizon</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">07</span><span class="dl-card__art dl-art--a"></span><span class="dl-card__title">Hub and Rim</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">08</span><span class="dl-card__art dl-art--b"></span><span class="dl-card__title">Settle</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">09</span><span class="dl-card__art dl-art--c"></span><span class="dl-card__title">Free Spin</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">10</span><span class="dl-card__art dl-art--d"></span><span class="dl-card__title">Fourteen Frames</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">11</span><span class="dl-card__art dl-art--e"></span><span class="dl-card__title">Seven in View</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">12</span><span class="dl-card__art dl-art--f"></span><span class="dl-card__title">No Last Card</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">13</span><span class="dl-card__art dl-art--a"></span><span class="dl-card__title">Closed Disc</span></div>
+            <div class="dial-card dl-card"><span class="dl-card__num">14</span><span class="dl-card__art dl-art--b"></span><span class="dl-card__title">Back to One</span></div>
+          </div>
+        </div>
+
+        <!-- Driven by the bubbling dial-settle event, so it reads the card
+             that actually came to rest at the gate rather than every one
+             turned past on the way there. -->
+        <p class="dl-plate">
+          <span class="dl-plate__count" id="dialCount">01 / 14</span>
+          <span class="dl-plate__title" id="dialTitle">The Gate</span>
+        </p>
+      </div>
+
+      <p class="dl-help">Drag the face to turn it, scroll over it either way, click any card, or use <kbd>←</kbd> <kbd>→</kbd>.</p>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">Lift the hub into the box</p>
+      <h2>The whole disc at once</h2>
+      <p class="direction">The half circle is just where <code>pivot</code> happens to sit by default — on the bottom edge, so exactly half the reel is in the window. Move the hub up into the box and the rest of the disc comes with it, until every card is in view and the arc closes into the reel as you'd hold it. Same mechanism, same rotational drag; the only thing that changed is where the center is.</p>
+
+      <div class="dl-device dl-device--full">
+        <div class="dial" id="dialFull" aria-label="Full-face dial reel">
+          <div class="dial-face">
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--a"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--b"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--c"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--d"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--e"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--f"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--a"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--b"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--c"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--d"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--e"></span></div>
+            <div class="dial-card dl-card dl-card--mini"><span class="dl-card__art dl-art--f"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="gallery">
+      <p class="eyebrow">Text, images, video — anything</p>
+      <h2>Cards are just content</h2>
+      <p class="direction">The mechanism only ever touches a card's transform and opacity. What goes inside is entirely yours — a paragraph, a real <code>&lt;img&gt;</code>, a video, a pull quote, a figure, a link. Bigger cards only want a bigger disc and a wider <code>cardAngle</code> so they still sit apart on it. The link on the last card works once that card is at the gate, and spins it up to the gate before that.</p>
+
+      <div class="dl-device dl-device--wide">
+        <div class="dial" id="dialContent" aria-label="Content dial">
+          <div class="dial-face">
+            <div class="dial-card dl-big">
+              <h3 class="dl-big__h">Text</h3>
+              <p class="dl-big__p">A card is whatever markup you put inside <code>.dial-card</code>. Nothing here is special — this is a heading and a paragraph, laid out by your own CSS, rotated by the disc.</p>
+            </div>
+
+            <figure class="dial-card dl-big dl-big--figure">
+              <img class="dl-big__img" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 110'%3E%3Crect width='160' height='110' fill='%23f4f4f4'/%3E%3Ccircle cx='44' cy='32' r='16' fill='%23111'/%3E%3Cpath d='M0 110 L58 44 L104 94 L126 70 L160 110Z' fill='%232b2b2b'/%3E%3C/svg%3E" />
+              <figcaption class="dl-big__cap">A real <code>&lt;img&gt;</code>, scaled and tilted with the card</figcaption>
+            </figure>
+
+            <div class="dial-card dl-big dl-big--figure">
+              <span class="dl-big__video"><span class="dl-play" aria-hidden="true"></span></span>
+              <span class="dl-big__cap">A video sits in the same slot — the disc never looks inside</span>
+            </div>
+
+            <blockquote class="dial-card dl-big dl-big--quote">
+              <p class="dl-big__quote">Every card is rigidly mounted to one disc, so its angle is the whole of its state.</p>
+              <cite class="dl-big__cite">— the notes</cite>
+            </blockquote>
+
+            <div class="dial-card dl-big dl-big--stat">
+              <span class="dl-big__num">26°</span>
+              <span class="dl-big__cap">per card. Fourteen of them close the disc, with seven above the horizon.</span>
+            </div>
+
+            <div class="dial-card dl-big">
+              <h3 class="dl-big__h">A list</h3>
+              <ul class="dl-big__list">
+                <li>Drag the face to turn it</li>
+                <li>Scroll across it</li>
+                <li>Click any card</li>
+                <li>Arrow keys</li>
+              </ul>
+            </div>
+
+            <div class="dial-card dl-big dl-big--cta">
+              <h3 class="dl-big__h">Interactive</h3>
+              <p class="dl-big__p">Links and buttons inside the card at the gate behave normally. Away from it, a click brings the card here first.</p>
+              <a class="dl-big__link" href="/docs/carousel/dial.html">Read the docs →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery">
+      <p class="eyebrow">One disc, no two alike</p>
+      <h2>They don't have to match</h2>
+      <p class="direction">Each card's distance from the hub is worked out from its own height, so a disc carries whatever mix of sizes you give it and every card still sits flush against the rim — taller ones simply reach further in toward the hub. Nothing on this disc shares a width or a height with anything else.</p>
+
+      <div class="dl-device dl-device--mixed">
+        <div class="dial" id="dialMixed" aria-label="Mixed size dial">
+          <div class="dial-face">
+            <div class="dial-card dl-free dl-free--1"><span>150 × 110</span></div>
+            <div class="dial-card dl-free dl-free--2"><span>96 × 220</span></div>
+            <div class="dial-card dl-free dl-free--3"><span>170 × 150</span></div>
+            <div class="dial-card dl-free dl-free--4"><span>120 × 90</span></div>
+            <div class="dial-card dl-free dl-free--5"><span>140 × 190</span></div>
+            <div class="dial-card dl-free dl-free--6"><span>80 × 130</span></div>
+            <div class="dial-card dl-free dl-free--7"><span>165 × 240</span></div>
+            <div class="dial-card dl-free dl-free--8"><span>110 × 160</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="dial.js"></script>
+  <script src="demo.js"></script>

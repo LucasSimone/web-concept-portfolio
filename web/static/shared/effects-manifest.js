@@ -155,5 +155,29 @@
       jsPath: '/carousel/sweep/sweep.js',
       docsPath: '/docs/carousel/sweep.html',
     },
+    {
+      slug: 'reel',
+      name: 'Reel',
+      category: 'carousel',
+      demoPath: '/carousel/reel/index.html',
+      jsPath: '/carousel/reel/reel.js',
+      docsPath: '/docs/carousel/reel.html',
+    },
+    {
+      slug: 'deck',
+      name: 'Deck',
+      category: 'carousel',
+      demoPath: '/carousel/deck/index.html',
+      jsPath: '/carousel/deck/deck.js',
+      docsPath: '/docs/carousel/deck.html',
+    },
+    {
+      slug: 'dial',
+      name: 'Dial',
+      category: 'carousel',
+      demoPath: '/carousel/dial/index.html',
+      jsPath: '/carousel/dial/dial.js',
+      docsPath: '/docs/carousel/dial.html',
+    },
   ];
 })(window);

@@ -57,10 +57,23 @@
  * page before it has its first card.
  */
 (function (global) {
+  // See shared/carousel-kit.js - the arithmetic, the per-tab memory of
+  // which card was focused, and the initAll/get/getAll surface that all
+  // four carousels here share. Already bundled into the file this URL
+  // serves, so there is nothing extra to load.
+  const { clamp, createIndexMemory, registerEffect } = global.CarouselKit;
+
   const STYLE_ID = 'sweep-styles';
 
   const CSS = `
 .sweep {
+  /* Makes this element a container-query context, so the host can size
+     cards in cqw units and have them track the strip's own width rather
+     than the viewport's. Nothing here scales cards automatically - that
+     stays the host's CSS - but without this there is no unit that
+     follows this box, and fixed-px cards on a fluid strip crowd together
+     as it shrinks. Costs nothing when unused. */
+  container-type: inline-size;
   position: relative;
   /* Establishes a stacking context so the focused card's z-index (up to
      ~1000, see _render() below) stays contained here instead of competing
@@ -178,19 +191,14 @@
       this._hoverIndex = null;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
-      // Remembers the focused card per instance (by element id) across page
-      // loads within the same tab, so navigating to an effect and back to
-      // the homepage doesn't dump you back at card 0. sessionStorage (not
-      // localStorage) so it fades once the tab/session ends rather than
-      // sticking around indefinitely. Restored once, on the first refresh()
-      // - later refresh() calls (e.g. from a type filter change) still
-      // reset to card 0 as before.
-      this._persistKey = root.id ? `sweep-pos:${root.id}` : null;
-      // This effect was renamed from "carousel" to "sweep"; a tab already
-      // open from before that rename still has its position saved under
-      // the old key. Read it as a fallback so that deploy doesn't reset
-      // anyone's carousel back to card 0.
-      this._legacyPersistKey = root.id ? `carousel-pos:${root.id}` : null;
+      // Remembers the focused card across page loads within the same tab, so
+      // navigating to an effect and back to the homepage doesn't dump you at
+      // card 0. Restored once, on the first refresh() - later refresh()
+      // calls (e.g. from a type filter change) still reset to card 0 as
+      // before. The second prefix is the pre-rename one this effect used
+      // when it was called "carousel", read as a fallback so that deploy
+      // didn't reset anyone's position.
+      this._memory = createIndexMemory(root, 'sweep', 'carousel');
       this._restored = false;
 
       this._onWheel = this._onWheel.bind(this);
@@ -246,7 +254,15 @@
       };
       this.track.addEventListener('mousemove', this._onTrackEdgeHover);
       this.track.addEventListener('mouseleave', this._onTrackEdgeHover);
-      global.addEventListener('resize', this._onResize);
+      // A ResizeObserver on the root rather than a window resize listener.
+      // The element's size doesn't only change when the viewport does - a
+      // sidebar opening, a container query, a font finally loading, or
+      // anything sized off its container all resize it with no resize
+      // event at all, and the geometry derived here would silently go
+      // stale until the window happened to change. The observer also
+      // covers the window case, so it replaces that listener outright.
+      this._resizeObserver = new ResizeObserver(() => this._onResize());
+      this._resizeObserver.observe(this.root);
 
       // Stop the loop once the track has scrolled out of view - see
       // background/fireflies/fireflies.js for why (requestAnimationFrame
@@ -269,7 +285,7 @@
     // Re-reads which cards are visible (e.g. after a filter change) and
     // jumps back to the first one — call after hiding/showing cards. The
     // very first call (from the constructor) instead restores whatever
-    // card was last focused, if one was persisted (see _persistKey).
+    // card was last focused, if one was persisted (see this._memory).
     refresh() {
       this._cards = Array.from(this.track.children).filter((el) => !el.hidden);
       this._maxIndex = Math.max(0, this._cards.length - 1);
@@ -278,7 +294,7 @@
       let startIndex = 0;
       if (!this._restored) {
         this._restored = true;
-        const stored = this._readStoredIndex();
+        const stored = this._memory.read();
         if (stored !== null) startIndex = clamp(stored, 0, this._maxIndex);
       }
 
@@ -306,28 +322,6 @@
       return this.options.hoverFollow && this._cards.length >= MIN_HOVER_FOLLOW_CARDS;
     }
 
-    _readStoredIndex() {
-      if (!this._persistKey) return null;
-      try {
-        const raw = sessionStorage.getItem(this._persistKey)
-          ?? (this._legacyPersistKey && sessionStorage.getItem(this._legacyPersistKey));
-        if (raw === null || raw === undefined) return null;
-        const index = parseInt(raw, 10);
-        return Number.isFinite(index) ? index : null;
-      } catch (e) {
-        return null;
-      }
-    }
-
-    _writeStoredIndex(index) {
-      if (!this._persistKey) return;
-      try {
-        sessionStorage.setItem(this._persistKey, String(index));
-      } catch (e) {
-        // Ignore (e.g. storage disabled/full) - just means it won't persist.
-      }
-    }
-
     // Fires a 'sweep-settle' event (bubbling) on the card at `index`
     // once it's the one actually at rest in the focus position - not on
     // every card passed through while moving. Lets a page react to "this
@@ -337,7 +331,7 @@
     _setSettledIndex(index) {
       if (index === this._settledIndex) return;
       this._settledIndex = index;
-      this._writeStoredIndex(index);
+      this._memory.write(index);
       const card = this._cards[index];
       if (card) card.dispatchEvent(new CustomEvent('sweep-settle', { bubbles: true }));
     }
@@ -521,44 +515,19 @@
       this._hoverDelegate.destroy();
       this.track.removeEventListener('mousemove', this._onTrackEdgeHover);
       this.track.removeEventListener('mouseleave', this._onTrackEdgeHover);
-      global.removeEventListener('resize', this._onResize);
+      this._resizeObserver.disconnect();
       global.removeEventListener('pointermove', this._onPointerMove);
       global.removeEventListener('pointerup', this._onPointerUp);
     }
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function initAll(selector = '.sweep:not(.is-empty)', options = {}) {
-    injectStyles();
-    return Array.from(document.querySelectorAll(selector))
-      .filter((el) => !el.__sweepInstance)
-      .map((el) => {
-        const instance = new Sweep(el, options);
-        el.__sweepInstance = instance;
-        return instance;
-      });
-  }
-
-  function get(elOrSelector) {
-    const el = typeof elOrSelector === 'string' ? document.querySelector(elOrSelector) : elOrSelector;
-    return el ? el.__sweepInstance || null : null;
-  }
-
-  function getAll(selector = '.sweep:not(.is-empty)') {
-    return Array.from(document.querySelectorAll(selector))
-      .map((el) => el.__sweepInstance)
-      .filter(Boolean);
-  }
-
-  Sweep.initAll = initAll;
-  Sweep.get = get;
-  Sweep.getAll = getAll;
   Sweep.DEFAULTS = DEFAULTS;
 
   global.Sweep = Sweep;
 
-  document.addEventListener('DOMContentLoaded', () => initAll());
+  registerEffect(Sweep, {
+    slug: 'sweep',
+    selector: '.sweep:not(.is-empty)',
+    prepare: injectStyles,
+  });
 })(window);

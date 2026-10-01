@@ -1,0 +1,115 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for every control below, each a different feel for the same ring. Adjusting any control afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="dense">Dense Ring</option>
+        <option value="open">Open Fan</option>
+        <option value="tiny">Tiny Background</option>
+        <option value="snappy">Snappy</option>
+        <option value="arc">Arc With Ends</option>
+        <option value="turntable">Turntable</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Cards <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardCount">?<span class="hint" role="tooltip" id="hint-cardCount">How many cards are on the ring above. The first 7 keep their own labels; past that, extra cards are generic placeholders. Below 7, cards are hidden from the end rather than removed.</span></span></span><span id="cardCountVal" class="value"></span></label>
+      <input id="cardCountRange" type="range" min="1" max="100" step="1" value="16" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Ring size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-ringSize">?<span class="hint" role="tooltip" id="hint-ringSize">How big the ring is, as a multiple of the largest one that fits the box — so 1.00× is "as big as the box allows", measured from the element's own CSS size and the cards'. Below that pulls the ring in tight around the focus; above it isn't clamped, so cards swing out past the box's edges and you see a slice of something bigger than its window.</span></span></span><span id="ringSizeVal" class="value"></span></label>
+      <input id="ringSizeRange" type="range" min="0" max="1.5" step="0.02" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="loopCheckbox" checked />
+        Continuous loop
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-loop">?<span class="hint" role="tooltip" id="hint-loop">On, the ring is closed — spin it as many laps as you like in either direction and there's no first or last card. Off gives it two ends to stop against: card distances stop wrapping, so what's left reads as an arc that runs out, and a scroll that can't turn it any further is handed back to the page the way Sweep's strip does.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="clickToSelectCheckbox" checked />
+        Click to focus
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-clickToSelect">?<span class="hint" role="tooltip" id="hint-clickToSelect">Whether clicking a card that isn't in focus spins it there by the shortest way round, swallowing that click. The focused card always passes its clicks straight through either way, so links inside it still work.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="wheelEnabledCheckbox" checked />
+        Wheel scroll
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelEnabled">?<span class="hint" role="tooltip" id="hint-wheelEnabled">The master switch for scrolling over the ring — off leaves drag, click and the arrow keys as the ways to spin it, whatever Wheel axis says.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label>Wheel axis
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelAxis">?<span class="hint" role="tooltip" id="hint-wheelAxis">Which scroll axis spins the ring. A mouse wheel only ever reports vertical, a trackpad reports both — so Both is what makes one ring work for either. Taking the vertical axis means the page stops scrolling while the pointer is over a looping ring; Horizontal never interferes with the page, but then a mouse wheel does nothing.</span></span>
+      </label>
+      <select id="wheelAxisSelect">
+        <option value="both" selected>Both</option>
+        <option value="vertical">Vertical only</option>
+        <option value="horizontal">Horizontal only</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Auto spin <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoAdvance">?<span class="hint" role="tooltip" id="hint-autoAdvance">Milliseconds between automatic steps; Off leaves the ring still until something touches it. It pauses while the pointer is over the ring, while you drag or scroll it, while it's off screen, in a background tab, or under a reduced-motion setting — and with the loop off it walks back the other way at the ends instead of pressing against them.</span></span></span><span id="autoAdvanceVal" class="value"></span></label>
+      <input id="autoAdvanceRange" type="range" min="0" max="4000" step="100" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Density <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardAngle">?<span class="hint" role="tooltip" id="hint-cardAngle">Degrees of ring rotation per card step. Lower packs more cards into view at once around the ring; higher spreads them further apart and shows fewer before they swing past the back.</span></span></span><span id="cardAngleVal" class="value"></span></label>
+      <input id="cardAngleRange" type="range" min="12" max="70" step="1" value="34" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Background size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-minScale">?<span class="hint" role="tooltip" id="hint-minScale">The smallest a card ever shrinks to, directly behind the focused one.</span></span></span><span id="minScaleVal" class="value"></span></label>
+      <input id="minScaleRange" type="range" min="0.05" max="0.7" step="0.01" value="0.32" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Visible depth <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxDepth">?<span class="hint" role="tooltip" id="hint-maxDepth">How much of the ring's far side stays populated before fading out. Higher keeps cards visible almost all the way round; lower declutters to just the focus and its nearest neighbors.</span></span></span><span id="maxDepthVal" class="value"></span></label>
+      <input id="maxDepthRange" type="range" min="0.3" max="1" step="0.02" value="0.92" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Card step <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardStep">?<span class="hint" role="tooltip" id="hint-cardStep">Pixels of wheel/drag input that spin the ring by exactly one card. Lower reads as lighter and faster; higher takes more input to travel the same distance.</span></span></span><span id="cardStepVal" class="value"></span></label>
+      <input id="cardStepRange" type="range" min="60" max="320" step="10" value="140" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Wheel sensitivity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelSensitivity">?<span class="hint" role="tooltip" id="hint-wheelSensitivity">Multiplier on raw wheel delta before it's converted to a card distance via Card step.</span></span></span><span id="wheelSensitivityVal" class="value"></span></label>
+      <input id="wheelSensitivityRange" type="range" min="0.2" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Max velocity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxVelocity">?<span class="hint" role="tooltip" id="hint-maxVelocity">Ceiling on how much velocity (in cards per frame) a single wheel tick or drag frame can hand to the coast.</span></span></span><span id="maxVelocityVal" class="value"></span></label>
+      <input id="maxVelocityRange" type="range" min="0.05" max="1.2" step="0.05" value="0.4" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Friction <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-friction">?<span class="hint" role="tooltip" id="hint-friction">How much velocity decays each frame once input goes idle. Lower coasts longer before settling; higher stops almost immediately.</span></span></span><span id="frictionVal" class="value"></span></label>
+      <input id="frictionRange" type="range" min="0.4" max="0.97" step="0.01" value="0.8" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Snap strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-snapStrength">?<span class="hint" role="tooltip" id="hint-snapStrength">How hard the idle spring pulls toward the nearest card each frame. Higher snaps in tighter and faster; lower drifts more loosely before catching.</span></span></span><span id="snapStrengthVal" class="value"></span></label>
+      <input id="snapStrengthRange" type="range" min="0.01" max="0.15" step="0.005" value="0.045" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Wheel idle delay <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelIdleDelay">?<span class="hint" role="tooltip" id="hint-wheelIdleDelay">Milliseconds of no wheel events before Reel treats wheel input as having stopped and switches over to the idle coast/snap.</span></span></span><span id="wheelIdleDelayVal" class="value"></span></label>
+      <input id="wheelIdleDelayRange" type="range" min="40" max="400" step="10" value="140" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Drag threshold <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dragThreshold">?<span class="hint" role="tooltip" id="hint-dragThreshold">Pixels of pointer movement before a press counts as a drag rather than a click straight through to the card.</span></span></span><span id="dragThresholdVal" class="value"></span></label>
+      <input id="dragThresholdRange" type="range" min="0" max="24" step="1" value="6" />
+    </div>

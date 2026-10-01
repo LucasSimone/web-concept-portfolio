@@ -37,10 +37,14 @@
       <pre><code>&lt;script src="sweep.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Depends on <code>bindHoverDelegate</code> for its pointer-follow
-        tracking - the downloaded file above already has that bundled in, so
-        it's the one script tag above and nothing else. (Building from this
-        repo's own source instead, that's <code>shared/hover-delegate.js</code>,
-        loaded before <code>sweep.js</code>.) Injects its own
+        tracking, and shares its per-tab position memory and its
+        <code>initAll</code>/<code>get</code>/<code>getAll</code> surface
+        with the other three carousels here - the downloaded file above
+        already has both bundled in, so it's the one script tag above and
+        nothing else. (Building from this repo's own source instead, those
+        are <code>shared/carousel-kit.js</code> and
+        <code>shared/hover-delegate.js</code>, loaded before
+        <code>sweep.js</code>.) Injects its own
         <code>&lt;style&gt;</code> tag defining <code>.sweep</code>,
         <code>.sweep-track</code>, <code>.sweep-line</code> and
         <code>.sweep-card</code>, so no companion CSS file is required -
@@ -50,13 +54,19 @@
       </p>
 
       <h2 id="quick-start">Quick Start</h2>
-      <pre><code>&lt;div class="sweep" style="height:240px"&gt;
+      <pre><code>&lt;style&gt;
+  .my-sweep { height: 240px; }
+  /* cqw = 1% of the strip's own width, so cards track the strip */
+  .my-sweep .sweep-card { width: min(280px, 40cqw); height: 240px; }
+&lt;/style&gt;
+
+&lt;div class="sweep my-sweep"&gt;
   &lt;div class="sweep-line" data-sweep-line="top"&gt;&lt;/div&gt;
   &lt;div class="sweep-line" data-sweep-line="bottom"&gt;&lt;/div&gt;
   &lt;div class="sweep-track"&gt;
-    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;One&lt;/div&gt;
-    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;Two&lt;/div&gt;
-    &lt;div class="sweep-card" style="width:280px;height:240px"&gt;Three&lt;/div&gt;
+    &lt;div class="sweep-card"&gt;One&lt;/div&gt;
+    &lt;div class="sweep-card"&gt;Two&lt;/div&gt;
+    &lt;div class="sweep-card"&gt;Three&lt;/div&gt;
   &lt;/div&gt;
 &lt;/div&gt;
 &lt;script src="sweep.js"&gt;&lt;/script&gt;</code></pre>

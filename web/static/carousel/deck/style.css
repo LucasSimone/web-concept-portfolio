@@ -1,0 +1,704 @@
+main {
+  margin-right: 300px;
+  overflow: clip;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 8vh 5vw 6vh;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 110px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
+.direction {
+  max-width: 62ch;
+  margin: 0;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+.direction code,
+.dk-help code {
+  font-size: 0.92em;
+}
+
+/* Structural CSS (.deck, .deck-port, .deck-frame and the controls it builds
+   for itself) ships inside deck.js and is applied automatically. A deck is
+   already width: 100% at a 3/2 ratio, so all a page has to decide is how wide
+   to let it get and what shape it should be - which is what every rule in this
+   file that touches a .deck does. */
+#deckDemo {
+  max-width: 680px;
+  --dk-aspect: 16 / 10;
+  --dk-radius: 4px;
+}
+
+.dk-device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+/* The caption under the deck, updated from the deck-settle event in demo.js. */
+.dk-plate {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.dk-plate__count {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}
+
+.dk-plate__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.dk-help {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.dk-help kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 4px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 6vh 8vw 10vh;
+}
+
+.gallery h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+/* --- The six-transition row ------------------------------------------- */
+
+.dk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px 24px;
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 1rem;
+}
+
+.dk-sample {
+  margin: 0;
+  text-align: left;
+}
+
+.dk-sample .deck {
+  --dk-aspect: 4 / 3;
+  --dk-radius: 3px;
+}
+
+.dk-sample figcaption {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.6;
+}
+
+.dk-sample figcaption b {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* --- Cards on the page ------------------------------------------------ */
+
+/* The only two things this look needs from the page: no background behind the
+   frames, and room below the box for the pile to hang into now that nothing
+   clips it. The deck itself is configured with one option (clip: false). */
+.dk-loose {
+  max-width: 520px;
+  --dk-aspect: 5 / 3;
+  --dk-body: transparent;
+  margin: 1rem 0 4rem;
+}
+
+/* Frames are bare boxes - with no deck background behind them they need their
+   own, and a shadow to sit on the page as cards rather than as flat panels. */
+.dk-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2cqw;
+  padding: 8cqw;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.dk-card h3 {
+  margin: 0;
+  font-size: 5cqw;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.dk-card p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 2.6cqw;
+  line-height: 1.45;
+  opacity: 0.65;
+}
+
+/* --- Custom transition ------------------------------------------------ */
+
+.dk-code {
+  max-width: 560px;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dk-custom {
+  max-width: 420px;
+  --dk-aspect: 4 / 3;
+  --dk-radius: 4px;
+}
+
+/* --- Picture frames --------------------------------------------------- */
+
+.dk-slide {
+  background-color: #f1f1f1;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+/* Concentric aperture rings. */
+.dk-art--1 {
+  background-image:
+    repeating-radial-gradient(circle at 50% 50%, #101010 0 2px, transparent 2px 28px),
+    radial-gradient(circle at 50% 50%, #ffffff 0%, #d4d4d4 68%, #959595 100%);
+}
+
+/* Sun over a horizon. The sky is graded rather than flat so the white disc has
+   something to sit against. */
+.dk-art--2 {
+  background-image:
+    radial-gradient(circle 70px at 50% 36%, #ffffff 0 54%, #5e5e5e 54% 57%, transparent 57%),
+    linear-gradient(#9a9a9a 0%, #e4e4e4 52%, #fdfdfd 62%, #101010 63% 64.5%,
+      #3c3c3c 64.5%, #1b1b1b 100%);
+}
+
+/* A ridge line: two mirrored diagonals meeting at a peak, with a paler second
+   peak set back behind it. Each half holds the slope that rises *toward* the
+   seam, so the dark side of each diagonal faces inward and the two meet at a
+   summit rather than bottoming out in a valley. */
+.dk-art--3 {
+  background-image:
+    linear-gradient(to top left, #141414 49%, transparent 49.6%),
+    linear-gradient(to top right, #141414 49%, transparent 49.6%),
+    linear-gradient(to top left, #6b6b6b 48%, transparent 48.6%),
+    linear-gradient(to top right, #6b6b6b 48%, transparent 48.6%),
+    linear-gradient(to top left, #8f8f8f 48%, transparent 48.6%),
+    linear-gradient(to top right, #8f8f8f 48%, transparent 48.6%),
+    linear-gradient(#ffffff, #c9c9c9);
+  /* Each pair's two halves have to meet exactly at the summit. For a layer
+     sized S% wide, a background-position of P% puts its left edge at
+     P*(100-S)% - so the halves only coincide at the positions below. */
+  background-size: 50% 58%, 50% 58%, 20% 44%, 20% 44%, 16% 32%, 16% 32%, 100% 100%;
+  background-position: 0 100%, 100% 100%, 12% 100%, 37% 100%, 76% 100%, 95% 100%, 0 0;
+}
+
+/* Canyon strata. */
+.dk-art--4 {
+  background-image:
+    linear-gradient(transparent 45%, rgba(0, 0, 0, 0.3)),
+    repeating-linear-gradient(177deg,
+      #f2f2f2 0 15px, #c4c4c4 15px 23px, #6a6a6a 23px 27px, #e2e2e2 27px 48px);
+}
+
+/* Ripples spreading from the near shore. The rings crowd into moire as they
+   flatten toward the far side, so the top half is washed back out to leave
+   only the near water legible. */
+.dk-art--5 {
+  background-image:
+    linear-gradient(#ffffff 20%, rgba(255, 255, 255, 0) 60%),
+    repeating-radial-gradient(ellipse 62% 32% at 50% 86%, #1b1b1b 0 2px, transparent 2px 26px),
+    linear-gradient(#ffffff, #c0c0c0);
+}
+
+/* A ringed planet, seen near edge-on. */
+.dk-art--6 {
+  background-image:
+    radial-gradient(ellipse 42% 12% at 50% 48%, transparent 0 70%, #1f1f1f 71% 77%, transparent 78%),
+    radial-gradient(circle 84px at 50% 48%, #121212 0 99%, transparent 100%),
+    linear-gradient(#fafafa, #cbcbcb);
+}
+
+/* A halftone gradient. */
+.dk-art--7 {
+  background-image:
+    linear-gradient(115deg, #ffffff 6%, rgba(255, 255, 255, 0) 72%),
+    radial-gradient(circle 3.5px at 50% 50%, #131313 0 100%, transparent 100%),
+    linear-gradient(115deg, #ffffff, #b4b4b4);
+  background-size: 100% 100%, 16px 16px, 100% 100%;
+  background-position: 0 0, 0 0, 0 0;
+  background-repeat: no-repeat, repeat, no-repeat;
+}
+
+/* --- Content frames --------------------------------------------------- */
+
+.dk-content {
+  max-width: 720px;
+  --dk-aspect: 16 / 9;
+  --dk-radius: 4px;
+  --dk-body: #0d0d0d;
+  margin-top: 1rem;
+}
+
+/* Everything inside a frame is sized in cqw, which tracks the deck's own width
+   because .deck is a container-query context - so these panels hold their
+   proportions on a 720px deck and a 320px one alike. */
+.dk-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.6cqw;
+  /* Wider side padding than top and bottom, so the copy clears the overlaid
+     arrows instead of running under them. */
+  padding: 7cqw 10cqw;
+  text-align: left;
+  color: #111;
+  background: #f4f4f4;
+}
+
+.dk-panel--b { background: #e8e8e8; }
+.dk-panel--c { background: #111; color: #f4f4f4; }
+.dk-panel--d {
+  background: #f4f4f4;
+  justify-content: flex-start;
+}
+
+.dk-panel__kicker {
+  margin: 0;
+  font-size: 1.8cqw;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.dk-panel h3 {
+  margin: 0;
+  font-size: 5.4cqw;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.dk-panel p {
+  max-width: 40ch;
+  margin: 0;
+  font-size: 2.4cqw;
+  line-height: 1.45;
+  opacity: 0.7;
+}
+
+.dk-panel__link {
+  margin-top: 1cqw;
+  padding: 1.4cqw 2.6cqw;
+  border: 1px solid currentColor;
+  font-size: 2.2cqw;
+  text-decoration: none;
+}
+
+.dk-panel__link:hover,
+.dk-panel__link:focus-visible {
+  background: #111;
+  color: #f4f4f4;
+}
+
+.dk-panel__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 1cqw;
+  font-size: 13cqw;
+}
+
+.dk-panel__stat span {
+  font-size: 3cqw;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* Out of the flow, filling what's left below the copy. The copy is the one
+   that gets a position (and so paints on top), because a negative z-index here
+   would sink the art behind the frame's own background instead. */
+.dk-panel--d .dk-panel__art {
+  position: absolute;
+  inset: auto 0 0;
+  height: 58%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dk-panel--d > :not(.dk-panel__art) {
+  position: relative;
+}
+
+/* --- Page-built controls ---------------------------------------------- */
+
+.dk-rig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 560px;
+  margin-top: 1rem;
+}
+
+.dk-rig__view {
+  --dk-aspect: 3 / 2;
+  --dk-radius: 4px;
+}
+
+.dk-rig__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.dk-thumbs {
+  display: flex;
+  gap: 8px;
+}
+
+.dk-thumb {
+  position: relative;
+  overflow: hidden;
+  width: 68px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #000;
+  background-color: #f1f1f1;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+/* The artwork is built from px-sized gradients meant for a 680px deck, so
+   painting it into a 68px box would just crop one black circle. This draws it
+   at the full size it was designed for and scales the result down by ten. */
+.dk-thumb::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 680px;
+  height: 440px;
+  background-image: inherit;
+  background-size: cover;
+  background-position: center;
+  transform: scale(0.1);
+  transform-origin: 0 0;
+}
+
+.dk-thumb:hover,
+.dk-thumb:focus-visible {
+  transform: translateY(-2px);
+}
+
+.dk-rig__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dk-btn {
+  padding: 8px 14px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dk-btn:hover,
+.dk-btn:focus-visible {
+  background: #000;
+  color: #fff;
+}
+
+/* A lever of this page's own: the component binds the pull gesture to anything
+   carrying data-deck-lever and publishes --dk-pull on it while the pull is
+   live. Pull it down, or just tap it. */
+.dk-lever {
+  position: relative;
+  width: 34px;
+  height: 38px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: grab;
+  touch-action: none;
+}
+
+.dk-lever i {
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 5px;
+  height: 24px;
+  margin-left: -2.5px;
+  border-radius: 3px;
+  background: #000;
+  transform-origin: 50% 100%;
+  transform: rotate(var(--dk-pull, 0deg));
+  transition: transform 220ms cubic-bezier(0.22, 1.4, 0.4, 1);
+}
+
+.dk-lever i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 13px;
+  height: 7px;
+  margin-left: -6.5px;
+  border-radius: 2px;
+  background: inherit;
+}
+
+.dk-lever.is-pulling {
+  cursor: grabbing;
+}
+
+.dk-lever.is-pulling i {
+  transition: none;
+}
+
+/* --- Sizing grid ------------------------------------------------------ */
+
+.dk-sizes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 900px;
+  margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-lever i,
+  .dk-thumb { transition: none; }
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row[hidden] { display: none; }
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* The group of knobs that belongs to whichever transition is running, rather
+   than to the deck itself. */
+.controls .control-group {
+  margin: 0 0 16px;
+  padding: 12px 12px 2px;
+  border: 1px dashed #000;
+}
+
+.controls .control-group[hidden] { display: none; }
+
+.controls .control-group__title {
+  margin: 0 0 10px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

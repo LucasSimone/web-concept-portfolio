@@ -1,0 +1,182 @@
+
+    <div class="control-row">
+      <label>Transition
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-transition">?<span class="hint" role="tooltip" id="hint-transition">What the move from one frame to the next looks like. Everything else — the controls, the input, the sizing — is identical whichever you pick. A deck can also name one in markup with <code>data-transition</code>.</span></span>
+      </label>
+      <select id="transitionSelect">
+        <option value="slide" selected>Slide</option>
+        <option value="fade">Fade</option>
+        <option value="zoom">Zoom</option>
+        <option value="stack">Stack</option>
+        <option value="cube">Cube</option>
+        <option value="stereoscope">Stereoscope</option>
+        <option value="flip">Flip (this page's own)</option>
+      </select>
+    </div>
+
+    <div class="control-group" id="transitionGroup">
+      <p class="control-group__title">Transition options <span id="scrubBadge" class="value"></span></p>
+
+      <div class="control-row" data-option="gap">
+        <label><span class="label-text">Gap <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gap">?<span class="hint" role="tooltip" id="hint-gap">Space between one frame and the next, as a fraction of the deck's width — what shows there is <code>--dk-body</code>. Only the transitions that separate frames have it; a crossfade never shows the background at all.</span></span></span><span id="gapVal" class="value"></span></label>
+        <input id="gapRange" type="range" min="0" max="0.6" step="0.02" value="0.04" />
+      </div>
+
+      <div class="control-row" data-option="arc">
+        <label><span class="label-text">Arc <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-arc">?<span class="hint" role="tooltip" id="hint-arc">Stereoscope only: how curved the swing is. At 1 the disc is small, so a frame visibly arcs and tilts on its way out; toward 0 the arc flattens until an advance is barely more than a slide. 0.5 is a real View-Master reel's proportion.</span></span></span><span id="arcVal" class="value"></span></label>
+        <input id="arcRange" type="range" min="0" max="1" step="0.02" value="0.5" />
+      </div>
+
+      <div class="control-row" data-option="zoomScale">
+        <label><span class="label-text">Zoom amount <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-zoomScale">?<span class="hint" role="tooltip" id="hint-zoomScale">How far the arriving frame scales up from, and the leaving one pushes past. 0 leaves a plain crossfade.</span></span></span><span id="zoomScaleVal" class="value"></span></label>
+        <input id="zoomScaleRange" type="range" min="0" max="0.5" step="0.01" value="0.14" />
+      </div>
+
+      <div class="control-row" data-option="stackInset">
+        <label><span class="label-text">Stack inset <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stackInset">?<span class="hint" role="tooltip" id="hint-stackInset">How far the whole pile is held in from the edges of the box. A card that covers every pixel leaves nothing for the ones behind it to peek out of, so this is what makes the deck read as a deck. At 0 the top card fills the box and the pile disappears behind it.</span></span></span><span id="stackInsetVal" class="value"></span></label>
+        <input id="stackInsetRange" type="range" min="0" max="0.3" step="0.01" value="0.12" />
+      </div>
+
+      <div class="control-row" data-option="stackScale">
+        <label><span class="label-text">Stack falloff <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stackScale">?<span class="hint" role="tooltip" id="hint-stackScale">How much smaller each waiting card is than the one in front of it. Together with the offset below, this is the whole depth of the pile.</span></span></span><span id="stackScaleVal" class="value"></span></label>
+        <input id="stackScaleRange" type="range" min="0" max="0.16" step="0.005" value="0.075" />
+      </div>
+
+      <div class="control-row" data-option="stackOffset">
+        <label><span class="label-text">Stack offset <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stackOffset">?<span class="hint" role="tooltip" id="hint-stackOffset">How far down each waiting card peeks out from under the one in front, as a percentage of the deck's height.</span></span></span><span id="stackOffsetVal" class="value"></span></label>
+        <input id="stackOffsetRange" type="range" min="0" max="16" step="0.5" value="9" />
+      </div>
+
+      <div class="control-row" data-option="flipTilt">
+        <label><span class="label-text">Flip angle <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-flipTilt">?<span class="hint" role="tooltip" id="hint-flipTilt">Degrees the frame rotates about its horizontal axis. This option belongs to the transition this page registered itself — proof that a transition of your own is no different from a built-in.</span></span></span><span id="flipTiltVal" class="value"></span></label>
+        <input id="flipTiltRange" type="range" min="20" max="140" step="5" value="90" />
+      </div>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Frames <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-frameCount">?<span class="hint" role="tooltip" id="hint-frameCount">How many frames are in the deck. The first 7 keep their own artwork and caption; past that, extras reuse the artwork. Dots disappear above 12 frames, where they would stop being an index and start being confetti.</span></span></span><span id="frameCountVal" class="value"></span></label>
+      <input id="frameCountRange" type="range" min="1" max="20" step="1" value="7" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Max width <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxWidth">?<span class="hint" role="tooltip" id="hint-maxWidth">A deck is <code>width: 100%</code>, so this is a <code>max-width</code> on the page's side — not an option. Drag it down to a phone width: the arrows and dots shrink their own hit targets with a container query, and the transition re-measures itself.</span></span></span><span id="maxWidthVal" class="value"></span></label>
+      <input id="maxWidthRange" type="range" min="240" max="900" step="10" value="680" />
+    </div>
+
+    <div class="control-row">
+      <label>Aspect ratio
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-aspect">?<span class="hint" role="tooltip" id="hint-aspect">The <code>--dk-aspect</code> custom property, the other half of sizing. Nothing inside has to change: frames fill the deck by definition.</span></span>
+      </label>
+      <select id="aspectSelect">
+        <option value="16 / 10" selected>16 : 10</option>
+        <option value="3 / 2">3 : 2</option>
+        <option value="21 / 9">21 : 9 (ultrawide)</option>
+        <option value="1 / 1">1 : 1 (square)</option>
+        <option value="4 / 5">4 : 5 (portrait)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Deck background
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-body">?<span class="hint" role="tooltip" id="hint-body">The <code>--dk-body</code> custom property — what sits behind the frames. It only shows where a transition doesn't cover the box: between sliding frames, through the arc's wedge, and around an inset stack. Set it to <code>transparent</code> and a stack becomes cards lying on the page.</span></span>
+      </label>
+      <select id="bodySelect">
+        <option value="#111" selected>Dark (default)</option>
+        <option value="transparent">Transparent (the page)</option>
+        <option value="#ffffff">White</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Step duration <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-duration">?<span class="hint" role="tooltip" id="hint-duration">Milliseconds for one frame of travel. A multi-frame jump takes longer but nothing like proportionally longer, and a drag settling a fraction of a frame takes proportionally less.</span></span></span><span id="durationVal" class="value"></span></label>
+      <input id="durationRange" type="range" min="120" max="900" step="10" value="320" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Bounce <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-bounce">?<span class="hint" role="tooltip" id="hint-bounce">How hard a move rebounds as it lands. 0 arrives dead, which is what you want if the deck is carrying text rather than pictures.</span></span></span><span id="bounceVal" class="value"></span></label>
+      <input id="bounceRange" type="range" min="0" max="1" step="0.05" value="0.2" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Autoplay <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplay">?<span class="hint" role="tooltip" id="hint-autoplay">Milliseconds between automatic advances, or off. Pauses while off screen, while the tab is hidden, while the pointer is over the deck, while anything inside it has focus, and under reduced-motion.</span></span></span><span id="autoplayVal" class="value"></span></label>
+      <input id="autoplayRange" type="range" min="0" max="6000" step="200" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Mask
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-mask">?<span class="hint" role="tooltip" id="hint-mask">Off by default. Vignette softens all four edges, porthole is a single oval, and binocular is two overlapping ellipses — the shape a pair of eyepieces makes, which only reads right on a roughly 2:1 deck. A mask fades into <code>--dk-body</code>.</span></span>
+      </label>
+      <select id="maskSelect">
+        <option value="none" selected>None</option>
+        <option value="vignette">Vignette</option>
+        <option value="porthole">Porthole</option>
+        <option value="binocular">Binocular</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Wheel
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheel">?<span class="hint" role="tooltip" id="hint-wheel">Horizontal only takes sideways trackpad deltas, so a vertical scroll always passes straight through to the page. Any direction also takes vertical ones — what a plain mouse wheel produces — at the cost of capturing page scroll while the pointer is over the deck.</span></span>
+      </label>
+      <select id="wheelSelect">
+        <option value="x" selected>Horizontal only</option>
+        <option value="any">Any direction</option>
+        <option value="off">Off</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="arrowsCheckbox" checked />
+        Arrows
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-arrows">?<span class="hint" role="tooltip" id="hint-arrows">The prev/next buttons overlaid at the sides. They drive the deck through the same <code>data-deck-prev</code> / <code>data-deck-next</code> hooks your own buttons would use.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="dotsCheckbox" checked />
+        Dots
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dots">?<span class="hint" role="tooltip" id="hint-dots">The row of dots, which both shows the position and jumps to a frame. Each one is a <code>data-deck-to</code> hook, and a jump sweeps through the frames in between rather than cutting.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="clickCheckbox" checked />
+        Click to advance
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-click">?<span class="hint" role="tooltip" id="hint-click">Whether a click or tap on the frame advances — the primary driver on a phone, where there's no wheel and no keyboard. Shift-click goes back. A press that lands on a link inside a frame stays a press on that link.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="dragCheckbox" checked />
+        Drag
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-drag">?<span class="hint" role="tooltip" id="hint-drag">On a scrubbing transition a drag tracks the pointer 1:1 and settles where you let go, carrying on if you flick it. On a ratchet one — stereoscope — it gives a little and then commits a whole frame or springs back.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="leverCheckbox" />
+        Lever
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-lever">?<span class="hint" role="tooltip" id="hint-lever">The View-Master pull lever, in the bottom-right corner — over the picture rather than in a gutter, so turning it on never changes the deck's geometry. Pull it down or tap it. An element of your own carrying <code>data-deck-lever</code> is used instead of this one whenever there is one.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="clipCheckbox" checked />
+        Clip to the box
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-clip">?<span class="hint" role="tooltip" id="hint-clip">Whether the box is a window its frames can't leave. Off lets them spill onto the page — which with a transparent background is what turns the stack into loose cards, as long as the page leaves room below the box for the pile to hang into. Leave it on for anything that lays frames out in a line, like slide or the arc, or you'll see the whole strip at once.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="glareCheckbox" />
+        Glare
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glare">?<span class="hint" role="tooltip" id="hint-glare">The lens sheen and vignette laid over the frames. Off shows the frames as they actually are.</span></span>
+      </label>
+    </div>

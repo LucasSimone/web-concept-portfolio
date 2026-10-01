@@ -1,0 +1,479 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Carousel · Turn / Scroll / Click</p>
+      <h1>Dial</h1>
+      <p>
+        The View-Master reel itself - the cardboard disc you push into the
+        viewer - rather than the viewer. Cards are mounted radially around
+        a hub sitting on the bottom edge of the box, so what's in view is
+        the top half of the reel: a fan of cards arcing over, each tilted
+        to point outward from the center, cropped where the disc runs out
+        of window. Twelve o'clock is the gate, and because a
+        radially-mounted card is only upright at the top of its arc, the
+        selected card is also the only one the right way up.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/carousel/dial/index.html">View Demo</a>
+        <a class="btn" href="/carousel/dial/dial.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#events">Events</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="dial.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        One script tag and nothing else. The disc shares its wrap-around
+        arithmetic, its per-tab position memory and its
+        <code>initAll</code>/<code>get</code>/<code>getAll</code> surface
+        with the other three carousels here, and the file above already has
+        that bundled in - so there is nothing extra to fetch. (Building from
+        this repo's own source instead, that part is
+        <code>shared/carousel-kit.js</code>, loaded before
+        <code>dial.js</code>.) Injects its own <code>&lt;style&gt;</code>
+        tag defining <code>.dial</code>, <code>.dial-face</code> and
+        <code>.dial-card</code> plus the three parts of the reel it draws
+        for itself - the rim, the hub and the gate mark - so no companion
+        CSS file is required. The host supplies the box's size and the
+        cards' own size and chrome.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;style&gt;
+  .my-dial { width: min(700px, 92vw); aspect-ratio: 700 / 375; }
+  /* cqw = 1% of the dial's own width, so cards scale with the disc */
+  .my-dial .dial-card { width: 13.7cqw; height: 18cqw; }
+&lt;/style&gt;
+
+&lt;div class="dial my-dial"&gt;
+  &lt;div class="dial-face"&gt;
+    &lt;div class="dial-card"&gt;One&lt;/div&gt;
+    &lt;div class="dial-card"&gt;Two&lt;/div&gt;
+    &lt;div class="dial-card"&gt;Three&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;script src="dial.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Auto-initializes against every <code>.dial:not(.is-empty)</code>
+        element. Give the root a width and a height; roughly 2:1 suits the
+        default half circle, since the disc is as big as
+        <code>min(width / 2, pivot height)</code> allows. Size it however
+        you like - the geometry is re-derived from the element's measured
+        box whenever that box changes, so a fluid width is fine and is
+        what the demo page itself uses.
+      </p>
+      <p>
+        <strong>Cards do not scale with the disc on their own.</strong>
+        Their size is yours, and the disc's is derived from the box, so
+        fixed-pixel cards on a fluid dial crowd together as it shrinks -
+        96px cards that clear each other by 20px at a 700px dial overlap
+        by 56px at 360px. The fix is the <code>cqw</code> unit above: the
+        component makes <code>.dial</code> a container-query context, so
+        <code>1cqw</code> is 1% of <em>this dial's</em> width (not the
+        viewport's) and cards sized that way keep a constant share of the
+        disc at every width. See the sizing recipe below. Only direct
+        children of <code>.dial-face</code> carrying
+        <code>.dial-card</code> count as cards - the rim, hub and gate are
+        siblings of the face, not of the cards. To configure options:
+      </p>
+      <pre><code>Dial.initAll('.dial', {
+  cardAngle: 18,
+  pivot: 0.5,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>How much of the disc you see</h3>
+        <p>
+          <code>pivot</code> is where the hub sits, as a fraction of the
+          box height, and it's the control that most changes what the
+          thing looks like. <code>1</code> puts the hub exactly on the
+          bottom edge, so precisely half the reel is in view. Lift it into
+          the box and the rest of the disc comes with it, until every card
+          is visible and the arc closes into the reel as you'd hold it -
+          at which point you'll want <code>horizon</code> raised too, or
+          the far side fades out.
+        </p>
+        <pre><code>// The whole disc in a square box
+Dial.initAll('.dial', { pivot: 0.5, horizon: 180, fadeRange: 1 });
+
+// Hub dropped below the box: a shallow slice of a much bigger reel
+Dial.initAll('.dial', { pivot: 1.55, cardAngle: 15 });</code></pre>
+        <p>
+          Card size has to come down with the disc, though. Lifting the
+          hub shrinks the disc to fit the box - it's only ever
+          <code>min(width / 2, pivot height)</code> - so cards sized for a
+          half circle will pile over the hub once the whole face is in
+          view. Shrink them in CSS at the same time, the way the demo's
+          second disc does.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Sizing the disc</h3>
+        <p>
+          By default there's nothing to set: the disc is as big as the
+          element allows, <code>min(width / 2, pivot height)</code>, so
+          sizing the <code>.dial</code> box in CSS is all it takes and the
+          whole thing stays responsive for free. That's the route to
+          reach for first.
+        </p>
+        <pre><code>.my-dial { width: min(700px, 92vw); aspect-ratio: 700 / 375; }</code></pre>
+        <p>
+          <code>radius</code> takes over when you want the number itself -
+          a dial smaller than the space it's given, or one deliberately
+          bigger than its own window. It may exceed the box's width, and
+          that's the useful direction: the sides crop and you get a
+          shallow slice of something large. It is clamped to the hub's
+          height, though, because a disc taller than that would carry the
+          gate off the top of the box and leave the selected card
+          invisible - so going properly big means pushing <code>pivot</code>
+          down to make the room, which raises the ceiling with it. Read
+          <code>.radius</code> back for what's actually being drawn.
+        </p>
+        <pre><code>// A small dial in a generous box
+Dial.initAll('.dial', { radius: 220 });
+
+// A wide, shallow slice of a big disc: hub pushed well below the box
+Dial.initAll('.dial', { radius: 900, pivot: 2.4, cardAngle: 12 });</code></pre>
+        <p>
+          Whichever route you take, <strong>cards don't come along for the
+          ride by themselves.</strong> The disc's radius is derived from
+          the box but a card's size is plain CSS, so the two drift apart
+          as the box changes: cards take up a larger and larger share of
+          a shrinking disc until they crowd together and pile over the
+          hub. The component makes <code>.dial</code> a container-query
+          context precisely so there's a unit that follows this
+          element - <code>1cqw</code> is 1% of the dial's own width, not
+          the viewport's, which matters whenever the dial isn't full-bleed.
+        </p>
+        <pre><code>/* Cards hold a constant share of the disc at any width */
+.my-dial { width: min(700px, 92vw); aspect-ratio: 700 / 375; }
+.my-dial .dial-card { width: 13.7cqw; height: 18cqw; }
+
+/* Text inside them wants a floor, or it vanishes on a small dial */
+.my-dial .dial-card h3 { font-size: clamp(9px, 1.7cqw, 15px); }</code></pre>
+        <p>
+          A media query works too, but it steps rather than scales and it
+          keys off the viewport rather than the element, so a dial in a
+          narrow column gets the wrong answer.
+        </p>
+        <p>
+          One thing to pair with it: <code>rimInset</code> is pixels by
+          default, and a fixed margin takes a bigger bite out of a
+          shrinking disc, pulling the ring in faster than cqw cards
+          shrink until neighbors that cleared each other at full size
+          overlap. Give it a value below 1 and it's read as a fraction of
+          the radius instead, which makes the whole layout
+          scale-invariant - clearance then shrinks proportionally rather
+          than running out.
+        </p>
+        <pre><code>// 0.05 = 5% of the radius, at any dial size
+Dial.initAll('.dial', { rimInset: 0.05 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Which way the wheel turns it</h3>
+        <p>
+          <code>wheelAxis</code> decides which scroll axis the disc takes.
+          It defaults to <code>'both'</code>, meaning each event goes to
+          whichever axis dominates it, because a mouse wheel reports only
+          a vertical delta - horizontal-only would leave the wheel dead
+          for anyone not on a trackpad.
+        </p>
+        <p>
+          The trade-off is that taking the vertical axis means calling
+          <code>preventDefault</code> on it, so the page stops scrolling
+          while the pointer is over the disc. A disc is a closed loop with
+          no end at which to hand capture back, so moving the pointer off
+          it is the only escape. If that matters more than a working mouse
+          wheel - a disc in the middle of a long page, say -
+          <code>'horizontal'</code> never interferes with the page at all.
+        </p>
+        <pre><code>// Never touches page scrolling; trackpad only, in practice
+Dial.initAll('.dial', { wheelAxis: 'horizontal' });
+
+// Mouse wheel only, ignoring sideways trackpad drift
+Dial.initAll('.dial', { wheelAxis: 'vertical' });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A real reel's geometry</h3>
+        <p>
+          A View-Master reel carries 14 frames and shows 7 at a time.
+          <code>cardAngle</code> is degrees of disc per card, so
+          <code>360 / 14</code> with 14 cards closes the disc exactly and
+          puts seven of them above the horizon. Lower values crowd more
+          cards into the visible arc and make each turn a smaller
+          rotation; higher ones spread them out.
+        </p>
+        <pre><code>// Fourteen frames, seven in view
+Dial.initAll('.dial', { cardAngle: 360 / 14 });
+
+// A fanned deck - cards shingled rather than spaced
+Dial.initAll('.dial', { cardAngle: 11, rimInset: 16 });</code></pre>
+        <p>
+          Cards sit apart from each other only while the chord between
+          neighbors clears their width -
+          <code>2 * ringRadius * sin(cardAngle / 2) &gt;= card width</code>.
+          Push <code>cardAngle</code> below that and they shingle instead,
+          which isn't prevented: with the z-order stacking outward from
+          the gate it reads as a fanned deck with the selected card
+          standing proud of it, which is a perfectly good look to want.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Letting a card be content, not just a target</h3>
+        <p>
+          <code>clickToSelect</code> gives cards a two-stage click: a
+          click on a card that isn't at the gate spins it up there and is
+          swallowed, while a click on the card already at the gate passes
+          straight through. So a card full of links behaves as "bring it
+          to the front, then use it" with no extra control and nothing to
+          wire up. Turn it off and every click passes through immediately,
+          leaving drag, scroll and the arrow keys to do the turning.
+        </p>
+        <pre><code>Dial.initAll('.dial', { clickToSelect: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Cards of different sizes on one disc</h3>
+        <p>
+          Nothing to configure - each card's distance from the hub is
+          worked out from its own measured height, so a disc carries
+          whatever mix you give it and every card still sits flush against
+          the rim, taller ones simply reaching further in. A card is also
+          just markup: a paragraph, an <code>&lt;img&gt;</code>, a video,
+          a <code>&lt;figure&gt;</code> or <code>&lt;blockquote&gt;</code>
+          carrying <code>.dial-card</code> directly - the mechanism only
+          ever touches its transform and opacity.
+        </p>
+        <p>
+          The one thing to keep an eye on is width: neighbors sit apart
+          only while the chord clears the widest of them, so a disc of
+          big cards wants a wider <code>cardAngle</code>. And because the
+          ring radius is derived from card height, anything that changes a
+          card's height after layout (an image without dimensions, a font
+          swap) wants a <code>refresh()</code> afterward.
+        </p>
+        <pre><code>// 200x260 cards need roughly 44deg to clear each other
+Dial.initAll('.dial', { cardAngle: 44, rimInset: 24 });
+
+myImage.addEventListener('load', () =&gt; Dial.get('#myDial').refresh());</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Styling the card at the gate</h3>
+        <p>
+          <code>.is-selected</code> lands on whichever card is nearest the
+          gate and tracks the spin live, rather than waiting for it to
+          settle - so it's the hook for anything that should follow the
+          disc as it turns. Keep the styling to things that don't change
+          the card's box: its height feeds the ring radius, so revealing
+          content by adding layout would move every card on the disc.
+          Fade it instead.
+        </p>
+        <pre><code>.card__caption { opacity: 0; transition: opacity .18s ease; }
+.card.is-selected .card__caption { opacity: 1; }</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Reacting to the selected card</h3>
+        <p>
+          Listen for the bubbling <code>dial-settle</code> event when you
+          want the card that actually came to rest at the gate rather than
+          every card turned past on the way there - a flicked spin through
+          nine cards fires it once, at the end.
+        </p>
+        <pre><code>document.getElementById('myDial').addEventListener('dial-settle', (e) =&gt; {
+  caption.textContent = e.target.dataset.title;
+});</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>cardAngle</code></td><td><code>26</code></td><td>Degrees of disc between one card and the next. 26 puts 14 cards around a closed disc with 7 above the horizon - a real View-Master reel</td></tr>
+          <tr><td><code>pivot</code></td><td><code>1</code></td><td>Where the hub sits, as a fraction of the box height. 1 is the bottom edge (exactly half the disc in view); lower lifts it into the box and shows more; higher drops it away for a shallower arc</td></tr>
+          <tr><td><code>radius</code></td><td><code>null</code></td><td>The disc's radius in pixels. <code>null</code> fits it to the box - <code>min(width / 2, pivot height)</code> - which is what keeps it responsive. A number may exceed the box's width (the sides crop) but is clamped to the hub's height, so the gate never lifts off the top</td></tr>
+          <tr><td><code>rimInset</code></td><td><code>20</code></td><td>Space between a card's outer edge and the rim, in pixels - except that a value below 1 is read as a fraction of the radius, which is what keeps a fluid dial proportional. The cards' ring radius is derived from this and their own height at selected size, so they stay seated whatever size they are</td></tr>
+          <tr><td><code>selectedScale</code></td><td><code>1.14</code></td><td>How much bigger a card is at the gate. Interpolated over the last card-step of the approach, so it swells into place rather than popping</td></tr>
+          <tr><td><code>horizon</code></td><td><code>84</code></td><td>Degrees from the gate at which a card has faded out completely. Raise toward 180 to keep the whole disc populated</td></tr>
+          <tr><td><code>fadeRange</code></td><td><code>36</code></td><td>Degrees over which a card fades, ending at <code>horizon</code></td></tr>
+          <tr><td><code>cardStep</code></td><td><code>120</code></td><td>Pixels of wheel delta that turn the disc by one card. Dragging ignores this - a drag is 1:1 with the angle swept around the hub</td></tr>
+          <tr><td><code>wheelSensitivity</code></td><td><code>1</code></td><td>Multiplier on raw wheel delta before it's converted to a card distance via <code>cardStep</code></td></tr>
+          <tr><td><code>wheelIdleDelay</code></td><td><code>140</code></td><td>Milliseconds of no wheel events before wheel input counts as stopped and the settle spring takes over</td></tr>
+          <tr><td><code>wheelEnabled</code></td><td><code>true</code></td><td>Master switch for scrolling over the disc. <code>false</code> leaves drag, click and the arrow keys, whatever <code>wheelAxis</code> says</td></tr>
+          <tr><td><code>wheelAxis</code></td><td><code>'both'</code></td><td>Which scroll axis turns the disc: <code>'vertical'</code>, <code>'horizontal'</code>, or <code>'both'</code> (whichever axis dominates a given event). <code>'horizontal'</code> never interferes with page scrolling, but a mouse wheel reports no horizontal delta at all</td></tr>
+          <tr><td><code>maxVelocity</code></td><td><code>0.4</code></td><td>Ceiling on the spin (in cards per frame) a single wheel tick or drag frame can hand to the coast</td></tr>
+          <tr><td><code>friction</code></td><td><code>0.86</code></td><td>How much spin decays each frame once input goes idle</td></tr>
+          <tr><td><code>snapStrength</code></td><td><code>0.055</code></td><td>How hard the settle spring pulls toward the target card each frame, folded in on top of friction</td></tr>
+          <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer travel before a press counts as turning the disc rather than clicking the card under it</td></tr>
+          <tr><td><code>clickToSelect</code></td><td><code>true</code></td><td>Whether clicking a card that isn't at the gate spins it there and swallows the click. The card at the gate always passes clicks through either way</td></tr>
+          <tr><td><code>rim</code></td><td><code>true</code></td><td>Draw the disc's outer edge. Purely visual - the rim is what the ring radius is measured against whether it's drawn or not</td></tr>
+          <tr><td><code>hub</code></td><td><code>true</code></td><td>Draw the reel's center and spindle hole at the point everything rotates around</td></tr>
+          <tr><td><code>gate</code></td><td><code>true</code></td><td>Draw the index mark at twelve o'clock. It lives in the rim margin, so a <code>rimInset</code> too small to hold it hides it</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>new Dial(root, options)</code></td><td>Constructs directly against a root element containing <code>.dial-face</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>Turns the disc by <code>count</code> cards (default 1) in <code>direction</code> (default forward). A nudge to the settle spring rather than a queued step, so several in a row blend into one turn.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> to the gate by the shortest way round, resolved against the current unbounded position.</td></tr>
+          <tr><td><code>.radius</code></td><td>Getter for the disc's actual radius in pixels, after fitting or clamping - what's really being drawn, rather than what was asked for.</td></tr>
+          <tr><td><code>.index</code></td><td>Getter for the selected card's index among the visible cards, or <code>-1</code> on an empty disc.</td></tr>
+          <tr><td><code>.refresh()</code></td><td>Re-reads which cards are on the disc (skips anything <code>hidden</code>), remeasures, and brings card 0 to the gate - call after changing which cards are shown.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in, then rebuilds the drawn reel parts and re-derives the geometry. Safe to call on every slider tick.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the loop, removes every bound listener, and takes back the rim, hub and gate it added to your markup. The element stays marked as claimed, so a later <code>initAll()</code> skips it.</td></tr>
+          <tr><td><code>Dial.initAll(selector, options)</code></td><td>Default selector <code>'.dial:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
+          <tr><td><code>Dial.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
+          <tr><td><code>Dial.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="events">Events</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Event / hook</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>dial-settle</code></td><td>Bubbles from a card once it's actually come to rest at the gate - a flicked spin through nine cards fires it once, at the end. <code>event.target</code> is the settled card.</td></tr>
+          <tr><td><code>.is-selected</code></td><td>Class on whichever card is nearest the gate. The live counterpart to <code>dial-settle</code>: it tracks the spin rather than waiting for it to stop, so it's the hook for styling that should follow the disc as it turns.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>The angle is the whole of a card's state:</strong> every
+        card is rigidly mounted to one disc, so
+        <code>theta = (i - pos) * cardAngle</code> and position
+        (<code>radius * sin/cos theta</code>), tilt, opacity and scale all
+        read off that single number. Nothing is tracked per card. The
+        disc's own radius isn't an option either - it's whatever fits the
+        box, <code>min(width / 2, pivot height)</code> - and each card's
+        own ring radius is derived from <em>that</em> and from its own
+        height, so its outer edge always lands <code>rimInset</code> short
+        of the rim whatever size it is. That per-card derivation is what
+        lets one disc carry mismatched cards: a shared ring measured off a
+        single card would seat that one and leave every other floating
+        short of the rim or hanging over it. The radius is taken at the
+        card's <em>selected</em> size rather than its resting one, so a
+        card growing into the gate never eats the margin or runs over the
+        index mark sitting in it.
+      </p>
+      <p>
+        <strong>Drag is rotational, which is the real departure:</strong>
+        Sweep, Reel and Deck all read a linear drag - pixels
+        across, converted to cards. A disc doesn't work that way. Grabbing
+        it anywhere and moving the pointer turns it by the angle swept
+        around the hub, 1:1, so the card under your finger stays under
+        your finger wherever on the face you grabbed it. Releasing hands
+        the remaining angular velocity to the same damped spring Sweep and
+        Reel coast on, which always settles exactly on a card.
+      </p>
+      <p>
+        <strong>Angles are accumulated, not measured from the
+        press:</strong> taking the angle since pointerdown would be
+        simpler, but it breaks the moment the pointer crosses the hub,
+        where the angle is undefined and flips by 180 degrees - the disc
+        would snap a half turn. Deltas are instead summed per pointer-move
+        and any single move that appears to sweep more than 90 degrees is
+        discarded as a jump across the center rather than believed. A
+        press that starts inside the hub's dead zone doesn't begin a turn
+        at all, for the same reason.
+      </p>
+      <p>
+        <strong>Two clicks, two meanings:</strong> a click on a card away
+        from the gate is a navigation request and is swallowed; a click on
+        the card already at the gate is left completely alone, so its own
+        links and buttons behave normally. That's what lets cards hold
+        real content without a separate "open" affordance. Reel's
+        <code>clickToSelect</code> works exactly the same way, for the same
+        reason; Deck is the one that differs, because a frame fills the
+        whole box and there is no "other card" to click.
+      </p>
+      <p>
+        <strong>The root is focusable, and the arrow keys turn it:</strong>
+        unless the host already set them, <code>tabindex="0"</code> and
+        <code>role="group"</code> go on the root element, and
+        Left/Up/Right/Down call <code>step()</code>, so the disc is
+        reachable and operable without a pointer at all. A key press that
+        landed in a text field, a <code>&lt;select&gt;</code> or a
+        contenteditable region inside a card is left entirely alone,
+        though: a card can hold anything, and the arrow keys belong to the
+        caret there, not to the disc.
+      </p>
+      <p>
+        <strong>The wheel takes both axes:</strong> the same control, the
+        same default and the same trade-off as Reel's. Sweep accepts only a
+        horizontal-dominant scroll, and Deck's <code>wheel: 'x'</code> does
+        the same by default, so that page scrolling is never interrupted.
+        The reasoning is sound and the consequence is not: a mouse wheel
+        reports nothing but <code>deltaY</code>, so horizontal-only leaves
+        the wheel simply dead for anyone not on a trackpad. Dial assigns
+        each event to whichever axis dominates it and lets
+        <code>wheelAxis</code> decide which of those it keeps, taking both
+        by default. Accepting the vertical axis does mean calling
+        <code>preventDefault</code> on it, and a closed loop has no
+        boundary at which to hand that back the way Sweep's strip does, so
+        the page stops scrolling while the pointer is over the disc -
+        moving it off is the escape. <code>wheelAxis: 'horizontal'</code>
+        restores the never-interferes behavior for anyone who wants it.
+        Down and right both read as forward, so the two axes agree about
+        which way the disc turns.
+      </p>
+      <p>
+        <strong>The loop parks itself:</strong> unlike Sweep's always-on
+        tick, the animation loop here runs only while the disc is actually
+        turning - a live drag, arriving wheel input, or a spring that
+        hasn't come to rest - and cancels itself the moment it settles
+        exactly on a card. Reel parks the same way. The test for "the
+        spring has arrived" is deliberately the same one that finalizes the
+        settle, rather than a second comparison alongside it: two separate
+        comparisons let the loop quit a hair short of the card, leaving the
+        position at 1.0003 instead of 1 and never firing
+        <code>dial-settle</code> at all. An
+        <code>IntersectionObserver</code> still stops it off screen, same
+        <code>rootMargin</code> as the rest of this category.
+      </p>
+      <p>
+        <strong>Position is unbounded, angles aren't:</strong>
+        <code>pos</code> is a continuous real number that's never
+        clamped - spin the disc as many turns as you like in either
+        direction. Each card's on-screen angle comes from the shortest
+        circular distance between its index and <code>pos</code>, then
+        gets clamped to +/-180 degrees so a dense disc (many cards, or a
+        big <code>cardAngle</code>) piles up at the point opposite the
+        gate instead of doubling back round the wrong side. Same treatment
+        as Reel's ring, for the same reason.
+      </p>
+      <p>
+        <strong>Position is remembered per instance, per tab:</strong>
+        same as the rest of this category - the selected card's index is
+        written to <code>sessionStorage</code>, keyed by the root
+        element's own <code>id</code>, and restored once on an instance's
+        first <code>refresh()</code>.
+      </p>
+    </div>
+  </div>

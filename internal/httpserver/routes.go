@@ -31,16 +31,23 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 	}
 	mux.Handle("/", static)
 
-	// Rolodex and Type Pan's source is split into three shared building
-	// blocks (shared/hover-scroll-source.js, shared/sequence-stepper.js,
+	// Several effects' source is split across shared building blocks plus
+	// the effect's own file, but the URL every page loads and every
+	// "Download JS" button links to still needs to serve one
+	// self-contained script - see bundle.go. Order matters within each
+	// entry: the shared blocks come first, since the effect's own file
+	// reads them at load.
+	//
+	// Rolodex and Type Pan take three blocks each
+	// (shared/hover-scroll-source.js, shared/sequence-stepper.js,
 	// shared/scroll-progress.js - in that order, since scroll-progress.js
-	// calls SequenceStepper.clamp) plus each effect's own file, Outer
-	// Worlds is split into the reusable map generator (shared/world-map.js)
-	// plus its real-Earth stand-in (shared/earth-map.js) plus its own
-	// renderer, and Sweep depends on shared/hover-delegate.js for its
-	// pointer-hover tracking, but the URL every page loads and every
-	// "Download JS" button links to still needs to serve one self-contained
-	// script - see bundle.go.
+	// calls SequenceStepper.clamp). Outer Worlds takes the reusable map
+	// generator (shared/world-map.js) plus its real-Earth stand-in
+	// (shared/earth-map.js). All four carousels take shared/carousel-kit.js
+	// for the wrap-around arithmetic, the per-tab position memory and the
+	// initAll/get/getAll surface they have in common, and Sweep
+	// additionally takes shared/hover-delegate.js for its pointer-hover
+	// tracking.
 	bundled := map[string]http.HandlerFunc{
 		"/text-effects/rolodex/rolodex.js": bundledScript(staticFS,
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
@@ -51,7 +58,13 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 		"/background/outer-worlds/outer-worlds.js": bundledScript(staticFS,
 			"shared/world-map.js", "shared/earth-map.js", "background/outer-worlds/outer-worlds.js"),
 		"/carousel/sweep/sweep.js": bundledScript(staticFS,
-			"shared/hover-delegate.js", "carousel/sweep/sweep.js"),
+			"shared/carousel-kit.js", "shared/hover-delegate.js", "carousel/sweep/sweep.js"),
+		"/carousel/reel/reel.js": bundledScript(staticFS,
+			"shared/carousel-kit.js", "carousel/reel/reel.js"),
+		"/carousel/deck/deck.js": bundledScript(staticFS,
+			"shared/carousel-kit.js", "carousel/deck/deck.js"),
+		"/carousel/dial/dial.js": bundledScript(staticFS,
+			"shared/carousel-kit.js", "carousel/dial/dial.js"),
 	}
 	for path, handler := range bundled {
 		h := handler

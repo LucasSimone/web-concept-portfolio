@@ -1,0 +1,301 @@
+main {
+  margin-right: 300px;
+  overflow: clip;
+}
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 8vh 5vw 6vh;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(48px, 9vw, 110px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  font-weight: 700;
+}
+
+.direction {
+  max-width: 60ch;
+  margin: 0;
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+/* Structural/motion CSS (.reel, .reel-track, .reel-card) ships inside
+   reel.js and is injected automatically - this page only supplies its own
+   size and card chrome, same as any other page consuming the component.
+   Taller than a Sweep box: the ring needs room above and below the
+   focused card, not just to its sides. */
+#reelDemo {
+  width: min(640px, 92vw);
+  height: 520px;
+  margin-top: 2rem;
+}
+
+#reelMedia {
+  width: min(480px, 90vw);
+  height: 380px;
+  margin-top: 1rem;
+}
+
+.rl-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  width: 210px;
+  height: 230px;
+  padding: 22px;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+/* .is-focused is the mechanism's own class (see reel.js) - it tracks
+   whichever card is nearest the focus live, even mid-spin, so this is
+   chrome layered on top of the size and stacking that card already gets
+   for free. Transitioned, since the class flips the instant a card takes
+   the lead rather than easing into it. */
+.rl-card {
+  transition: box-shadow 0.18s ease;
+}
+
+.rl-card.is-focused {
+  box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.1);
+}
+
+.rl-card__num {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  opacity: 0.4;
+  transition: opacity 0.18s ease;
+}
+
+.rl-card.is-focused .rl-card__num,
+.rl-card.is-focused .rl-card__label {
+  opacity: 1;
+}
+
+.rl-card h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.rl-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+.rl-card code {
+  font-size: 11px;
+}
+
+.rl-card--media {
+  width: 150px;
+  height: 180px;
+  padding: 10px;
+  gap: 8px;
+}
+
+.rl-swatch {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+}
+
+.rl-swatch--a { background: linear-gradient(135deg, #000, #fff); }
+.rl-swatch--b { background: linear-gradient(135deg, #fff, #000 150%); }
+.rl-swatch--c { background: repeating-linear-gradient(45deg, #000, #000 2px, #fff 2px, #fff 10px); }
+.rl-swatch--d { background: radial-gradient(circle at 30% 30%, #fff, #000 75%); }
+.rl-swatch--e { background: linear-gradient(0deg, #000, #fff); }
+
+.rl-play {
+  width: 0;
+  height: 0;
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  border-left: 14px solid #fff;
+  filter: drop-shadow(0 0 1px #000);
+}
+
+.rl-card__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  transition: opacity 0.18s ease;
+}
+
+.gallery {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  padding: 4vh 8vw 16vh;
+}
+
+.gallery h2 {
+  margin: 0;
+  font-size: clamp(24px, 3.5vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

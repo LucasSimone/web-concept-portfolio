@@ -1,0 +1,130 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for every control below, each a different disc built from the same mechanism. Adjusting any control afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="reel">True Reel</option>
+        <option value="dense">Fanned Deck</option>
+        <option value="shallow">Shallow</option>
+        <option value="threeQuarter">Three Quarters</option>
+        <option value="bare">Bare Disc</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Cards <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardCount">?<span class="hint" role="tooltip" id="hint-cardCount">How many cards are on the disc. The first 14 keep their own titles; past that, extras are generic. Below 14, cards are hidden from the end rather than removed. At 14 with the default 26° spacing the disc closes exactly, like a real reel's 14 frames.</span></span></span><span id="cardCountVal" class="value"></span></label>
+      <input id="cardCountRange" type="range" min="1" max="60" step="1" value="14" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Card angle <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardAngle">?<span class="hint" role="tooltip" id="hint-cardAngle">Degrees of disc between one card and the next. Lower packs more cards into the visible arc and makes each turn a smaller rotation; higher spreads them out. 26° puts 14 cards around a closed disc with 7 above the horizon — a real View-Master reel.</span></span></span><span id="cardAngleVal" class="value"></span></label>
+      <input id="cardAngleRange" type="range" min="6" max="60" step="1" value="26" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Hub position <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-pivot">?<span class="hint" role="tooltip" id="hint-pivot">Where the disc's center sits, as a fraction of the box height. 1.00 puts it exactly on the bottom edge, so precisely half the reel is in view. Lower lifts it into the box and shows more than half — at around 0.50 the whole disc fits. Higher drops it away for a shallower arc.</span></span></span><span id="pivotVal" class="value"></span></label>
+      <input id="pivotRange" type="range" min="0.4" max="1.6" step="0.02" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Disc size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-radius">?<span class="hint" role="tooltip" id="hint-radius">The disc's radius in pixels. At "Fit box" it's derived from the element's own CSS size instead — min(half the width, the hub's height) — which is what keeps it responsive, since CSS is already sizing the box. A set radius isn't clamped to the box, so you can make a disc bigger than its own window and see a shallow slice of something large.</span></span></span><span id="radiusVal" class="value"></span></label>
+      <input id="radiusRange" type="range" min="0" max="700" step="10" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Wheel axis
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelAxis">?<span class="hint" role="tooltip" id="hint-wheelAxis">Which scroll axis turns the disc. A mouse wheel only ever reports vertical, a trackpad reports both — so Both is what makes one dial work for either. Taking the vertical axis means the page stops scrolling while the pointer is over the disc; Horizontal never interferes with the page, but then a mouse wheel does nothing.</span></span>
+      </label>
+      <select id="wheelAxisSelect">
+        <option value="both" selected>Both</option>
+        <option value="vertical">Vertical only</option>
+        <option value="horizontal">Horizontal only</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Rim inset <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-rimInset">?<span class="hint" role="tooltip" id="hint-rimInset">Pixels between a card's outer edge and the rim. The cards' ring radius is derived from this and their own height at selected size, so they stay seated against the rim however big they are and whatever they grow to. The index mark lives in this margin.</span></span></span><span id="rimInsetVal" class="value"></span></label>
+      <input id="rimInsetRange" type="range" min="0" max="80" step="2" value="20" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Selected size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-selectedScale">?<span class="hint" role="tooltip" id="hint-selectedScale">How much bigger a card is once it reaches the gate. It grows over the last card-step of its approach rather than switching at arrival, so it swells into place instead of popping.</span></span></span><span id="selectedScaleVal" class="value"></span></label>
+      <input id="selectedScaleRange" type="range" min="1" max="1.6" step="0.02" value="1.14" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Horizon <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-horizon">?<span class="hint" role="tooltip" id="hint-horizon">Degrees from the gate at which a card has faded out completely. 84° is a little below the hub's own level, which is roughly where a card would be leaving the window anyway. Raise it toward 180° to keep the whole disc populated — useful once the hub is lifted into the box.</span></span></span><span id="horizonVal" class="value"></span></label>
+      <input id="horizonRange" type="range" min="30" max="180" step="2" value="84" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Fade range <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fadeRange">?<span class="hint" role="tooltip" id="hint-fadeRange">Degrees over which a card fades, ending at the horizon. Small values make cards wink out; large ones have them dimming most of the way round.</span></span></span><span id="fadeRangeVal" class="value"></span></label>
+      <input id="fadeRangeRange" type="range" min="1" max="90" step="1" value="36" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Card step <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cardStep">?<span class="hint" role="tooltip" id="hint-cardStep">Pixels of horizontal scroll that turn the disc by exactly one card. Dragging ignores this entirely — a drag turns the disc by the angle your pointer sweeps around the hub, 1:1.</span></span></span><span id="cardStepVal" class="value"></span></label>
+      <input id="cardStepRange" type="range" min="40" max="300" step="10" value="120" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Wheel sensitivity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelSensitivity">?<span class="hint" role="tooltip" id="hint-wheelSensitivity">Multiplier on raw wheel delta before it's converted to a card distance via Card step.</span></span></span><span id="wheelSensitivityVal" class="value"></span></label>
+      <input id="wheelSensitivityRange" type="range" min="0.2" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Friction <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-friction">?<span class="hint" role="tooltip" id="hint-friction">How much of the disc's spin is lost each frame once you let go. Lower stops it almost at once; higher lets a flick coast for several turns.</span></span></span><span id="frictionVal" class="value"></span></label>
+      <input id="frictionRange" type="range" min="0.4" max="0.97" step="0.01" value="0.86" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Snap strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-snapStrength">?<span class="hint" role="tooltip" id="hint-snapStrength">How hard the settle spring pulls toward the nearest card each frame, folded in on top of friction. Higher catches the gate tightly; lower drifts before settling.</span></span></span><span id="snapStrengthVal" class="value"></span></label>
+      <input id="snapStrengthRange" type="range" min="0.01" max="0.2" step="0.005" value="0.055" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Drag threshold <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dragThreshold">?<span class="hint" role="tooltip" id="hint-dragThreshold">Pixels of pointer travel before a press counts as turning the disc rather than clicking the card under it.</span></span></span><span id="dragThresholdVal" class="value"></span></label>
+      <input id="dragThresholdRange" type="range" min="0" max="24" step="1" value="6" />
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="clickToSelectCheckbox" checked />
+        Click to select
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-clickToSelect">?<span class="hint" role="tooltip" id="hint-clickToSelect">Whether clicking a card that isn't at the gate spins it there by the shortest way round, swallowing that click. The card already at the gate always passes its clicks straight through either way, so links inside it still work.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="wheelEnabledCheckbox" checked />
+        Wheel scroll
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelEnabled">?<span class="hint" role="tooltip" id="hint-wheelEnabled">The master switch for scrolling over the disc — off leaves drag, click and the arrow keys as the ways to turn it, whatever Wheel axis says.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="rimCheckbox" checked />
+        Rim
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-rim">?<span class="hint" role="tooltip" id="hint-rim">The disc's outer edge. Turning it off doesn't move the cards — the rim is still what their ring radius is measured against, drawn or not.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="hubCheckbox" checked />
+        Hub
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-hub">?<span class="hint" role="tooltip" id="hint-hub">The reel's center and its spindle hole, drawn at the point everything rotates around.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="gateCheckbox" checked />
+        Gate mark
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gate">?<span class="hint" role="tooltip" id="hint-gate">The index mark at twelve o'clock showing where the selected slot is. It sits in the rim margin, so a Rim inset too small to hold it hides it.</span></span>
+      </label>
+    </div>
