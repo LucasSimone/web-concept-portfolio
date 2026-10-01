@@ -14,7 +14,8 @@
         every point on the planet already has an elevation waiting to be
         asked for and you can keep panning in any direction forever. Purely
         decorative — it sits behind the element's content and never touches
-        real page elements.
+        real page elements. Switch to a real map of Earth instead with
+        <code>world: 'earth'</code> — see <a href="#options">Options</a>.
       </p>
       <p>
         The same world draws in any of three styles, set by
@@ -59,6 +60,22 @@
         terrain instead of its spherical terrain. The seed drives both, but
         switching projection changes what is under you, the same way
         changing <code>frequency</code> does.
+      </p>
+      <p>
+        There's also which planet, set by <code>world</code>:
+        <code>'random'</code> generates one from the options above,
+        <code>'earth'</code> reads an embedded map of the real one instead
+        and ignores every option that only means something to a generator
+        — <code>seed</code>, <code>frequency</code>, <code>octaves</code>,
+        <code>warp</code>, <code>ridge</code>, <code>landBias</code> all stop
+        doing anything. <code>seaLevel</code> and <code>landRange</code>
+        still work, since those are a reading of whatever terrain is
+        current rather than part of generating it. All three styles and
+        both projections work with Earth exactly as they do with a random
+        world — the one difference is <code>'flat'</code>: a random
+        plane is endless because the noise it samples is, but Earth isn't,
+        so a flat Earth wraps at the date line instead of panning on
+        forever.
       </p>
 
       <div class="docs-actions">
@@ -190,6 +207,24 @@
       </div>
 
       <div class="recipe">
+        <h3>The real thing</h3>
+        <p>
+          <code>world: 'earth'</code> swaps the generator for an embedded
+          map of the actual planet — every style and projection still work,
+          including <code>'flat'</code>, which wraps at the date line
+          instead of panning on forever the way it does over random
+          terrain. <code>seed</code> and <code>frequency</code> stop
+          meaning anything, since there's only the one Earth to show.
+        </p>
+        <pre><code>OuterWorlds.initAll('.bg-outer-worlds', {
+  world: 'earth',
+  mode: 'map',
+  projection: 'flat',
+  scale: 1.4,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
         <h3>A paper map</h3>
         <p>
           <code>projection: 'flat'</code> lays the world out on paper.
@@ -298,6 +333,7 @@
           <tr><th>Option</th><th>Default</th><th>Description</th></tr>
         </thead>
         <tbody>
+          <tr><td><code>world</code></td><td><code>'random'</code></td><td><code>'random'</code> generates a planet from the options below; <code>'earth'</code> reads an embedded map of the real one instead, ignoring every option that only means something to a generator (<code>seed</code>, <code>frequency</code>, <code>octaves</code>, <code>warp</code>, <code>ridge</code>, <code>landBias</code>). <code>seaLevel</code> and <code>landRange</code> still apply to either</td></tr>
           <tr><td><code>mode</code></td><td><code>'dots'</code></td><td>How the world is drawn: <code>'dots'</code> for the halftone field, <code>'wire'</code> for the relief-displaced mesh, <code>'map'</code> for filled land with a drawn coastline. All three read the same terrain</td></tr>
           <tr><td><code>projection</code></td><td><code>'globe'</code></td><td><code>'globe'</code> views the world as a sphere; <code>'flat'</code> is an endless plane with no curvature, no poles and no edges. A flat view is a different world from the globe rather than the same one unrolled. <code>scale</code> means the same in both, so a flat view wants a much lower one</td></tr>
           <tr><td><code>dotSpacing</code></td><td><code>13</code></td><td>Distance between sample points at the view centre, in px — the dot spacing in <code>'dots'</code>, the detail along each line in <code>'wire'</code>. Also the resolution the world is generated at, so a finer spacing is a more detailed planet rather than a closer one. Floored per element at what one frame can afford to draw — roughly <code>sqrt(width * height / 25000)</code> px — so a very low value on a large element settles at that floor instead of asking for a million points a frame. Nearly all of the cost is rasterizing the samples rather than placing them, so this is the setting that decides what the effect costs on a slow device</td></tr>
@@ -333,7 +369,7 @@
           <tr><th>Method</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>.update(options)</code></td><td>Merges new options in. A world-generating option (<code>seed</code>, <code>frequency</code>, <code>octaves</code>, <code>warp</code>, <code>ridge</code>, <code>landBias</code>) builds a new planet; <code>dotSpacing</code>, <code>scale</code> and <code>relief</code> rebuild the globe geometry; everything else — <code>mode</code>, the colors and <code>seaLevel</code> included — just applies on the next frame, so switching style or repainting mid-glide costs nothing and disturbs neither the world nor the viewpoint.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. <code>world</code> or a world-generating option (<code>seed</code>, <code>frequency</code>, <code>octaves</code>, <code>warp</code>, <code>ridge</code>, <code>landBias</code>) builds a new planet; <code>dotSpacing</code>, <code>scale</code> and <code>relief</code> rebuild the globe geometry; everything else — <code>mode</code>, the colors and <code>seaLevel</code> included — just applies on the next frame, so switching style or repainting mid-glide costs nothing and disturbs neither the world nor the viewpoint.</td></tr>
           <tr><td><code>.newWorld(seed)</code></td><td>Replaces the planet, keeping the current viewpoint and motion. Omit <code>seed</code> for a random one. Returns the seed actually used, so it can be stored and passed back later to get this world again.</td></tr>
           <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize and visibility observers, removes the pointer listeners, and removes the canvas.</td></tr>
           <tr><td><code>OuterWorlds.get(elOrSelector)</code> / <code>OuterWorlds.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
@@ -430,18 +466,23 @@ world.reseed();                  // new planet in place, returns its seed</code>
         solid starburst directly over it.
       </p>
       <p>
-        In <code>'flat'</code> nothing is clamped or wrapped at all: the
-        viewpoint keeps going in every direction, and elevations come from
-        a rolling window of cells sized to the element rather than to the
-        world, so travelling a long way costs no more memory than standing
-        still. <code>maxLat</code> does not apply. Its terrain is also
-        generated a few times larger than the globe's, because a flat view
-        has to be zoomed well out to frame a useful span — at matching
-        scale it would cross from sea to solid land inside a single cell,
-        and since a flat grid is perfectly axis-aligned, those one-cell
-        steps line up into straight vertical edges instead of a coastline.
-        A flat view wants finer <code>dotSpacing</code> than a globe for
-        the same reason.
+        In <code>'flat'</code> over a random world, nothing is clamped or
+        wrapped at all: the viewpoint keeps going in every direction, and
+        elevations come from a rolling window of cells sized to the element
+        rather than to the world, so travelling a long way costs no more
+        memory than standing still. <code>maxLat</code> does not apply. Its
+        terrain is also generated a few times larger than the globe's,
+        because a flat view has to be zoomed well out to frame a useful
+        span — at matching scale it would cross from sea to solid land
+        inside a single cell, and since a flat grid is perfectly
+        axis-aligned, those one-cell steps line up into straight vertical
+        edges instead of a coastline. A flat view wants finer
+        <code>dotSpacing</code> than a globe for the same reason. A flat
+        Earth is the exception to all of this: it's a bounded map rather
+        than an endless plane, so it wraps sideways at the date line and
+        stops short of the poles vertically, the same as a globe does
+        short of <code>maxLat</code> — just without that option, since a
+        paper map has no reason to stop early.
       </p>
       <p>
         The demo page's control panel adds a Profile dropdown with eight

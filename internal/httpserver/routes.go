@@ -36,8 +36,9 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 	// shared/scroll-progress.js - in that order, since scroll-progress.js
 	// calls SequenceStepper.clamp) plus each effect's own file, Outer
 	// Worlds is split into the reusable map generator (shared/world-map.js)
-	// plus its own renderer, and Sweep depends on shared/hover-delegate.js
-	// for its pointer-hover tracking, but the URL every page loads and every
+	// plus its real-Earth stand-in (shared/earth-map.js) plus its own
+	// renderer, and Sweep depends on shared/hover-delegate.js for its
+	// pointer-hover tracking, but the URL every page loads and every
 	// "Download JS" button links to still needs to serve one self-contained
 	// script - see bundle.go.
 	bundled := map[string]http.HandlerFunc{
@@ -48,7 +49,7 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
 			"text-effects/type-pan/type-pan.js"),
 		"/background/outer-worlds/outer-worlds.js": bundledScript(staticFS,
-			"shared/world-map.js", "background/outer-worlds/outer-worlds.js"),
+			"shared/world-map.js", "shared/earth-map.js", "background/outer-worlds/outer-worlds.js"),
 		"/carousel/sweep/sweep.js": bundledScript(staticFS,
 			"shared/hover-delegate.js", "carousel/sweep/sweep.js"),
 	}

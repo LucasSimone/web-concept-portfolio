@@ -28,8 +28,15 @@
 
     <div class="control-row">
       <div class="control-inline">
+        <button id="worldToggle" type="button" class="toggle-button" aria-pressed="false">World: Random</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-world">?<span class="hint" role="tooltip" id="hint-world">Random generates a planet from the sliders below. Earth reads an embedded map of the real one instead, so Seed and Continent size stop meaning anything — only Sea level still does, since it floods and drains Earth the same way it floods a random world.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
         <button id="projectionToggle" type="button" class="toggle-button" aria-pressed="false">View: Globe</button>
-        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-projection">?<span class="hint" role="tooltip" id="hint-projection">Globe shows the world as a sphere, with the curvature that implies. Flat is an endless plane instead — no curvature, no poles, no edge in any direction — and a different world rather than the globe unrolled. It usually wants a much lower Zoom.</span></span>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-projection">?<span class="hint" role="tooltip" id="hint-projection">Globe shows the world as a sphere, with the curvature that implies. Flat is an endless plane instead — no curvature, no poles, no edge in any direction — and a different world rather than the globe unrolled. It usually wants a much lower Zoom. A flat Earth is the exception: it wraps at the date line rather than running on forever, since unlike random terrain it isn't infinite.</span></span>
       </div>
     </div>
 
@@ -80,7 +87,7 @@
       <input type="range" id="seaLevelRange" min="-0.3" max="0.45" step="0.01" value="0.1" />
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-world="random">
       <label><span class="label-text">Continent size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-frequency">?<span class="hint" role="tooltip" id="hint-frequency">How large the landmasses are. Low values give a few big continents; high values break the world up into archipelagos. Changing it generates a new planet.</span></span></span><span id="frequencyVal" class="value"></span></label>
       <input type="range" id="frequencyRange" min="0.8" max="6" step="0.1" value="2.3" />
     </div>
@@ -118,11 +125,11 @@
       <input type="color" id="backgroundPicker" class="t-swatch" value="#ffffff" />
     </div>
 
-    <div class="control-row">
+    <div class="control-row" data-world="random">
       <div class="control-inline">
         <button id="newWorldButton" type="button">New world</button>
         <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-newWorld">?<span class="hint" role="tooltip" id="hint-newWorld">Generates a fresh planet under the current viewpoint, leaving everything else alone.</span></span>
       </div>
     </div>
 
-    <p class="seed-readout">Hero seed <span id="seedVal" class="value"></span></p>
+    <p class="seed-readout control-row" data-world="random">Hero seed <span id="seedVal" class="value"></span></p>

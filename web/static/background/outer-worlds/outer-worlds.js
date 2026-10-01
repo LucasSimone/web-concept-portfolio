@@ -74,6 +74,15 @@
   const DEG = Math.PI / 180;
 
   const DEFAULTS = {
+    // Which planet is under the terrain: 'random' generates one from
+    // `seed`/`frequency`/etc (WorldMap), 'earth' reads an embedded raster
+    // of the real one (EarthMap) and ignores every generation option — only
+    // `seaLevel`/`landRange` still mean anything, since those are a
+    // reading of the terrain rather than part of making it. Every style and
+    // both projections work with either; a flat Earth wraps at the date
+    // line the same way the globe does, rather than running on forever the
+    // way flat random terrain does, because unlike noise it isn't infinite.
+    world: 'random',
     // How the world is drawn: 'dots' for the halftone field, 'wire' for a
     // relief-displaced mesh, 'map' for filled landmasses with a drawn
     // coastline. All three read the same terrain — only the ink changes.
@@ -420,11 +429,12 @@
       this.el.insertBefore(this.canvas, this.el.firstChild);
       this.ctx = this.canvas.getContext('2d');
 
-      this.map = new global.WorldMap(this._mapOptions());
+      const MapClass = this._mapClass();
+      this.map = new MapClass(this._mapOptions());
       // Adopt whatever seed the map settled on, so a later update() that
       // rebuilds the map lands on the same world instead of a new one.
       this.options.seed = this.map.options.seed;
-      this._signature = this.map.signature();
+      this._signature = `${this.options.world}:${this.map.signature()}`;
 
       // Where on the planet we're looking, and how fast that's moving.
       this._lon = Math.random() * TAU;
@@ -516,6 +526,20 @@
       return out;
     }
 
+    // Which terrain source `options.world` asks for. A separate class
+    // rather than a flag on WorldMap because the two have nothing in
+    // common to share — one generates, one reads a fixed raster — and
+    // every call site below only needs the small common interface
+    // (`heightAt`, `.options`, `.signature()`, `.reseed()`, `.signatureOf`)
+    // that both happen to implement.
+    _mapClass() {
+      if (this.options.world === 'earth') {
+        if (!global.EarthMap) throw new Error('OuterWorlds: shared/earth-map.js must load first');
+        return global.EarthMap;
+      }
+      return global.WorldMap;
+    }
+
     // clientWidth/clientHeight (not getBoundingClientRect) because the host
     // element may sit under a CSS transform (e.g. the homepage carousel's
     // coverflow scale) — the canvas is a child of that same element, so it
@@ -545,7 +569,18 @@
       // element is entirely on the planet" for a wide hero and a square
       // card alike.
       const reach = Math.hypot(this._w, this._h) / 2;
-      this._R = Math.max(40, reach * Math.max(0.05, this.options.scale));
+      // A flat Earth is bounded pole to pole — unlike the globe, which
+      // always fills the frame with planet or background in a way that
+      // still reads as a planet, and unlike flat random terrain, which has
+      // no pole to run out of. Zooming out past the point where the full
+      // latitude range already spans the container's height would only
+      // uncover blank canvas above and below it, since there is no more
+      // world up there to draw — so that point is as far out as it goes.
+      let minScale = 0.05;
+      if (this.options.projection === 'flat' && this.options.world === 'earth') {
+        minScale = Math.max(minScale, this._h / (Math.PI * reach));
+      }
+      this._R = Math.max(40, reach * Math.max(minScale, this.options.scale));
       // Finer than the element can afford is not finer than it looks: past
       // the budget the points are crowding into the same pixels anyway, so
       // the floor costs nothing visible and keeps the frame bounded however
@@ -681,10 +716,33 @@
     // that wall kills the vertical velocity so a fling into it doesn't sit
     // there pressing against it for the rest of its glide.
     _clampView() {
-      // A flat view is an endless plane: no pole to stop at, no date line to
-      // come back round to. The viewpoint just keeps going.
-      if (this.options.projection === 'flat') return;
+      // A flat random world is an endless plane: no pole to stop at, no
+      // date line to come back round to. The viewpoint just keeps going.
+      // A flat Earth is bounded like any paper map, so it still needs
+      // wrapping and clamping — just not by `maxLat`, which is a globe
+      // tuning value with no reason to also cap how far a flat map can pan.
+      if (this.options.projection === 'flat' && this.options.world !== 'earth') return;
       this._lon = ((this._lon % TAU) + TAU) % TAU;
+      if (this.options.projection === 'flat') {
+        // The pole itself, not the view centre, is what has to stop at the
+        // container's edge — past the minimum zoom (see _rebuild) there's
+        // slack to pan by, and the view centre may wander only as far as
+        // keeps both edges of the container inside the world. At the
+        // minimum zoom that slack is exactly zero and the view centre is
+        // pinned to the equator, which is what keeps both poles sitting
+        // exactly on the container's edges rather than one of them
+        // floating past it into blank canvas.
+        const halfSpan = this._h / (2 * this._R);
+        const lim = Math.max(0, HALF_PI - halfSpan - 1e-3);
+        if (this._lat > lim) {
+          this._lat = lim;
+          this._velLat = 0;
+        } else if (this._lat < -lim) {
+          this._lat = -lim;
+          this._velLat = 0;
+        }
+        return;
+      }
       const maxLat = clamp(this.options.maxLat, 0, 89) * DEG;
       if (this._lat > maxLat) {
         this._lat = maxLat;
@@ -829,8 +887,14 @@
     //
     // A flat view is a different world rather than the globe unrolled: see
     // PlaneGrid on why a sphere cannot be made endless by flattening it.
+    // That reasoning assumes an infinite generator, though — Earth isn't
+    // one, so its flat view takes the same bounded, wrapping lon/lat grid
+    // 'map' style uses on the globe instead of the endless plane, which is
+    // what makes it wrap at the date line rather than running on forever.
     _grid() {
-      if (this.options.projection === 'flat') return this.gridPlane;
+      if (this.options.projection === 'flat') {
+        return this.options.world === 'earth' ? this.gridLonLat : this.gridPlane;
+      }
       return this.options.mode === 'map' ? this.gridLonLat : this.lattice;
     }
 
@@ -907,6 +971,16 @@
       // the indices run on in both directions, capped only so an extreme
       // zoom-out cannot ask for an unbounded walk.
       if (!grid.wraps) return [i0, Math.min(i1, i0 + MAX_ROW_STEPS)];
+      // A flat Earth can be zoomed out past one world-width — the
+      // pole-to-pole zoom floor only bounds height, so anything wider than
+      // it is tall needs the world walked more than once around to stay
+      // filled edge to edge. wrapCol (below, in _walkRow) folds each column
+      // back onto the one world there actually is, so walking past `cols`
+      // is what tiles it seamlessly instead of stopping after one copy and
+      // leaving blank canvas — and a seam — where the next one should be.
+      // The globe never needs this: there's nothing past its own horizon to
+      // tile, so it keeps the single-wrap shortcut below.
+      if (v.flat) return [i0, Math.min(i1, i0 + MAX_ROW_STEPS)];
       if (v.win.fullLon || i1 - i0 >= cols - 1) return [0, cols];
       return [i0, i1];
     }
@@ -1561,10 +1635,11 @@
         this._pendLat = 0;
         this._hasPointer = false;
       }
+      const MapClass = this._mapClass();
       const mapOptions = this._mapOptions();
-      const signature = global.WorldMap.signatureOf(mapOptions);
+      const signature = `${this.options.world}:${MapClass.signatureOf(mapOptions)}`;
       if (signature !== this._signature) {
-        this.map = new global.WorldMap(mapOptions);
+        this.map = new MapClass(mapOptions);
         this.options.seed = this.map.options.seed;
         this._signature = signature;
         this._rebuild(true);
@@ -1585,7 +1660,7 @@
     // can be shown or saved and passed back later to get this world again.
     newWorld(seed) {
       this.options.seed = this.map.reseed(seed);
-      this._signature = this.map.signature();
+      this._signature = `${this.options.world}:${this.map.signature()}`;
       this._rebuild(true);
       if (this._reduced) this._render();
       return this.options.seed;

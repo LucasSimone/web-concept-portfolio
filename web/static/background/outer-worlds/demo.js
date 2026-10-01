@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const profileSelect = document.getElementById('profileSelect');
   const styleSelect = document.getElementById('styleSelect');
+  const worldToggle = document.getElementById('worldToggle');
   const projectionToggle = document.getElementById('projectionToggle');
   const pointerToggle = document.getElementById('pointerToggle');
   const controlRows = Array.from(document.querySelectorAll('.controls .control-row'));
@@ -143,22 +144,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Hides the controls that have nothing to act on. `data-style` marks a row
   // as belonging to one drawing style; `data-pointer` marks one that only
-  // means something while the cursor is allowed to drive.
+  // means something while the cursor is allowed to drive; `data-world`
+  // marks one that only means something for that World setting — Seed and
+  // Continent size drive generation, which Earth has none of.
   function syncVisibility() {
     const style = styleSelect.value;
     const pointerOn = pointerToggle.getAttribute('aria-pressed') === 'true';
     const flat = projectionToggle.getAttribute('aria-pressed') === 'true';
+    const world = currentWorld();
     // A flat Map paints its sea over the whole canvas, so the background is
     // behind something opaque and has nothing to show - the one combination
     // where that picker is genuinely inert.
     const deadBackground = style === 'map' && flat;
     controlRows.forEach((row) => {
       const forStyle = row.dataset.style;
+      const forWorld = row.dataset.world;
       const ok = (!forStyle || forStyle.split(' ').indexOf(style) !== -1)
         && (!row.hasAttribute('data-pointer') || pointerOn)
+        && (!forWorld || forWorld === world)
         && !(row.dataset.hideWhen === 'flat-map' && deadBackground);
       row.hidden = !ok;
     });
+  }
+
+  function currentWorld() {
+    return worldToggle.getAttribute('aria-pressed') === 'true' ? 'earth' : 'random';
+  }
+
+  function currentProjection() {
+    return projectionToggle.getAttribute('aria-pressed') === 'true' ? 'flat' : 'globe';
   }
 
   styleSelect.addEventListener('change', () => {
@@ -167,34 +181,47 @@ document.addEventListener('DOMContentLoaded', () => {
     syncStaging();
   });
 
-  // Zoom means the same number in both projections — the globe's radius in
-  // px — but a flat view needs several times less of it to frame a useful
-  // span, and correspondingly finer Detail to keep a coastline dithering
-  // over more than a cell. Carrying one pair across the toggle therefore
-  // lands badly whichever way it is flipped, so each projection keeps its
-  // own and the sliders are moved to match — visibly, rather than the
-  // values being quietly rewritten behind controls still reading the old
-  // numbers.
-  // Mesh spacing rides along for the same reason: a flat view frames more
+  // Zoom means the same number in every combination — the globe's radius in
+  // px — but a flat random view needs several times less of it to frame a
+  // useful span, and correspondingly finer Detail to keep a coastline
+  // dithering over more than a cell, while a flat Earth is bounded and
+  // reads best zoomed in enough to make the wrap at its edges worth seeing.
+  // Carrying one pair across either toggle therefore lands badly more often
+  // than not, so every World/View combination keeps its own and the
+  // sliders are moved to match — visibly, rather than the values being
+  // quietly rewritten behind controls still reading the old numbers.
+  // Mesh spacing rides along for the same reason: a wider view frames more
   // world, so each landmass gets fewer mesh lines across it at the same px
-  // spacing, and the wireframe reads sparser than the globe's does.
+  // spacing, and the wireframe reads sparser.
   const viewFor = {
-    globe: { scale: 1.25, dotSpacing: 13, meshSpacing: 34 },
-    flat: { scale: 0.3, dotSpacing: 7, meshSpacing: 24 },
+    'random-globe': { scale: 1.25, dotSpacing: 13, meshSpacing: 34 },
+    'random-flat': { scale: 0.3, dotSpacing: 7, meshSpacing: 24 },
+    'earth-globe': { scale: 1.25, dotSpacing: 13, meshSpacing: 34 },
+    'earth-flat': { scale: 1.4, dotSpacing: 9, meshSpacing: 24 },
   };
 
+  function applyView(world, projection) {
+    const v = viewFor[`${world}-${projection}`];
+    controls.scale.value = v.scale;
+    controls.dotSpacing.value = v.dotSpacing;
+    controls.meshSpacing.value = v.meshSpacing;
+  }
+
+  function saveView(world, projection) {
+    viewFor[`${world}-${projection}`] = {
+      scale: Number(controls.scale.value),
+      dotSpacing: Number(controls.dotSpacing.value),
+      meshSpacing: Number(controls.meshSpacing.value),
+    };
+  }
+
   function setProjection(flat) {
-    const from = projectionToggle.getAttribute('aria-pressed') === 'true' ? 'flat' : 'globe';
+    const world = currentWorld();
+    const from = currentProjection();
     const to = flat ? 'flat' : 'globe';
     if (from !== to) {
-      viewFor[from] = {
-        scale: Number(controls.scale.value),
-        dotSpacing: Number(controls.dotSpacing.value),
-        meshSpacing: Number(controls.meshSpacing.value),
-      };
-      controls.scale.value = viewFor[to].scale;
-      controls.dotSpacing.value = viewFor[to].dotSpacing;
-      controls.meshSpacing.value = viewFor[to].meshSpacing;
+      saveView(world, from);
+      applyView(world, to);
     }
     projectionToggle.setAttribute('aria-pressed', String(flat));
     projectionToggle.textContent = flat ? 'View: Flat' : 'View: Globe';
@@ -208,8 +235,33 @@ document.addEventListener('DOMContentLoaded', () => {
     syncVisibility();
   }
 
+  function setWorld(earth) {
+    const projection = currentProjection();
+    const from = currentWorld();
+    const to = earth ? 'earth' : 'random';
+    if (from !== to) {
+      saveView(from, projection);
+      applyView(to, projection);
+    }
+    worldToggle.setAttribute('aria-pressed', String(earth));
+    worldToggle.textContent = earth ? 'World: Earth' : 'World: Random';
+    apply({
+      world: to,
+      scale: Number(controls.scale.value),
+      dotSpacing: Number(controls.dotSpacing.value),
+      meshSpacing: Number(controls.meshSpacing.value),
+    });
+    syncLabels();
+    syncVisibility();
+    syncSeed();
+  }
+
   projectionToggle.addEventListener('click', () => {
     setProjection(projectionToggle.getAttribute('aria-pressed') !== 'true');
+  });
+
+  worldToggle.addEventListener('click', () => {
+    setWorld(worldToggle.getAttribute('aria-pressed') !== 'true');
   });
 
   function setPointer(on) {
@@ -275,14 +327,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const flat = profile.projection === 'flat';
     projectionToggle.setAttribute('aria-pressed', String(flat));
     projectionToggle.textContent = flat ? 'View: Flat' : 'View: Globe';
+    // Every profile is a random world — World is the one control a preset
+    // leaves out of its own definition, the same way Pointer is, but unlike
+    // Pointer it still gets reset here: a profile picked while Earth was on
+    // would otherwise apply a Continent size and Seed that do nothing.
+    worldToggle.setAttribute('aria-pressed', 'false');
+    worldToggle.textContent = 'World: Random';
     // A preset states a zoom and detail for the projection it uses, so
     // make those the ones the toggle comes back to.
-    viewFor[profile.projection] = {
+    viewFor[`random-${profile.projection}`] = {
       scale: profile.scale, dotSpacing: profile.dotSpacing, meshSpacing: profile.meshSpacing,
     };
 
     apply({
       ...options,
+      world: 'random',
       mode: profile.mode,
       projection: profile.projection,
       landRange: profile.landRange,
@@ -296,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncLabels();
     syncStaging();
     syncVisibility();
+    syncSeed();
   }
 
   profileSelect.addEventListener('change', () => applyProfile(profileSelect.value));
