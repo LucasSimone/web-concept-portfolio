@@ -3,7 +3,7 @@
     <section class="hero">
       <p class="eyebrow">One engine, any transition</p>
       <h1>Deck</h1>
-      <p class="direction">A frame changer. One box, a stack of frames inside it, and a transition that decides what the move from one to the next looks like — a slide, a crossfade, a cube face turning, a card dealt off the top, or the arc of a View-Master reel. Everything else is the same whichever you pick: click, scroll, swipe, arrows, dots, keyboard. Change the transition in the panel.</p>
+      <p class="direction">One box, a stack of frames in it, and a transition that decides what moving between them looks like: a slide, a crossfade, a turning cube face, a card dealt off the top, or the arc of a View-Master reel. Everything else is identical whichever you pick — click, scroll, swipe, arrows, dots, keyboard. Switch transitions in the panel.</p>
 
       <div class="dk-device">
         <div class="deck" id="deckDemo" data-transition="slide" aria-label="Deck demo">
@@ -33,7 +33,7 @@
     <section class="gallery">
       <p class="eyebrow">No JavaScript on this row</p>
       <h2>Six built in</h2>
-      <p class="direction">Each of these is the same component with a different <code>data-transition</code> in the markup. A transition is a function from one number — how far a frame is from the one in view — to a transform and an opacity, so adding one is a dozen lines rather than a fork. Five of the six track a drag 1:1 and settle where you let go; the arc doesn't, because a frame parked halfway through a swing isn't a pose anything can rest in.</p>
+      <p class="direction">Same component six times, with a different <code>data-transition</code> in the markup. A transition maps one number — how far a frame sits from the one in view — to a transform and an opacity, so a new one is a dozen lines, not a fork. Five of the six follow a drag 1:1 and settle where you let go. The arc doesn't: a frame stopped halfway through a swing isn't a pose to rest in.</p>
 
       <div class="dk-grid">
         <figure class="dk-sample">
@@ -107,7 +107,7 @@
     <section class="gallery">
       <p class="eyebrow">Two custom properties and one option</p>
       <h2>Or no box at all</h2>
-      <p class="direction">The box is only as visible as you make it. <code>--dk-body: transparent</code> takes the slab out from behind the frames, and <code>clip: false</code> stops the box being a window they can't leave — so a stack becomes loose cards lying on the page, with the page's own background between them. Nothing about the component changes; the cards below are the same <code>stack</code> transition as the one above, with the deck's background removed and a shadow added by this page's CSS.</p>
+      <p class="direction"><code>--dk-body: transparent</code> removes the slab behind the frames, and <code>clip: false</code> stops the box being a window they can't leave. A stack becomes loose cards lying on the page, with the page's own background between them. The component is unchanged — these are the same <code>stack</code> transition as above, minus the background, plus a shadow from this page's CSS.</p>
 
       <div class="deck dk-loose" id="deckLoose" data-transition="stack" aria-label="Unclipped stack demo">
         <div class="deck-port">
@@ -121,7 +121,7 @@
           </div>
           <div class="deck-frame dk-card">
             <h3>Fades before it leaves</h3>
-            <p>With nothing to clip it, the thrown card has to reach zero opacity exactly one frame out — which is what the transition does.</p>
+            <p>With nothing to clip it, the thrown card has to hit zero opacity exactly one frame out. That's what the transition does.</p>
           </div>
           <div class="deck-frame dk-card">
             <h3>Same everything else</h3>
@@ -134,7 +134,7 @@
     <section class="gallery">
       <p class="eyebrow">A dozen lines</p>
       <h2>Or write your own</h2>
-      <p class="direction">A transition is a plain object on <code>Deck.transitions</code>. It gets the frame, its signed distance from the one in view, and a context carrying the measured box, the resolved options and the direction of travel. The deck below runs this exact code: <code>demo.js</code> registers it at load, and the markup asks for it by name with <code>data-transition="flip"</code> like any built-in.</p>
+      <p class="direction">A transition is a plain object on <code>Deck.transitions</code>. It gets a frame, that frame's signed distance from the one in view, and a context holding the measured box, the resolved options and the direction of travel. The deck below runs exactly this code — <code>demo.js</code> registers it on load, and the markup asks for it by name with <code>data-transition="flip"</code> like any built-in.</p>
 
       <pre class="dk-code"><code>Deck.transitions.flip = {
   scrub: true,
@@ -164,7 +164,7 @@
     <section class="gallery">
       <p class="eyebrow">A frame holds anything</p>
       <h2>It isn't a photo viewer</h2>
-      <p class="direction">A frame is an empty box that fills the deck — put markup in it. These hold text, a link and a stat, with no sizing of their own: <code>.deck</code> is a container-query context, so everything inside is measured in <code>cqw</code> and scales with the deck rather than the viewport. Only the frame at rest is interactive — try tabbing to the link, then advancing.</p>
+      <p class="direction">A frame is an empty box that fills the deck. Put markup in it. These hold text, a link and a stat, none of them sized directly: <code>.deck</code> is a container-query context, so everything inside measures in <code>cqw</code> and scales with the deck instead of the viewport. Only the resting frame is interactive — try tabbing to the link, then advancing.</p>
 
       <div class="deck dk-content" id="deckContent" data-transition="fade" aria-label="Content frames demo">
         <div class="deck-port">
@@ -196,7 +196,7 @@
     <section class="gallery">
       <p class="eyebrow">Bring your own buttons</p>
       <h2>Drive it from your own controls</h2>
-      <p class="direction">Any element on the page can drive a deck with no JavaScript of your own: <code>data-deck-next</code>, <code>data-deck-prev</code> and <code>data-deck-to="N"</code> are picked up by one delegated listener, scoped by the deck they sit in or by <code>data-deck-for="#id"</code>. The built-in arrows and dots use those very same hooks — this one just has them switched off. The lever is a <code>&lt;span data-deck-lever&gt;</code> styled entirely by this page: while you pull it, the component publishes <code>--dk-pull</code> on it, and that's all its CSS needs.</p>
+      <p class="direction">Any element on the page can drive a deck without JavaScript of your own. One delegated listener picks up <code>data-deck-next</code>, <code>data-deck-prev</code> and <code>data-deck-to="N"</code>, scoped by the deck they sit inside or by <code>data-deck-for="#id"</code>. The built-in arrows and dots use the same hooks; this deck has them switched off. The lever is a <code>&lt;span data-deck-lever&gt;</code> styled entirely by this page — while you pull it the component publishes <code>--dk-pull</code>, and that's all its CSS needs.</p>
 
       <div class="dk-rig">
         <div class="deck dk-rig__view" id="deckCustom" data-transition="stereoscope" aria-label="Custom controls demo">
@@ -229,7 +229,7 @@
     <section class="gallery">
       <p class="eyebrow">Two custom properties</p>
       <h2>Sizing is a ratio and a max width</h2>
-      <p class="direction">A deck is <code>width: 100%</code> at <code>aspect-ratio: var(--dk-aspect, 3 / 2)</code>, so it fills whatever you put it in and keeps its shape at every width — set <code>--dk-aspect</code>, cap it with <code>max-width</code>, and you're done. Set an explicit <code>height</code> instead and that wins. These three are the same component, sized inline, in a grid that reflows on a narrow screen. The hit targets on the small ones shrink themselves with a container query.</p>
+      <p class="direction">A deck is <code>width: 100%</code> at <code>aspect-ratio: var(--dk-aspect, 3 / 2)</code>, so it fills whatever holds it and keeps its shape at every width. Set <code>--dk-aspect</code>, cap it with <code>max-width</code>, done — an explicit <code>height</code> wins over both. These three are one component sized inline, in a grid that reflows on a narrow screen; the hit targets on the small ones shrink via container query.</p>
 
       <div class="dk-sizes">
         <div class="deck" data-transition="stack" style="--dk-aspect: 3 / 4; --dk-radius: 14px" aria-label="Portrait deck">

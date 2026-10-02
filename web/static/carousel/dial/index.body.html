@@ -3,7 +3,7 @@
     <section class="hero">
       <p class="eyebrow">Turn it, scroll it, or click a card</p>
       <h1>Dial</h1>
-      <p class="direction">The View-Master reel itself, rather than the viewer. Cards are mounted radially around a hub on the bottom edge, so the top half of the disc arcs across the window. Twelve o'clock is the gate — and since a radially-mounted card is only upright at the top of its arc, the selected one is the only card the right way up. Grab the face anywhere and turn it like a knob.</p>
+      <p class="direction">The View-Master reel itself, not the viewer. Cards mount radially around a hub on the bottom edge, so the top half of the disc arcs across the window. Twelve o'clock is the gate, and since a radial card is only upright at the top of its arc, the selected one is the only card the right way up. Grab the face anywhere and turn it like a knob.</p>
 
       <div class="dl-device">
         <div class="dial" id="dialDemo" aria-label="Dial demo reel">
@@ -40,7 +40,7 @@
     <section class="gallery">
       <p class="eyebrow">Lift the hub into the box</p>
       <h2>The whole disc at once</h2>
-      <p class="direction">The half circle is just where <code>pivot</code> happens to sit by default — on the bottom edge, so exactly half the reel is in the window. Move the hub up into the box and the rest of the disc comes with it, until every card is in view and the arc closes into the reel as you'd hold it. Same mechanism, same rotational drag; the only thing that changed is where the center is.</p>
+      <p class="direction">The half circle is only where <code>pivot</code> sits by default: on the bottom edge, so exactly half the reel is in the window. Move the hub up into the box and the rest of the disc follows, until every card is in view and the arc closes into the reel as you'd hold it. Same mechanism, same rotational drag — only the center moved.</p>
 
       <div class="dl-device dl-device--full">
         <div class="dial" id="dialFull" aria-label="Full-face dial reel">
@@ -64,14 +64,14 @@
     <section class="gallery">
       <p class="eyebrow">Text, images, video — anything</p>
       <h2>Cards are just content</h2>
-      <p class="direction">The mechanism only ever touches a card's transform and opacity. What goes inside is entirely yours — a paragraph, a real <code>&lt;img&gt;</code>, a video, a pull quote, a figure, a link. Bigger cards only want a bigger disc and a wider <code>cardAngle</code> so they still sit apart on it. The link on the last card works once that card is at the gate, and spins it up to the gate before that.</p>
+      <p class="direction">The mechanism only touches a card's transform and opacity; what goes inside is yours — a paragraph, an <code>&lt;img&gt;</code>, a video, a pull quote, a link. Bigger cards want a bigger disc and a wider <code>cardAngle</code> so they still sit apart. The link on the last card works once that card reaches the gate; before that, clicking spins it there first.</p>
 
       <div class="dl-device dl-device--wide">
         <div class="dial" id="dialContent" aria-label="Content dial">
           <div class="dial-face">
             <div class="dial-card dl-big">
               <h3 class="dl-big__h">Text</h3>
-              <p class="dl-big__p">A card is whatever markup you put inside <code>.dial-card</code>. Nothing here is special — this is a heading and a paragraph, laid out by your own CSS, rotated by the disc.</p>
+              <p class="dl-big__p">A card is whatever markup you put inside <code>.dial-card</code>. This one is a heading and a paragraph, laid out by your own CSS and rotated by the disc.</p>
             </div>
 
             <figure class="dial-card dl-big dl-big--figure">
@@ -85,7 +85,7 @@
             </div>
 
             <blockquote class="dial-card dl-big dl-big--quote">
-              <p class="dl-big__quote">Every card is rigidly mounted to one disc, so its angle is the whole of its state.</p>
+              <p class="dl-big__quote">Every card is rigidly mounted to one disc, so its angle is its entire state.</p>
               <cite class="dl-big__cite">— the notes</cite>
             </blockquote>
 
@@ -117,7 +117,7 @@
     <section class="gallery">
       <p class="eyebrow">One disc, no two alike</p>
       <h2>They don't have to match</h2>
-      <p class="direction">Each card's distance from the hub is worked out from its own height, so a disc carries whatever mix of sizes you give it and every card still sits flush against the rim — taller ones simply reach further in toward the hub. Nothing on this disc shares a width or a height with anything else.</p>
+      <p class="direction">Each card's distance from the hub comes from its own height, so a disc takes whatever mix of sizes you give it and every card still sits flush to the rim — taller ones reach further in. Nothing on this disc shares a width or a height with anything else.</p>
 
       <div class="dl-device dl-device--mixed">
         <div class="dial" id="dialMixed" aria-label="Mixed size dial">

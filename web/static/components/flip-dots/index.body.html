@@ -4,12 +4,11 @@
       <p class="eyebrow">Component · Programmable</p>
       <h1>Flip Dots</h1>
       <p class="intro">
-        A programmable grid of physical discs. Each one sits on a center
-        axle: asked for a new state it turns a half turn, slams into its
-        magnet stop, and the color swaps at the exact moment it passes
-        edge-on — which is why a disc with two faces can hold any number of
-        colors. Hover the board to flip single dots; click one to send a
-        ripple out from it.
+        A programmable grid of physical discs. Each sits on a center axle:
+        given a new state it makes a half turn, slams into its magnet stop,
+        and swaps color at the moment it passes edge-on — which is how a
+        two-faced disc holds any number of colors. Hover the board to flip
+        single dots, or click one to send a ripple out from it.
       </p>
     </section>
 
@@ -37,11 +36,11 @@
       <p class="eyebrow">Words, not just pixels</p>
       <h2>A board that says things</h2>
       <p class="intro">
-        The same component with a 5&#215;7 bitmap font on top of it. A message
-        is just another whole-board update, so it arrives on a transition
-        like anything else &#8212; and because only the dots that actually
-        differ between two messages flip, changing one word to another costs
-        the handful of discs that disagree rather than the whole board.
+        The same component with a 5&#215;7 bitmap font over it. A message is
+        one more whole-board update, so it arrives on a transition like
+        anything else. Only the dots that differ between two messages flip,
+        so swapping a word costs the handful of discs that disagree, not the
+        board.
       </p>
 
       <div class="flip-dots fd-text-stage" id="fdTextBoard"></div>
@@ -60,12 +59,12 @@
       <p class="eyebrow">Any size</p>
       <h2>Same component, three scales</h2>
       <p class="intro">
-        The grid is measured against the element's own box. Give it a
-        <code>dotSize</code> and the columns follow; give it
-        <code>cols</code> and the dot size follows. Below about five pixels
-        a disc has no room to read as a disc, so a grid asked for finer than
-        that is thinned rather than drawn too small &#8212; each board below
-        reports what it actually got.
+        The grid is measured against the element's own box: give it a
+        <code>dotSize</code> and the columns follow, give it <code>cols</code>
+        and the dot size follows. Under about five pixels there is no room
+        left for a disc to look like one, so a grid asked for finer than that
+        gets thinned instead of drawn too small. Each board below reports
+        what it actually got.
       </p>
 
       <div class="fd-row">
@@ -88,16 +87,15 @@
       <p class="eyebrow">A live display</p>
       <h2>Driven by data</h2>
       <p class="intro">
-        A clock, redrawn every second. Only the dots whose state actually
-        differs flip, so a tick costs the handful of discs that make up the
-        digit that changed &#8212; watch the minute roll over and the rest of
-        the board stays perfectly still.
+        A clock, redrawn every second. Watch the minute roll over: only the
+        discs in the digit that changed flip, and the rest of the board never
+        twitches.
       </p>
 
       <div class="flip-dots fd-clock" id="fdClock"></div>
 
       <div class="fd-actions">
-        <span class="fd-bar__note">No transition on a tick: a clock that rippled every second would be a toy rather than a clock.</span>
+        <span class="fd-bar__note">No transition on a tick — a clock that rippled every second would be a toy, not a clock.</span>
         <button type="button" class="fd-btn fd-btn--primary fd-btn--end" id="fdClockToggle" aria-pressed="true">Pause</button>
       </div>
     </section>
@@ -108,11 +106,10 @@
       <p class="intro">
         <code>play()</code> is a frame source plus a clock. The source is
         either an array of frames &#8212; a clip, like the one below &#8212;
-        or a function the board asks for content every beat, which is the
-        live case. Frames are dropped rather than queued: a board is a
-        physical display with a real refresh limit of one half turn per disc,
-        and a queue would only let a fast source push it further and further
-        behind the thing it is meant to be showing.
+        or a function the board asks for content on every beat, which is the
+        live case. Frames are dropped, never queued: a disc can only make one
+        half turn at a time, and a queue would let a fast source push the
+        board further and further behind what it is meant to be showing.
       </p>
 
       <div class="flip-dots fd-film" id="fdFilm"></div>
@@ -130,11 +127,10 @@
         <h2>Content sits on top</h2>
         <p class="intro">
           The canvas inserts itself as the element&#8217;s first child, behind
-          everything else in it, so a board can carry its own content
-          instead of only being a display. This whole section is one
-          instance &#8212; the heading and this paragraph are its children.
-          Holding the lit state well down from full brightness keeps the
-          text the brightest thing on it.
+          everything else, so a board can carry content instead of only
+          displaying it. This whole section is one instance; the heading and
+          this paragraph are its children. Keeping the lit state well below
+          full brightness leaves the text the brightest thing on it.
         </p>
       </div>
     </section>

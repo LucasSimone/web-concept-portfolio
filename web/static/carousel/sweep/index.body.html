@@ -3,7 +3,7 @@
     <section class="hero">
       <p class="eyebrow">Wheel, drag, or hover</p>
       <h1>Sweep</h1>
-      <p class="direction">A strip of cards you browse by wheel, drag, or just moving the pointer across them. The focused card's own anchor point sweeps from the viewport's left edge to its right edge as you move through the list, everything packs edge to edge with no gaps as it shrinks toward the background, and the whole thing settles into a snap the instant input goes idle.</p>
+      <p class="direction">A strip of cards you browse by wheel, drag, or by moving the pointer across it. The focused card travels the full width of the window as you work through the list, its neighbors packing edge to edge with no gaps as they shrink away behind it. Stop moving and it snaps.</p>
 
       <div class="sweep" id="sweepDemo">
         <div class="sweep-line" data-sweep-line="top"></div>
@@ -11,7 +11,7 @@
         <div class="sweep-track" id="sweepDemoGrid">
           <div class="sweep-card sw-card"><span class="sw-card__num">01</span><h3>Wheel</h3><p>Scroll over the strip to move through it — either axis, whichever the input carries more of.</p></div>
           <div class="sweep-card sw-card"><span class="sw-card__num">02</span><h3>Drag</h3><p>Press and pull. Release goes into a damped coast that always settles exactly on a card.</p></div>
-          <div class="sweep-card sw-card"><span class="sw-card__num">03</span><h3>Hover</h3><p>With enough cards on screen, just moving the pointer across the strip pulls the nearest one to focus.</p></div>
+          <div class="sweep-card sw-card"><span class="sw-card__num">03</span><h3>Hover</h3><p>With enough cards on screen, moving the pointer across the strip pulls the nearest one into focus.</p></div>
           <div class="sweep-card sw-card"><span class="sw-card__num">04</span><h3>Settle</h3><p>A card at rest in focus fires <code>sweep-settle</code> — the hook a page uses to reset a preview.</p></div>
           <div class="sweep-card sw-card"><span class="sw-card__num">05</span><h3>Falloff</h3><p>Distance from focus drives scale on an exponential curve, never opacity.</p></div>
           <div class="sweep-card sw-card"><span class="sw-card__num">06</span><h3>Packed</h3><p>Every card's position is the cumulative sum of its neighbors' half-widths — no gaps, ever.</p></div>
@@ -23,7 +23,7 @@
     <section class="gallery">
       <p class="eyebrow">Under five cards</p>
       <h2>Hover-follow turns off</h2>
-      <p class="direction">Below five visible cards, mousing across the strip no longer pulls one to center — with this few, that tracking reads as fighting the pointer rather than helping you browse. Wheel and drag stay live regardless of count; try them here.</p>
+      <p class="direction">Below five visible cards, moving the pointer no longer pulls one to center: with this few it feels like the strip is fighting you rather than helping. Wheel and drag work at any count — try them here.</p>
 
       <div class="sweep" id="sweepSmall">
         <div class="sweep-line" data-sweep-line="top"></div>

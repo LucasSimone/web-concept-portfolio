@@ -3,12 +3,12 @@
     <section class="hero">
       <p class="eyebrow">Wheel, drag, click, or keys</p>
       <h1>Reel</h1>
-      <p class="direction">A View-Master-style carousel — cards sit on a ring that curves back and away behind a single focus point, dead center. The focused card grows to full size exactly as it arrives there, like holding a slide up to the eye; the rest curve off into a halo behind it, shrinking and fading the further round they sit. Spin it with the wheel, drag it, click a card to bring it to the front, walk it with the arrow keys, or leave it turning by itself.</p>
+      <p class="direction">A View-Master-style carousel. Cards ride a ring that curves away behind one focus point, dead center. The focused card grows to full size exactly as it arrives — a slide held up to the eye — while the rest fall into a halo behind it, smaller and fainter the further round they sit. Or leave it turning on its own.</p>
 
       <div class="reel" id="reelDemo">
         <div class="reel-track" id="reelDemoGrid">
-          <div class="reel-card rl-card"><span class="rl-card__num">01</span><h3>Focus</h3><p>The focused card sits dead center at full size — it shrinks to zero distance from center exactly as it comes into focus, rather than arriving at a separate center slot.</p></div>
-          <div class="reel-card rl-card"><span class="rl-card__num">02</span><h3>Ring</h3><p>Every other card sits on a real ring behind it, at a constant distance from center — only the one settling into focus moves inward.</p></div>
+          <div class="reel-card rl-card"><span class="rl-card__num">01</span><h3>Focus</h3><p>The focused card sits dead center at full size. It reaches zero distance from center exactly as it comes into focus, instead of arriving at a separate slot.</p></div>
+          <div class="reel-card rl-card"><span class="rl-card__num">02</span><h3>Ring</h3><p>Every other card sits on a real ring behind it at a constant distance from center. Only the one settling into focus moves inward.</p></div>
           <div class="reel-card rl-card"><span class="rl-card__num">03</span><h3>Wheel + Drag</h3><p>A scroll or a drag spins the ring. <code>wheelAxis</code> picks which scroll axis it takes — both, or only one, so page scroll can pass straight through.</p></div>
           <div class="reel-card rl-card"><span class="rl-card__num">04</span><h3>Click + Keys</h3><p>Click any card behind the focus to spin it to the front; the front card's own links then work normally. Arrow keys step it one at a time.</p></div>
           <div class="reel-card rl-card"><span class="rl-card__num">05</span><h3>Settle</h3><p>A card at rest in focus fires <code>reel-settle</code> and carries <code>.is-focused</code> — reset a preview animation from it, same hook as Sweep's.</p></div>
@@ -21,7 +21,7 @@
     <section class="gallery">
       <p class="eyebrow">Text, images, video — anything</p>
       <h2>Cards are just content</h2>
-      <p class="direction">A card is whatever markup you put inside <code>.reel-card</code> — the mechanism only ever touches its transform and opacity. Here the same ring holds an image swatch and a video placeholder instead of text.</p>
+      <p class="direction">A card is whatever markup you put inside <code>.reel-card</code>; the mechanism only touches its transform and opacity. Here the same ring holds images and video instead of text.</p>
 
       <div class="reel" id="reelMedia">
         <div class="reel-track" id="reelMediaGrid">
