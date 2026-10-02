@@ -286,14 +286,31 @@ const [flipDotsPreview] = FlipDots.initAll('#flipDotsPreview', {
   flipDuration: 115,
   jitter: 0.3,
   duration: 850,
+  // Sound is wired but held at silence, and hover is what raises the
+  // volume. `sound: true` is doing one job here: it registers the listeners
+  // that arm the audio on the page's first pointerdown or keydown, wherever
+  // on the page those land. Browsers unlock audio only on a gesture from
+  // that short list, and neither a pointer crossing a card nor a scroll is
+  // on it - so a visit spent hovering alone is silent however this is
+  // wired. What arming up front buys is the hover *after* the visitor's
+  // first click or keypress: the context is already running by then, rather
+  // than that hover spending itself on the unlock.
+  sound: true,
+  volume: 0,
 });
+
+// Set below if the card is on the page, and read by the HOVER_EFFECTS list
+// further down - which is where every other hover-reactive thing on a card
+// is driven from, and so where this one belongs too rather than binding the
+// board's own pointer events.
+let flipDotsHover = null;
+
 if (flipDotsPreview) {
   // The card spells its own name out, then shows what the board does
   // between names, then spells it again - each step on a different
   // transition and pace, so a glance at the card catches a different move
-  // than the last one did. Nothing here reacts to input: the card is a
-  // link, and a board that flipped under the pointer would fight the hover
-  // lift every other card gets.
+  // than the last one did. Hovering interrupts all of that and holds the
+  // name; see the hover section at the end of this block.
   const FONT_H = FlipDots.font.height;
 
   // "FLIP DOTS" on one line needs 53 columns and the card has about 26, so
@@ -348,6 +365,7 @@ if (flipDotsPreview) {
   ];
 
   let slide = 0;
+  let slideTimer = null;
   const beat = () => {
     const spec = SLIDES[slide % SLIDES.length];
     slide++;
@@ -357,8 +375,127 @@ if (flipDotsPreview) {
       direction: spec.direction,
     });
   };
+
+  function startSlides() {
+    if (slideTimer === null) slideTimer = setInterval(beat, 2400);
+  }
+
+  function stopSlides() {
+    clearInterval(slideTimer);
+    slideTimer = null;
+  }
+
   beat();
-  setInterval(beat, 2400);
+  startSlides();
+
+  // --- hover ----------------------------------------------------------
+  // Hovering stops the slideshow and holds the card on its own name: the
+  // board flips to FLIP DOTS, the dots the word doesn't use carry on
+  // ticking over underneath it, and the clicks come up out of silence.
+  // Together they are the one state where the card is the component being
+  // driven rather than a preview playing - which is what a visitor about
+  // to click through is asking to see.
+  //
+  // Driven from HOVER_EFFECTS below rather than from the board's own
+  // pointerenter, for the same reason Liftoff is: the sweep slides a
+  // hovered card toward center under a stationary cursor, which retriggers
+  // native hover on its own. That also means hover does nothing under
+  // reduced motion, same as every other card effect on this page.
+  const HOVER_VOLUME = 0.5;
+  const SHIMMER_EVERY_MS = 240;
+  const SHIMMER_COUNT = 8;
+
+  let hovered = false;
+  let shimmerTimer = null;
+  // The cells the word leaves spare, and the handful of them currently
+  // lit. The spare set is measured on each enter rather than once up
+  // front: the grid is measured off the card's box, so a resize changes
+  // which cells exist at all.
+  let spare = [];
+  let lit = [];
+
+  function spareCells(mask) {
+    const cells = [];
+    for (let y = 0; y < flipDotsPreview.rows; y++) {
+      for (let x = 0; x < flipDotsPreview.cols; x++) {
+        if (mask(x, y) !== 1) cells.push([x, y]);
+      }
+    }
+    return cells;
+  }
+
+  // A few spare dots up, and last beat's few back down, which is what
+  // keeps this a shimmer around the word rather than a board slowly
+  // filling in. The two directions have to be separate beats: a dot holds
+  // one instruction, so asking it on the way up to come back down after a
+  // delay would only replace the request that was sending it up.
+  function shimmer() {
+    lit.forEach(([x, y]) => flipDotsPreview.set(x, y, 0));
+    lit = [];
+    if (!spare.length) return;
+    for (let i = 0; i < SHIMMER_COUNT; i++) {
+      const cell = spare[Math.floor(Math.random() * spare.length)];
+      // Read the board rather than trusting the spare set, which a resize
+      // mid-hover can outdate: the word is the one thing on the card that
+      // has to stay whole, and punching a hole in it would outlast the
+      // pointer.
+      if (flipDotsPreview.get(cell[0], cell[1]) === 1) continue;
+      lit.push(cell);
+      // A little spread per dot, so a beat arrives as a scatter of clicks
+      // rather than one louder one - the same per-dot delay a transition
+      // hands out, for a handful of dots that aren't an update.
+      flipDotsPreview.set(cell[0], cell[1], 1, { delay: Math.random() * 90 });
+    }
+  }
+
+  // The shimmer belongs to the word being held, not to it arriving, so it
+  // waits for the board to come to rest. That wait is the settle event's
+  // job rather than a setTimeout reconstructing duration plus a flip plus
+  // bounce plus jitter - but a board already showing the name has nothing
+  // to flip and so will never announce one, hence the direct check too.
+  function startShimmer() {
+    if (shimmerTimer === null) shimmerTimer = setInterval(shimmer, SHIMMER_EVERY_MS);
+  }
+
+  function onSettle() {
+    if (hovered) startShimmer();
+  }
+
+  function enter() {
+    if (hovered) return;
+    hovered = true;
+    stopSlides();
+    const mask = nameGrid(flipDotsPreview);
+    spare = spareCells(mask);
+    lit = [];
+    // Volume before the grid, so the word's own arrival is the loudest
+    // thing the card does. Passing `sound` again re-arms the audio, which
+    // is the retry for a context that was created before the page had a
+    // gesture to unlock it.
+    flipDotsPreview.update({ sound: true, volume: HOVER_VOLUME });
+    flipDotsPreview.setGrid(mask, {
+      transition: 'ripple', easing: 'smooth', duration: 650,
+    });
+    if (flipDotsPreview.settled) startShimmer();
+    else flipDotsPreview.el.addEventListener('flip-dots:settle', onSettle, { once: true });
+  }
+
+  function leave() {
+    if (!hovered) return;
+    hovered = false;
+    clearInterval(shimmerTimer);
+    shimmerTimer = null;
+    flipDotsPreview.el.removeEventListener('flip-dots:settle', onSettle);
+    // Silenced before the shimmer comes down, so the card goes quiet the
+    // moment the pointer is off it. The word itself is left standing - the
+    // next slide is 2.4s away and is a whole-board update anyway.
+    flipDotsPreview.update({ volume: 0 });
+    lit.forEach(([x, y]) => flipDotsPreview.set(x, y, 0));
+    lit = [];
+    startSlides();
+  }
+
+  flipDotsHover = { el: flipDotsPreview.el, enter, leave };
 }
 
 // --- Carousel Lab card previews --------------------------------------
@@ -565,10 +702,19 @@ if (!prefersReducedMotion) {
     else lowerSpotlitWhenDark(host, instance);
   }
 
+  // The Flip Dots card's own hover response (see the Components Lab block
+  // above for what it does). Scoped by element rather than by a `.get()`
+  // miss like the two above, since there is only ever one board on this
+  // page and it is not an effect that every card could carry.
+  function flipDotsOn(card, method) {
+    if (!flipDotsHover || card !== flipDotsHover.el) return;
+    flipDotsHover[method]();
+  }
+
   // Every homepage hover/focus-reactive effect a card can carry, so adding
   // one only means adding it here instead of hunting down every hover/focus
   // call site below.
-  const HOVER_EFFECTS = [liftoffOn, spotlightOn];
+  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn];
   function hoverPopOn(card, method) {
     HOVER_EFFECTS.forEach((effectOn) => effectOn(card, method));
   }
