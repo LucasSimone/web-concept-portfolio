@@ -57,6 +57,22 @@
   position: relative;
   z-index: 1;
 }
+/* The Flip Dots card writes its own label onto the board, so the rendered
+   one would sit on top of the thing it duplicates. Hidden visually rather
+   than removed: the anchor still needs an accessible name, and the hover
+   wiring in home.js resolves cards through this same markup. */
+.fd-card .type,
+.fd-card .title-wrap,
+.fd-card .go {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 /* --- Per-effect title styling, scaled down to card size --- */
 .variation-card h2.double-speak {
   font-family: 'Dancing Script', cursive;

@@ -1,0 +1,170 @@
+
+    <p class="fd-group">Mechanics — how one dot moves</p>
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Presets for every control below, each a different feel for the same board. Adjusting any control afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="classic">Classic flip board</option>
+        <option value="crisp">Crisp</option>
+        <option value="heavy">Heavy</option>
+        <option value="loose">Loose</option>
+        <option value="flat">Flat (no 3D)</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Stiffness <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stiffness">?<span class="hint" role="tooltip" id="hint-stiffness">The spring constant driving a disc to its stop. Higher is a faster, harder flip; lower makes the half turn visibly take its time.</span></span></span><span id="stiffnessVal" class="value"></span></label>
+      <input id="stiffnessRange" type="range" min="80" max="1600" step="20" value="520" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Bounce <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-bounce">?<span class="hint" role="tooltip" id="hint-bounce">How under-damped the spring is. 0 is critically damped — the disc arrives and stops dead. Higher lets it ring against its stop before settling, which is most of what makes arrival feel physical.</span></span></span><span id="bounceVal" class="value"></span></label>
+      <input id="bounceRange" type="range" min="0" max="1" step="0.02" value="0.55" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Stop give <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-overshoot">?<span class="hint" role="tooltip" id="hint-overshoot">How far past flat the disc is allowed to flex when it hits its magnet stop, in half turns — 0.055 is about ten degrees. At 0 the stop is immovable and arrival is dead flat; too high and the disc visibly swings past, which reads as rubber rather than plastic.</span></span></span><span id="overshootVal" class="value"></span></label>
+      <input id="overshootRange" type="range" min="0" max="0.2" step="0.005" value="0.055" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Jitter <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-jitter">?<span class="hint" role="tooltip" id="hint-jitter">Random variation in each dot's spring rate. At 0 a whole row flips in perfect lockstep, which reads as one object rather than many; a little spread makes it a crowd.</span></span></span><span id="jitterVal" class="value"></span></label>
+      <input id="jitterRange" type="range" min="0" max="1" step="0.02" value="0.18" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Shading <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shade">?<span class="hint" role="tooltip" id="hint-shade">How much a face darkens as it turns away from the light. 0 is flat color and the flip reads as a squash; this is what makes it read as a solid object turning.</span></span></span><span id="shadeVal" class="value"></span></label>
+      <input id="shadeRange" type="range" min="0" max="1" step="0.02" value="0.45" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Perspective <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-perspective">?<span class="hint" role="tooltip" id="hint-perspective">How far the disc appears to swing toward and away from you mid-turn, as a fraction of its diameter. Without it the disc squashes in place; with it, it's hinged.</span></span></span><span id="perspectiveVal" class="value"></span></label>
+      <input id="perspectiveRange" type="range" min="0" max="0.4" step="0.01" value="0.14" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Edge thickness <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-thickness">?<span class="hint" role="tooltip" id="hint-thickness">What's left of the disc at exactly edge-on, as a fraction of its diameter — a real one shows its rim rather than disappearing. At 0 the flip has a dead frame in the middle of it.</span></span></span><span id="thicknessVal" class="value"></span></label>
+      <input id="thicknessRange" type="range" min="0" max="0.3" step="0.01" value="0.09" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Hinge angle <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-hinge">?<span class="hint" role="tooltip" id="hint-hinge">The angle of the axle each disc turns on. 0° lays it flat so the disc tumbles top over bottom, 90° stands it upright so the disc swings like a door, and everything between is a diagonal. Only 0–180° exists: an axle has no near end and far end, so 190° is the same hinge as 10°.</span></span></span><span id="hingeVal" class="value"></span></label>
+      <input id="hingeRange" type="range" min="0" max="180" step="1" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="directionalCheckbox" checked />
+        Directional
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-directional">?<span class="hint" role="tooltip" id="hint-directional">On, a dot turns one way toward a higher state and the other way back down, so the board visibly opens and closes. Off, every flip turns the same way.</span></span>
+      </label>
+    </div>
+
+    <p class="fd-group">Choreography — who starts when</p>
+
+    <div class="control-row">
+      <label>Transition
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-transition">?<span class="hint" role="tooltip" id="hint-transition">How a whole-board update is spread out in time. Each one is a single function of a dot's position, so this list is a registry a host can add to rather than a fixed set. Individual dots poked by hand ignore it and flip immediately.</span></span>
+      </label>
+      <select id="transitionSelect">
+        <option value="ripple" selected>Ripple from center</option>
+        <option value="shuffle">Shuffle (a different one each time)</option>
+        <option value="instant">All at once</option>
+        <option value="random">Random order (one at a time)</option>
+        <option value="dissolve">Dissolve (clumpy)</option>
+        <option value="wipe">Wipe</option>
+        <option value="diagonal">Diagonal</option>
+        <option value="rows">Row by row</option>
+        <option value="snake">Snake</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Pace
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-easing">?<span class="hint" role="tooltip" id="hint-easing">How the clock runs while a transition plays out. The transition decides the order dots go in; this decides whether that order is walked at a constant pace, started hard and wound down, built up from a slow start, or taken quickly at both ends with a lingering middle. It applies to every transition, so it multiplies the list above rather than adding to it.</span></span>
+      </label>
+      <select id="easingSelect">
+        <option value="even" selected>Even pace</option>
+        <option value="decelerate">Fast, then slow</option>
+        <option value="accelerate">Slow, then fast</option>
+        <option value="smooth">Quick at both ends</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Spread <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-duration">?<span class="hint" role="tooltip" id="hint-duration">Milliseconds from the first dot starting to the last one starting. Independent of how long a single flip takes, which is Stiffness — a long spread of fast flips is a travelling wave, a short spread of slow ones is the whole board turning together.</span></span></span><span id="durationVal" class="value"></span></label>
+      <input id="durationRange" type="range" min="0" max="5000" step="50" value="600" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Auto cycle <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cycle">?<span class="hint" role="tooltip" id="hint-cycle">Milliseconds between automatic pattern changes, each with a random transition. Off leaves the board still until you press a pattern button.</span></span></span><span id="cycleVal" class="value"></span></label>
+      <input id="cycleRange" type="range" min="0" max="6000" step="250" value="2500" />
+    </div>
+
+    <p class="fd-group">Grid &amp; color</p>
+
+    <div class="control-row">
+      <label><span class="label-text">Columns <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-cols">?<span class="hint" role="tooltip" id="hint-cols">Dots across. Rows follow so cells stay square. Below about five pixels a dot can't read as a disc, so the grid is thinned rather than drawn that small — the readout under the board shows what you actually got.</span></span></span><span id="colsVal" class="value"></span></label>
+      <input id="colsRange" type="range" min="4" max="160" step="1" value="48" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Gap <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gap">?<span class="hint" role="tooltip" id="hint-gap">Space between dots as a fraction of the cell. At 0 they touch.</span></span></span><span id="gapVal" class="value"></span></label>
+      <input id="gapRange" type="range" min="0" max="0.6" step="0.02" value="0.22" />
+    </div>
+
+    <div class="control-row">
+      <label>Shape</label>
+      <select id="shapeSelect">
+        <option value="circle" selected>Circle</option>
+        <option value="rounded">Rounded square</option>
+        <option value="square">Square</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Palette
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-palette">?<span class="hint" role="tooltip" id="hint-palette">A dot's state is an index into a palette, so there's no two-color limit — the three- and four-state entries here flip between all of them. "Materialize" sets state 0 to the page's own background with no rim, so dots appear out of nothing instead of sitting in a visible socket.</span></span>
+      </label>
+      <select id="paletteSelect">
+        <option value="mono" selected>Mono (2)</option>
+        <option value="amber">Amber on black (2)</option>
+        <option value="materialize">Materialize (2)</option>
+        <option value="triple">Three states</option>
+        <option value="quad">Four states</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="borderCheckbox" />
+        Rims
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-border">?<span class="hint" role="tooltip" id="hint-border">A stroke around every disc. Off by default, because a dot with no rim whose off state matches the background behind it materializes out of nothing.</span></span>
+      </label>
+    </div>
+
+    <p class="fd-group">Input &amp; sound</p>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="hoverCheckbox" checked />
+        Hover to flip
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-hover">?<span class="hint" role="tooltip" id="hint-hover">Moving the pointer over the board flips the dot under it — the most direct way to feel a single flip. Clicking a dot always sends a ripple out from it regardless.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="soundCheckbox" />
+        Sound
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sound">?<span class="hint" role="tooltip" id="hint-sound">A synthesized click as each disc meets its stop — no audio files. A whole-board wave is thousands of flips, so clicks landing in the same instant are collapsed into a few louder voices panned toward where they happened, which is what makes a wave clatter instead of hiss.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Volume</span><span id="volumeVal" class="value"></span></label>
+      <input id="volumeRange" type="range" min="0" max="1" step="0.05" value="0.5" />
+    </div>

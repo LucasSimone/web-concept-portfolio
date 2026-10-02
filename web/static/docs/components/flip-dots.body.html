@@ -1,0 +1,451 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Components · Programmable</p>
+      <h1>Flip Dots</h1>
+      <p>
+        A programmable grid of physical discs on a canvas. Each one sits on
+        a center axle: asked for a new state it turns a half turn, slams
+        into its magnet stop, and the color you see swaps at the exact
+        moment it passes edge-on. That last detail is what lets a dot hold
+        any number of colors without lying about the metaphor - a real disc
+        has two faces, but nobody ever sees the back of one, so repainting
+        the far face mid-turn is invisible and any state can reach any
+        other in a single flip.
+      </p>
+      <p>
+        Write single dots, whole grids, patterns or text. Who flips when is
+        a separate question from how a dot moves, and both are open: a
+        registry of transitions decides the order, a registry of easings
+        decides the pace, and either takes a function of your own.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/components/flip-dots/index.html">View Demo</a>
+        <a class="btn" href="/components/flip-dots/flip-dots.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#transitions">Transitions</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="flip-dots.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        One script tag, no dependencies and no companion CSS - it injects
+        its own <code>&lt;style&gt;</code> defining <code>.flip-dots</code>
+        and the canvas inside it, and auto-initializes every matching
+        element on load. The host supplies the box; the component measures
+        it and lays a grid out inside.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;style&gt;
+  .my-board { width: min(720px, 92vw); aspect-ratio: 16 / 9; }
+&lt;/style&gt;
+
+&lt;div class="flip-dots my-board" id="board"&gt;&lt;/div&gt;
+&lt;script src="flip-dots.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const board = FlipDots.get('#board');
+  board.text('HELLO', { transition: 'ripple' });
+&lt;/script&gt;</code></pre>
+      <p>
+        Give the element a width and a height - everything else is derived
+        from that box. With no <code>cols</code> the grid is measured
+        against <code>dotSize</code>; with <code>cols</code> set, the dot
+        size is measured against the grid. Cells are always square, and the
+        grid is centered in whatever slack is left over.
+      </p>
+      <pre><code>FlipDots.initAll('.flip-dots', {
+  cols: 60,
+  palette: ['#1b1e24', '#f0ece2'],
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Writing to the board</h3>
+        <p>
+          <code>set()</code> writes one dot and flips it immediately -
+          that's a dot being poked, and poking it should land now.
+          <code>setGrid()</code> writes the whole board and gets a
+          transition, because that's a new frame of content arriving. The
+          difference in treatment is the whole reason they're separate
+          calls.
+        </p>
+        <pre><code>board.set(4, 2, 1);                 // one dot, no choreography
+board.fill(1);                      // every dot
+board.clear();
+board.rect(0, 0, 8, 8, 1);
+board.setGrid(grid, { transition: 'wipe' });</code></pre>
+        <p>
+          <code>setGrid</code> takes a 2D array, a flat row-major array, a
+          function, or an array of strings - the string form being there
+          because a pattern someone typed by hand is the common case, and
+          it stays readable where nested arrays of integers do not. Cells
+          outside the data are left alone, so a small pattern written to a
+          big board changes only the dots it covers.
+        </p>
+        <pre><code>board.setGrid([
+  '..##..',
+  '.####.',
+  '######',
+], { charMap: { '.': 0, '#': 1 } });</code></pre>
+        <p>
+          Only dots whose state actually differs will flip. Writing the
+          same frame twice is free, and changing one word to another on a
+          message board costs the handful of discs that disagree rather
+          than the whole board.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Any number of colors</h3>
+        <p>
+          A dot's state is an index into <code>palette</code>, so colors
+          are a lookup rather than a property of the data - re-theming a
+          board is a palette swap with no change to what's written on it.
+          There is no two-color limit; a disc shows the face it is turning
+          toward, and that face is painted while it is edge-on and
+          invisible.
+        </p>
+        <pre><code>FlipDots.initAll('.flip-dots', {
+  palette: ['#1b1e24', '#f0ece2', '#e8503a', '#ffc247'],
+});</code></pre>
+        <p>
+          A palette entry may be an object instead of a color string, which
+          is how one state gets a rim the others don't - a faint socket
+          ring on "off" dots while the lit ones stay clean.
+        </p>
+        <pre><code>palette: [
+  { fill: '#0f1115', border: 'rgba(255,255,255,0.12)' },
+  '#f0ece2',
+]</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Dots that materialize out of nothing</h3>
+        <p>
+          Rims are off by default for exactly this: set state 0 to the page
+          color behind the board and an "off" dot is invisible, so content
+          appears out of blank paper rather than lighting up inside a
+          visible socket. <code>background: null</code> leaves the canvas
+          transparent, so the board can sit over whatever is already there.
+        </p>
+        <pre><code>FlipDots.initAll('.flip-dots', {
+  background: null,
+  palette: ['#ffffff', '#111111'],
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Who flips when</h3>
+        <p>
+          A transition answers one question per dot: how far into the
+          update does this one start. That's the whole contract -
+          <code>(x, y, ctx) =&gt; 0..1</code> - which is why everything
+          from a wipe to a scatter to a spiral is a different answer to it
+          rather than a different mechanism. <code>duration</code> is the
+          spread in milliseconds from the first dot starting to the last,
+          and is independent of how long one flip takes: a long spread of
+          fast flips is a travelling wave, a short spread of slow ones is
+          the whole board turning at once.
+        </p>
+        <pre><code>board.setGrid(grid, { transition: 'ripple', duration: 700 });
+board.setGrid(grid, { transition: 'wipe', direction: 'up' });
+
+// Ripple out from the dot someone just clicked
+board.el.addEventListener('click', (e) => {
+  const at = board.dotAt(e.clientX, e.clientY);
+  if (at) board.setGrid(grid, { transition: 'ripple', origin: at });
+});</code></pre>
+        <p>
+          Register your own and it has the same standing as the built-ins:
+        </p>
+        <pre><code>FlipDots.transitions.register('spiral', (x, y, g) =&gt; {
+  const dx = x - g.cols / 2;
+  const dy = y - g.rows / 2;
+  const angle = (Math.atan2(dy, dx) + Math.PI) / (Math.PI * 2);
+  return (angle + Math.hypot(dx, dy) / g.cols) % 1;
+});
+
+board.setGrid(grid, { transition: 'spiral' });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>How the clock runs while it plays</h3>
+        <p>
+          The transition says what order the dots go in; <code>easing</code>
+          says how fast the clock moves through that order. Keeping them
+          apart means four easings across nine transitions is thirty-six
+          looks out of thirteen small functions, instead of needing a
+          <code>ripple-decelerating</code> entry sitting next to
+          <code>ripple</code>.
+        </p>
+        <pre><code>// Off hard and winding down
+board.setGrid(grid, { transition: 'wipe', easing: 'decelerate' });
+
+// A slow start that finishes in a rush
+board.setGrid(grid, { transition: 'rows', easing: 'accelerate' });
+
+FlipDots.easings.register('bounce', (t) =&gt; t * t * (3 - 2 * t));</code></pre>
+        <p>
+          The curve is easier to read backwards: where the output changes
+          slowly, many dots start close together and the wave is moving
+          fast; where it changes quickly, they're spread out and it's
+          moving slowly.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Text</h3>
+        <p>
+          <code>text()</code> writes a line across the whole board in a 5&#215;7
+          bitmap font - lit dots for the glyphs, the <code>off</code> state
+          everywhere else, centered unless <code>x</code>/<code>y</code>
+          say otherwise. It goes through <code>setGrid</code>, so a message
+          arrives on a transition like anything else.
+        </p>
+        <pre><code>board.text('GATE 7', { transition: 'rows', easing: 'decelerate' });
+board.text('14:05', { on: 2, spacing: 2 });</code></pre>
+        <p>
+          <code>measureText()</code> returns the width in dots, for
+          deciding whether a message fits before committing to it. Derive
+          the limit from the live grid rather than writing it down - the
+          grid is measured against the element's box, so a hardcoded
+          character count is wrong on every window but the one it was
+          written on.
+        </p>
+        <pre><code>const perGlyph = FlipDots.font.width + 1;
+const fits = Math.floor((board.cols + 1) / perGlyph);</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>The hinge</h3>
+        <p>
+          <code>hinge</code> is the angle of the axle each disc turns on,
+          in degrees. 0 lays it flat so the disc tumbles top over bottom,
+          90 stands it upright so it swings like a door, and anything
+          between is a diagonal. Only 0-180 exists: an axle has no near end
+          and far end, so 190 is the same hinge as 10.
+        </p>
+        <pre><code>FlipDots.initAll('.flip-dots', { hinge: 90 });  // swings like a door
+FlipDots.initAll('.flip-dots', { hinge: 45 });  // diagonal</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Sound</h3>
+        <p>
+          Off by default - a component that starts making noise in someone
+          else's page has to be asked for. Switched on, each disc clicks as
+          it meets its stop, synthesized rather than loaded from a file.
+          Browsers won't start audio before a real user gesture, so turning
+          it on arms the audio for the next pointer or key event;
+          <code>enableSound()</code> is for the case where the gesture has
+          already happened, such as your own "sound on" button.
+        </p>
+        <pre><code>FlipDots.initAll('.flip-dots', { sound: true, volume: 0.4 });
+
+soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre>
+        <p>
+          A board-wide wave is thousands of flips, which as thousands of
+          voices would be white noise and more than the audio thread will
+          schedule. Clicks landing in the same instant are collapsed into a
+          few louder voices, panned toward where on the board they
+          happened - which is the difference between a wave that clatters
+          and one that hisses.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>As a background</h3>
+        <p>
+          The canvas inserts itself as the element's first child, behind
+          everything else in it, so a board can carry its own content. With
+          the lit state held well down from full brightness the text on top
+          stays the brightest thing on it.
+        </p>
+        <pre><code>&lt;section class="flip-dots hero"&gt;
+  &lt;h1&gt;Anything you like&lt;/h1&gt;
+&lt;/section&gt;</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>cols</code></td><td><code>null</code></td><td>Columns across. <code>null</code> measures the grid against <code>dotSize</code> instead</td></tr>
+          <tr><td><code>rows</code></td><td><code>null</code></td><td>Rows down. <code>null</code> derives it from <code>cols</code> so cells come out square</td></tr>
+          <tr><td><code>dotSize</code></td><td><code>16</code></td><td>Target dot diameter in px, used only when <code>cols</code> is <code>null</code></td></tr>
+          <tr><td><code>gap</code></td><td><code>0.22</code></td><td>Space between dots as a fraction of the cell pitch; 0 has them touching</td></tr>
+          <tr><td><code>shape</code></td><td><code>'circle'</code></td><td><code>'circle'</code>, <code>'rounded'</code> or <code>'square'</code></td></tr>
+          <tr><td><code>palette</code></td><td>2 entries</td><td>A dot's state is an index into this. Entries are a color string or <code>{ fill, border, edge }</code></td></tr>
+          <tr><td><code>background</code></td><td><code>'#0c0d10'</code></td><td>Behind the dots. <code>null</code> leaves the canvas transparent</td></tr>
+          <tr><td><code>borderColor</code></td><td><code>null</code></td><td>Rim on every disc, unless its palette entry overrides it. Off by default so dots can materialize out of nothing</td></tr>
+          <tr><td><code>borderWidth</code></td><td><code>0.08</code></td><td>Rim width as a fraction of dot diameter</td></tr>
+          <tr><td><code>stiffness</code></td><td><code>520</code></td><td>Spring constant. Higher is a faster, harder flip</td></tr>
+          <tr><td><code>bounce</code></td><td><code>0.55</code></td><td>0 is critically damped - arrives and stops dead. Higher rings against the stop before settling</td></tr>
+          <tr><td><code>overshoot</code></td><td><code>0.055</code></td><td>How far past flat the disc may flex when it hits its stop, in half turns (0.055 is about 10&#176;)</td></tr>
+          <tr><td><code>jitter</code></td><td><code>0.18</code></td><td>Random variation in each dot's spring rate, so a row doesn't flip in lockstep</td></tr>
+          <tr><td><code>shade</code></td><td><code>0.45</code></td><td>How much a face darkens as it turns away from the light</td></tr>
+          <tr><td><code>edgeColor</code></td><td><code>null</code></td><td>The disc's rim, seen near edge-on. <code>null</code> derives one from the palette</td></tr>
+          <tr><td><code>edgeFalloff</code></td><td><code>3</code></td><td>How tightly the rim is confined to the edge-on sliver. Lower cross-fades the faces into each other and loses the moment of the swap</td></tr>
+          <tr><td><code>perspective</code></td><td><code>0.14</code></td><td>How far the disc appears to swing toward you mid-turn, as a fraction of its diameter</td></tr>
+          <tr><td><code>thickness</code></td><td><code>0.09</code></td><td>Visible thickness of the disc edge-on. Without it the flip has a dead frame in the middle</td></tr>
+          <tr><td><code>hinge</code></td><td><code>0</code></td><td>Angle of the axle in degrees: 0 tumbles, 90 swings like a door, between is diagonal</td></tr>
+          <tr><td><code>directional</code></td><td><code>true</code></td><td>Turn one way toward higher states and the other way back down, so a board visibly opens and closes</td></tr>
+          <tr><td><code>transition</code></td><td><code>'ripple'</code></td><td>Default for <code>setGrid</code>: a name from <code>FlipDots.transitions</code>, or a function</td></tr>
+          <tr><td><code>duration</code></td><td><code>600</code></td><td>Milliseconds from the first dot starting to the last one starting</td></tr>
+          <tr><td><code>easing</code></td><td><code>'even'</code></td><td>How the clock runs while a transition plays: a name from <code>FlipDots.easings</code>, or a function</td></tr>
+          <tr><td><code>sound</code></td><td><code>false</code></td><td>A synthesized click as each disc meets its stop</td></tr>
+          <tr><td><code>volume</code></td><td><code>0.5</code></td><td>0 to 1</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>set(x, y, state)</code></td><td>One dot, flipped immediately with no choreography</td></tr>
+          <tr><td><code>get(x, y)</code></td><td>That dot's state, or -1 if out of range</td></tr>
+          <tr><td><code>setGrid(data, opts)</code></td><td>The whole board, choreographed. <code>opts</code> takes <code>transition</code>, <code>easing</code>, <code>duration</code>, <code>direction</code>, <code>origin</code>, <code>charMap</code></td></tr>
+          <tr><td><code>text(str, opts)</code></td><td>A line of text in the 5&#215;7 font, centered by default. Same <code>opts</code> as <code>setGrid</code>, plus <code>x</code>, <code>y</code>, <code>on</code>, <code>off</code>, <code>spacing</code></td></tr>
+          <tr><td><code>measureText(str, opts)</code></td><td>How wide that string would be, in dots</td></tr>
+          <tr><td><code>fill(state, opts)</code> / <code>clear(opts)</code></td><td>Every dot to one state</td></tr>
+          <tr><td><code>rect(x, y, w, h, state, opts)</code></td><td>A rectangular block</td></tr>
+          <tr><td><code>row(y, states, opts)</code> / <code>col(x, states, opts)</code></td><td>One line of the grid</td></tr>
+          <tr><td><code>randomize(opts)</code></td><td>Every dot to a random state</td></tr>
+          <tr><td><code>snapshot()</code></td><td>A copy of what's on the board, row-major</td></tr>
+          <tr><td><code>dotAt(clientX, clientY)</code></td><td><code>[x, y]</code> of the dot under a client-space point, or <code>null</code> if it missed</td></tr>
+          <tr><td><code>update(options)</code></td><td>New option values. Grid changes re-measure and resample; color changes just repaint</td></tr>
+          <tr><td><code>enableSound()</code></td><td>Start audio now, for a gesture that has already happened</td></tr>
+          <tr><td><code>destroy()</code></td><td>Tears down observers, audio and the canvas</td></tr>
+          <tr><td><code>cols</code> / <code>rows</code> / <code>length</code></td><td>The grid actually settled on - read these rather than echoing what you asked for</td></tr>
+          <tr><td><code>dotPx</code> / <code>pitchPx</code></td><td>Effective dot diameter and cell pitch, in px</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="transitions">Transitions &amp; easings</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Transition</th><th>Order</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>instant</code></td><td>Everything at once - the board changes in a single clack</td></tr>
+          <tr><td><code>random</code></td><td>Every changing dot gets its own slot in a shuffled order, so they go one at a time, evenly paced</td></tr>
+          <tr><td><code>dissolve</code></td><td>Independent draws per dot, so they clump - a surface corroding rather than a list being worked through</td></tr>
+          <tr><td><code>wipe</code></td><td>A straight edge crossing the board; takes <code>direction</code> of <code>'left'</code>, <code>'right'</code>, <code>'up'</code> or <code>'down'</code></td></tr>
+          <tr><td><code>diagonal</code></td><td>Corner to corner</td></tr>
+          <tr><td><code>ripple</code></td><td>Outward from the center, or from <code>origin</code></td></tr>
+          <tr><td><code>rows</code></td><td>Line by line, every dot in a row together</td></tr>
+          <tr><td><code>snake</code></td><td>One dot at a time, down each row and back along the next</td></tr>
+          <tr><td><code>shuffle</code></td><td>Picks a different one of the above for every update, wipe direction included</td></tr>
+        </tbody>
+      </table>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Easing</th><th>Pace</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>even</code></td><td>Constant from one side to the other</td></tr>
+          <tr><td><code>decelerate</code></td><td>Off hard and winding down - most of the board goes in the first half of the spread</td></tr>
+          <tr><td><code>accelerate</code></td><td>A slow start that gathers and finishes in a rush</td></tr>
+          <tr><td><code>smooth</code></td><td>Quick at both ends, lingering through the middle</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        <strong>The color swaps at edge-on, which is what makes N colors
+        work:</strong> a dot carries a face for even half turns and one for
+        odd, and which you see is decided by the parity of the nearest flat
+        position. Painting the other parity's face is therefore always
+        invisible. Asked for a new state mid-flight, a dot still short of
+        edge-on hasn't revealed its destination face yet, so the new state
+        simply overwrites it and the dot carries on with its momentum
+        intact; past edge-on it has to turn again - and if the new state is
+        the one it was leaving, it springs back the way it came rather than
+        continuing round.
+      </p>
+      <p>
+        <strong>It's a spring against a magnet stop, not a tween:</strong>
+        travel past the target is capped at <code>overshoot</code> and what
+        velocity is left rebounds, so the overshoot you see is the disc
+        flexing against its stop rather than swinging past it. The spring
+        is integrated at a fixed sub-step regardless of frame rate, so the
+        feel is identical on a 60Hz and a 144Hz display and a dropped frame
+        can't fling a dot. At the defaults a disc reaches its stop in about
+        127ms and has finished ringing by about 430ms.
+      </p>
+      <p>
+        <strong>The disc has a rim, and it matters more than it sounds:</strong>
+        without one a face just darkens as it turns, and a dark face on a
+        dark panel darkens straight into invisibility - so half of every
+        flip is a dot quietly vanishing and the other half is a different
+        dot appearing, which is the one thing a flip must not look like. A
+        rim that is neither of the two faces keeps the disc continuously
+        visible all the way round. <code>edgeColor</code> defaults to the
+        palette's own average mixed toward black, so it stays visible
+        against both the darkest face and the lightest without being set.
+      </p>
+      <p>
+        <strong>A dot never leaves its cell, and the repaint depends on
+        it:</strong> only cells that moved are redrawn, each clearing
+        exactly its own cell and nothing more - which is only safe because
+        the perspective lean is capped at the cell's own slack and, on a
+        diagonal hinge, non-circular shapes are clipped to their cell. A
+        padded clear would reach into neighbors and shave the dots already
+        drawn there. One consequence worth knowing: at <code>gap: 0</code>
+        there is no slack, so <code>perspective</code> has no room to do
+        anything.
+      </p>
+      <p>
+        <strong>Cell boundaries are snapped to whole device pixels:</strong>
+        computed from a fractional center and a width, each dot's edges land
+        mid-pixel and antialias against the background, and a board of
+        square dots at zero gap draws a grid of seams over itself. Insetting
+        from a shared snapped boundary means neighbors agree exactly where
+        the edge between them is.
+      </p>
+      <p>
+        <strong>The loop stops when the board is at rest:</strong>
+        <code>requestAnimationFrame</code> runs only while something is
+        mid-flight and tears itself down otherwise, so a settled board
+        costs nothing at all. It also pauses off screen, and snaps
+        everything to its target on the way out rather than replaying a
+        queue of stale delays on the way back.
+      </p>
+      <p>
+        <strong>Resizing resamples rather than clearing:</strong> a new
+        grid is filled nearest-neighbor from the old one and lands settled
+        and flat, so dragging a window doesn't blank the board - or fire a
+        board-wide flip, and a board-wide clatter, on every frame of the
+        drag.
+      </p>
+      <p>
+        <strong>There is a floor on dot size:</strong> below about five
+        pixels the squash that carries the whole effect happens inside a
+        pixel or two and stops reading as rotation, so a grid that fine is
+        thinned rather than drawn that small. Read <code>cols</code> and
+        <code>rows</code> back for what you actually got.
+      </p>
+      <p>
+        <strong>Reduced motion is honored:</strong> under
+        <code>prefers-reduced-motion</code> states change instantly with no
+        rotation, and the component follows a live change to the setting
+        rather than only reading it once.
+      </p>
+    </div>
+  </div>

@@ -269,6 +269,98 @@ OuterWorlds.initAll('.liftoff-card.bg-outer-worlds', {
   dotSpacing: 7, autoSpin: 1.6, seaLevel: 0.2,
 });
 
+// --- Components Lab card preview -------------------------------------
+// Same idea as the background cards above: the card is a live board rather
+// than a picture of one. A card is a few hundred dots against the demo
+// page's thousand-plus, so the grid is coarse and the dots are big enough
+// to still read as discs turning at this size.
+//
+// White panel, near-black dots: every other card on this page is black on
+// white, and with the card's own labels hidden (.fd-card in style.css)
+// there is nothing sitting on top that the contrast could swallow.
+const [flipDotsPreview] = FlipDots.initAll('#flipDotsPreview', {
+  dotSize: 9,
+  gap: 0.26,
+  background: '#ffffff',
+  palette: ['#e9e9e9', '#15171b'],
+  stiffness: 640,
+  jitter: 0.3,
+  duration: 850,
+});
+if (flipDotsPreview) {
+  // The card spells its own name out, then shows what the board does
+  // between names, then spells it again - each step on a different
+  // transition and pace, so a glance at the card catches a different move
+  // than the last one did. Nothing here reacts to input: the card is a
+  // link, and a board that flipped under the pointer would fight the hover
+  // lift every other card gets.
+  const FONT_H = FlipDots.font.height;
+
+  // "FLIP DOTS" on one line needs 53 columns and the card has about 26, so
+  // it goes on two. textGrid is a plain accessor rather than a method for
+  // exactly this: two of them OR'd together compose into one grid, where
+  // two text() calls would have the second blanking the first.
+  function nameGrid(board) {
+    const lines = ['FLIP', 'DOTS'];
+    const block = FONT_H * 2 + 1;
+    const top = Math.round((board.rows - block) / 2);
+    const built = lines.map((line, i) => FlipDots.textGrid(line, board.cols, board.rows, {
+      y: top + i * (FONT_H + 1),
+    }));
+    return (x, y) => (built.some((at) => at(x, y) === 1) ? 1 : 0);
+  }
+
+  // Each slide is content plus how it should arrive. Fixed rather than
+  // random: this is a card on a page, and it should look choreographed
+  // rather than restless.
+  const SLIDES = [
+    { grid: nameGrid, transition: 'random', easing: 'even' },
+    {
+      // Concentric bands out from the middle.
+      grid: (b) => {
+        const cx = (b.cols - 1) / 2;
+        const cy = (b.rows - 1) / 2;
+        return (x, y) => (Math.floor(Math.hypot(x - cx, y - cy) / 2.5) % 2);
+      },
+      transition: 'ripple',
+      easing: 'smooth',
+    },
+    { grid: nameGrid, transition: 'wipe', easing: 'even', direction: 'left' },
+    {
+      // Diagonal stripes.
+      grid: () => (x, y) => (Math.floor((x + y) / 3) % 2),
+      transition: 'diagonal',
+      easing: 'accelerate',
+    },
+    { grid: nameGrid, transition: 'rows', easing: 'decelerate' },
+    {
+      // A soft blotchy field - the one slide that is different every time
+      // it comes round.
+      grid: () => {
+        const seed = Math.random() * 100;
+        return (x, y) => (
+          Math.sin((x + seed) * 0.3) + Math.sin((y - seed) * 0.4) > 0.4 ? 1 : 0
+        );
+      },
+      transition: 'dissolve',
+      easing: 'even',
+    },
+  ];
+
+  let slide = 0;
+  const beat = () => {
+    const spec = SLIDES[slide % SLIDES.length];
+    slide++;
+    flipDotsPreview.setGrid(spec.grid(flipDotsPreview), {
+      transition: spec.transition,
+      easing: spec.easing,
+      direction: spec.direction,
+    });
+  };
+  beat();
+  setInterval(beat, 2400);
+}
+
 // --- Carousel Lab card previews --------------------------------------
 // Every other lab's cards show the effect they link to actually running,
 // and these four now do the same with their own mechanism: a real Sweep,
@@ -486,7 +578,7 @@ if (!prefersReducedMotion) {
   // Liftoff (and, where present, Spotlight) instance via .get() -
   // Transition Lab's transitionGrid gets one too, entirely independent of
   // that grid's own cover/reveal hover delegate further down.
-  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid', 'carouselLabGrid'].forEach((gridId) => {
+  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid', 'carouselLabGrid', 'componentsGrid'].forEach((gridId) => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     bindHoverDelegate(grid, '.liftoff-card', (el, prevEl) => {

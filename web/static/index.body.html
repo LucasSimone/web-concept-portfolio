@@ -307,6 +307,37 @@
   </div>
 
   <section class="home-hero lab-section">
+    <h1>Components Lab</h1>
+    <p>
+      Building blocks rather than effects — things you program, drive from
+      your own data, and put at the center of a page instead of behind it.
+    </p>
+  </section>
+
+  <div class="sweep" id="componentsCarousel">
+  <div class="sweep-line" data-sweep-line="top"></div>
+  <div class="sweep-line" data-sweep-line="bottom"></div>
+  <div class="sweep-track" id="componentsGrid">
+    <!-- Like the Background Lab cards above, the card IS a live instance:
+         `flip-dots` goes straight on .liftoff-card and the component's
+         canvas inserts itself behind that card's own text. Unlike them,
+         this card's label text is hidden (see .fd-card in style.css) -
+         the board spells the name out itself between slides, and a
+         rendered title sitting over it would only collide with the
+         thing it duplicates. The markup stays for screen readers and for
+         the hover wiring that resolves cards by these classes. Slides and
+         options are in home.js. -->
+    <a class="variation-card sweep-card liftoff-host fd-card" href="/components/flip-dots/index.html" data-type="programmable">
+      <div class="liftoff-card flip-dots" id="flipDotsPreview">
+        <div class="type">Programmable</div>
+        <div class="title-wrap"><h2>Flip Dots</h2></div>
+        <div class="go">View →</div>
+      </div>
+    </a>
+  </div>
+  </div>
+
+  <section class="home-hero lab-section">
     <h1>Misc Lab</h1>
     <p>
       One-off interaction concepts that don't fit the other labs — scroll,
@@ -355,6 +386,7 @@
   <script src="/carousel/reel/reel.js"></script>
   <script src="/carousel/deck/deck.js"></script>
   <script src="/carousel/dial/dial.js"></script>
+  <script src="/components/flip-dots/flip-dots.js"></script>
   <!-- Must load synchronously (no async/defer) — see the header comment
        in home.js for why. -->
   <script src="home.js"></script>

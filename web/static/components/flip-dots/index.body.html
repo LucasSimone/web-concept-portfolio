@@ -1,0 +1,128 @@
+
+  <main>
+    <section class="fd-intro">
+      <p class="eyebrow">Component · Programmable</p>
+      <h1>Flip Dots</h1>
+      <p class="intro">
+        A programmable grid of physical discs. Each one sits on a center
+        axle: asked for a new state it turns a half turn, slams into its
+        magnet stop, and the color swaps at the exact moment it passes
+        edge-on — which is why a disc with two faces can hold any number of
+        colors. Hover the board to flip single dots; click one to send a
+        ripple out from it.
+      </p>
+      <p class="intro fd-note">
+        Every control on the right is a real option you can pass in. Who
+        flips when is a separate question from how a dot moves, and both
+        are open — the transition and pace lists are registries you can add
+        your own to.
+      </p>
+    </section>
+
+    <section class="fd-stage-wrap">
+      <div class="flip-dots fd-stage" id="fdBoard"></div>
+
+      <div class="fd-actions">
+        <button type="button" class="fd-btn" data-pattern="message">Message</button>
+        <button type="button" class="fd-btn" data-pattern="scatter">Scatter</button>
+        <button type="button" class="fd-btn" data-pattern="checker">Checker</button>
+        <button type="button" class="fd-btn" data-pattern="rings">Rings</button>
+        <button type="button" class="fd-btn" data-pattern="bars">Bars</button>
+        <button type="button" class="fd-btn" data-pattern="blobs">Blobs</button>
+        <button type="button" class="fd-btn" data-pattern="gradient">Gradient</button>
+        <button type="button" class="fd-btn" data-pattern="invert">Invert</button>
+        <button type="button" class="fd-btn" data-pattern="fill">Fill</button>
+        <button type="button" class="fd-btn" data-pattern="clear">Clear</button>
+        <button type="button" class="fd-btn fd-btn--primary fd-btn--end" id="fdCycleToggle" aria-pressed="true">Pause</button>
+      </div>
+
+      <p class="fd-readout" id="fdReadout"></p>
+    </section>
+
+    <section class="fd-stage-wrap">
+      <p class="eyebrow">Words, not just pixels</p>
+      <h2>A board that says things</h2>
+      <p class="intro">
+        The same component with a 5&#215;7 bitmap font on top of it. A message
+        is just another whole-board update, so it arrives on a transition
+        like anything else &#8212; and because only the dots that actually
+        differ between two messages flip, changing one word to another costs
+        the handful of discs that disagree rather than the whole board.
+      </p>
+
+      <div class="flip-dots fd-text-stage" id="fdTextBoard"></div>
+
+      <div class="fd-actions">
+        <button type="button" class="fd-btn" id="fdTextNext">Next message</button>
+        <label class="fd-field">
+          <span>Say something</span>
+          <input type="text" id="fdTextInput" placeholder="Type a message" />
+        </label>
+        <button type="button" class="fd-btn fd-btn--primary fd-btn--end" id="fdTextToggle" aria-pressed="true">Pause</button>
+      </div>
+    </section>
+
+    <section class="fd-stage-wrap">
+      <p class="eyebrow">Any size</p>
+      <h2>Same component, three scales</h2>
+      <p class="intro">
+        The grid is measured against the element's own box. Give it a
+        <code>dotSize</code> and the columns follow; give it
+        <code>cols</code> and the dot size follows. Below about five pixels
+        a disc has no room to read as a disc, so a grid asked for finer than
+        that is thinned rather than drawn too small &#8212; each board below
+        reports what it actually got.
+      </p>
+
+      <div class="fd-row">
+        <figure class="fd-row__item">
+          <div class="flip-dots fd-mini" id="fdSizeA"></div>
+          <figcaption>Coarse &#8212; <span data-size-readout="fdSizeA"></span></figcaption>
+        </figure>
+        <figure class="fd-row__item">
+          <div class="flip-dots fd-mini" id="fdSizeB"></div>
+          <figcaption>Medium &#8212; <span data-size-readout="fdSizeB"></span></figcaption>
+        </figure>
+        <figure class="fd-row__item">
+          <div class="flip-dots fd-mini" id="fdSizeC"></div>
+          <figcaption>Fine &#8212; <span data-size-readout="fdSizeC"></span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="fd-stage-wrap">
+      <p class="eyebrow">A live display</p>
+      <h2>Driven by data</h2>
+      <p class="intro">
+        A clock, redrawn every second. Only the dots whose state actually
+        differs flip, so a tick costs the handful of discs that make up the
+        digit that changed &#8212; watch the minute roll over and the rest of
+        the board stays perfectly still.
+      </p>
+
+      <div class="flip-dots fd-clock" id="fdClock"></div>
+
+      <div class="fd-actions">
+        <span class="fd-bar__note">No transition on a tick: a clock that rippled every second would be a toy rather than a clock.</span>
+        <button type="button" class="fd-btn fd-btn--primary fd-btn--end" id="fdClockToggle" aria-pressed="true">Pause</button>
+      </div>
+    </section>
+
+    <section class="fd-bg-demo flip-dots" id="fdBackdrop">
+      <div class="fd-bg-demo__inner">
+        <p class="eyebrow">As a surface</p>
+        <h2>Content sits on top</h2>
+        <p class="intro">
+          The canvas inserts itself as the element&#8217;s first child, behind
+          everything else in it, so a board can carry its own content
+          instead of only being a display. This whole section is one
+          instance &#8212; the heading and this paragraph are its children.
+          Holding the lit state well down from full brightness keeps the
+          text the brightest thing on it.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="flip-dots.js"></script>
+  <script src="demo.js"></script>

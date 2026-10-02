@@ -1,0 +1,1559 @@
+/**
+ * FlipDots
+ * --------
+ * A programmable grid of physical flip-dot discs on a canvas. Each dot is a
+ * disc on a center axle: asked for a new state it rotates a half turn, and
+ * the color you see swaps at the exact moment it passes edge-on. That one
+ * detail is what lets a dot hold any number of colors without lying about
+ * the metaphor - a real disc has two faces, but nobody ever sees the back of
+ * one, so repainting the far face mid-turn is invisible and any state can
+ * reach any other in a single flip.
+ *
+ * Two things are kept deliberately separate, and keeping them separate is
+ * most of the design:
+ *
+ *   mechanics    how ONE dot moves - the spring, the magnet stop it slams
+ *                into, the shading as it turns away from the light. Tuned
+ *                once, globally, because a dot that feels good feels good
+ *                everywhere.
+ *   choreography WHO starts when - a wipe, a ripple, a scatter. This is a
+ *                single function of position, which is why the whole
+ *                vocabulary of grid-update animations fits in one plug-in
+ *                point (see `FlipDots.transitions`) instead of a dozen
+ *                options.
+ *
+ * Which of the two applies is decided by how you wrote to the grid:
+ * `set()` on individual dots flips them as they come, with no choreography
+ * - that is a dot being poked, and poking it should be immediate. Writing a
+ * whole grid with `setGrid()` is a new frame of content arriving, and that
+ * gets a transition.
+ *
+ * Canvas rather than one element per dot: a 100x60 board is 6000 dots, which
+ * is well past what DOM transforms carry, and the overshoot/shading/edge
+ * detail below needs per-frame control that CSS transitions don't give.
+ *
+ * Usage: give any element `class="flip-dots"` - this file injects its own CSS
+ * and auto-initializes every matching element on load.
+ *
+ *   FlipDots.get('#board').setGrid(rows, { transition: 'ripple' });
+ *
+ * NOTE: this is the phase-one animation rig. The full content API (text,
+ * images, frame sequences), the sprite-atlas draw path and the rest of the
+ * transition set are still to come; what is here is everything the feel
+ * depends on.
+ */
+(function (global) {
+  const STYLE_ID = 'flip-dots-styles';
+  const CSS = `
+.flip-dots {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+}
+
+.flip-dots__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+}
+`;
+
+  function injectStyles() {
+    if (document.getElementById(STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = CSS;
+    document.head.appendChild(style);
+  }
+
+  // Below about five pixels a disc has no room to read as a disc: the
+  // squash that carries the whole effect happens inside one or two device
+  // pixels and the flip stops being legible as rotation. Rather than
+  // honoring a grid that fine and rendering mush, the grid is reduced until
+  // its dots clear this - see _measure, and `cols`/`rows` afterward for what
+  // you actually got.
+  const MIN_DOT_PX = 5;
+
+  // Fixed spring sub-step. The integrator below is explicit, so a stiff
+  // spring sampled at a long frame time can gain energy instead of losing
+  // it; stepping at a fixed 1/300s regardless of frame rate keeps the feel
+  // identical on a 60Hz and a 144Hz display, and keeps a dropped frame from
+  // flinging a dot.
+  const SUB_STEP = 1 / 300;
+
+  const DEFAULTS = {
+    // --- grid -------------------------------------------------------
+    // Columns across. null measures the box against `dotSize` instead.
+    cols: null,
+    // Rows down. null derives it from `cols` so cells come out square.
+    rows: null,
+    // Target dot diameter in px, used only when `cols` is null.
+    dotSize: 16,
+    // Space between dots as a fraction of the cell pitch (0 = touching).
+    gap: 0.22,
+    shape: 'circle', // 'circle' | 'square' | 'rounded'
+
+    // --- color ------------------------------------------------------
+    // A dot's state is an index into this. Entries are a color string, or
+    // `{ fill, border, edge }` to give one state its own rim - which is how
+    // an "off" dot gets a faint socket ring while a lit one stays clean.
+    palette: ['#1b1e24', '#f0ece2'],
+    // Behind the dots. null leaves the canvas transparent, so the board can
+    // sit over whatever is underneath it.
+    background: '#0c0d10',
+    // Rim on every disc, unless its palette entry overrides it. Off by
+    // default: with no rim and state 0 matching the page behind it, dots
+    // materialize out of nothing instead of sitting in a visible socket.
+    borderColor: null,
+    borderWidth: 0.08, // fraction of dot diameter
+
+    // --- mechanics --------------------------------------------------
+    // Spring constant. Higher is a faster, harder flip.
+    stiffness: 520,
+    // 0 = critically damped (no overshoot at all), 1 = loose and ringy.
+    bounce: 0.55,
+    // How far past the stop the disc is allowed to travel, in half turns.
+    // This is the magnet it slams into: travel is clamped here and the
+    // remaining velocity rebounds, which is what gives arrival its thunk.
+    overshoot: 0.055,
+    // Per-dot random variation in spring rate, so a wave never looks like
+    // it was clocked.
+    jitter: 0.18,
+    // Depth of the shading as a face turns away from the light. 0 is flat
+    // color; this is most of what reads as three-dimensional.
+    shade: 0.45,
+    // The color of the disc's edge - what you are actually looking at near
+    // edge-on, when the face has foreshortened to nothing. null derives one
+    // from the palette, which is what keeps this from needing to be set.
+    //
+    // This matters more than it sounds. Without it, a face just darkens as
+    // it turns, and a dark face on a dark panel darkens straight into
+    // invisibility - so half of every flip is a dot quietly vanishing and
+    // the other half is a different dot appearing, which is exactly what
+    // the flip is supposed to not look like. A rim that is neither of the
+    // two faces keeps the disc continuously visible all the way round, and
+    // reads as the one piece of plastic it is meant to be.
+    edgeColor: null,
+    // How tightly the rim is confined to the edge-on sliver. Low values
+    // bleed it across the whole turn, which cross-fades the two faces into
+    // each other and loses the moment of the swap; high values keep each
+    // face its own color until the last instant, so the rim reads as a
+    // glint at the midpoint and the swap lands as a snap.
+    edgeFalloff: 3,
+    // How much the disc appears to swing toward and away from you, as a
+    // fraction of its diameter. The other half of reading as hinged.
+    perspective: 0.14,
+    // Visible thickness of the disc edge-on, as a fraction of its diameter.
+    // A real disc never vanishes at 90 degrees - it shows its edge - and
+    // without this the flip has a dead frame in the middle of it.
+    thickness: 0.09,
+    // The angle of the axle the disc turns on, in degrees. 0 lays the hinge
+    // horizontally so the disc tumbles top over bottom; 90 stands it upright
+    // so the disc swings like a door; anything between is a diagonal. Only
+    // 0..180 is meaningful - a hinge line has no near end and far end, so
+    // 190 degrees is the same axle as 10.
+    hinge: 0,
+    // Flip toward higher states one way and toward lower states the other,
+    // so a board visibly opens and closes rather than always turning the
+    // same way.
+    directional: true,
+
+    // --- choreography -----------------------------------------------
+    // Default for setGrid: a name from FlipDots.transitions, or a function.
+    // 'shuffle' picks a different one for every update.
+    transition: 'ripple',
+    // Milliseconds from the first dot starting to the last one starting.
+    duration: 600,
+    // Reshapes the order a transition hands back, so the wave can keep an
+    // even pace or run down / wind up as it crosses. A name from
+    // FlipDots.easings, or a function. See that registry for why this is
+    // separate from the transition rather than baked into each one.
+    easing: 'even',
+
+    // --- sound ------------------------------------------------------
+    // Off by default - a component that starts making noise in someone
+    // else's page has to be asked for. Switching it on arms the audio on
+    // the next pointer or key event, since browsers will not start audio
+    // before a real user gesture; see enableSound for the case where the
+    // gesture has already happened.
+    sound: false,
+    volume: 0.5,
+  };
+
+  // ---------------------------------------------------------------------
+  // Transitions
+  //
+  // A transition answers one question per dot: how far into the update does
+  // this one start, as a fraction of `duration`. That is the whole contract
+  // - `(x, y, ctx) => 0..1`, where ctx carries { cols, rows, from, to,
+  // origin }. Everything from a wipe to a scatter to a spiral is a
+  // different answer to it, which is why this is a registry rather than an
+  // enum: `FlipDots.transitions.register('mine', fn)` buys the same
+  // standing as the built-ins.
+  //
+  // The answer is a place in the order, not a time: `duration` decides how
+  // long the whole order takes and the easing decides how the clock runs
+  // while it does, so a transition never has to know either. Values are
+  // clamped to 0..1 - see setGrid.
+  // ---------------------------------------------------------------------
+  const transitions = {
+    // Everything at once. The board changes in a single clack.
+    instant: () => 0,
+
+    // Every changing dot gets its own slot in a shuffled order, so they go
+    // one at a time, evenly paced, until the board has turned over. This
+    // needs to know the whole set of changing dots before it can answer for
+    // any one of them, which is what `ctx.rank` is for - see setGrid.
+    //
+    // The distinction from `dissolve` below is the one worth knowing. Giving
+    // every dot an independent random number is the obvious way to write
+    // this and it is not the same thing: independent draws clump, so some
+    // dots land on nearly the same instant while other stretches of the
+    // spread are empty, and the result flickers unevenly rather than
+    // counting steadily down. A shuffle has no clumps because every dot
+    // gets a different slot by construction.
+    random: (x, y, g) => (g.rank ? g.rank(x, y) : Math.random()),
+
+    // Independent draws per dot - the clumpy version, kept because the
+    // unevenness reads as a surface corroding rather than as a list being
+    // worked through, and that is sometimes the wanted effect.
+    dissolve: () => Math.random(),
+
+    // A straight edge crossing the board. The classic departure-board wipe.
+    wipe: (x, y, g) => {
+      const fx = g.cols > 1 ? x / (g.cols - 1) : 0;
+      const fy = g.rows > 1 ? y / (g.rows - 1) : 0;
+      switch (g.direction) {
+        case 'right': return 1 - fx;
+        case 'up': return 1 - fy;
+        case 'down': return fy;
+        default: return fx; // 'left' - starts at the left edge
+      }
+    },
+
+    // Corner to corner.
+    diagonal: (x, y, g) => (x + y) / Math.max(1, (g.cols - 1) + (g.rows - 1)),
+
+    // Outward from a point - the center by default, or wherever `origin`
+    // says, which is what makes a ripple from the dot someone just clicked
+    // a one-liner.
+    ripple: (x, y, g) => {
+      const ox = g.origin ? g.origin[0] : (g.cols - 1) / 2;
+      const oy = g.origin ? g.origin[1] : (g.rows - 1) / 2;
+      const d = Math.hypot(x - ox, y - oy);
+      // Normalized against the furthest corner from the origin, so the last
+      // dot to start always starts at 1 regardless of where the origin sits.
+      const max = Math.max(
+        Math.hypot(0 - ox, 0 - oy),
+        Math.hypot(g.cols - 1 - ox, 0 - oy),
+        Math.hypot(0 - ox, g.rows - 1 - oy),
+        Math.hypot(g.cols - 1 - ox, g.rows - 1 - oy),
+      );
+      return max === 0 ? 0 : d / max;
+    },
+
+    // Line by line, every dot in a row together.
+    rows: (x, y, g) => (g.rows > 1 ? y / (g.rows - 1) : 0),
+
+    // One dot at a time, boustrophedon - down each row and back along the
+    // next, so the travel is continuous instead of jumping back to the left
+    // margin.
+    snake: (x, y, g) => {
+      const col = y % 2 === 0 ? x : g.cols - 1 - x;
+      const total = g.cols * g.rows;
+      return total <= 1 ? 0 : (y * g.cols + col) / (total - 1);
+    },
+  };
+
+  transitions.register = function register(name, fn) {
+    transitions[name] = fn;
+  };
+
+  // Every name that `shuffle` draws from. Held separately from the registry
+  // itself so that `register`, `instant` and `shuffle` are not candidates -
+  // the first because a host's own transition should be opt-in rather than
+  // turning up unannounced, and the other two because one is the absence of
+  // choreography and the other would recurse.
+  const SHUFFLE_POOL = ['random', 'dissolve', 'wipe', 'diagonal', 'ripple', 'rows', 'snake'];
+  const WIPE_DIRECTIONS = ['left', 'right', 'up', 'down'];
+
+  function resolveTransition(spec) {
+    if (typeof spec === 'function') return spec;
+    // Resolved once per update rather than once per dot, which is what lets
+    // 'shuffle' mean "a different transition each time" instead of a
+    // different one for every dot (which is just `random` with extra steps).
+    if (spec === 'shuffle') {
+      return transitions[SHUFFLE_POOL[Math.floor(Math.random() * SHUFFLE_POOL.length)]];
+    }
+    const fn = transitions[spec];
+    // An unrecognized name changes the board without choreography rather
+    // than throwing: a typo should cost the animation, not the content.
+    return typeof fn === 'function' ? fn : transitions.instant;
+  }
+
+  // ---------------------------------------------------------------------
+  // Easings
+  //
+  // A transition says what ORDER the dots go in; an easing says how the
+  // clock runs while they do. Keeping them apart means four easings times
+  // seven transitions is twenty-eight looks out of eleven small functions,
+  // instead of needing a `ripple-decelerating` entry in the registry next
+  // to `ripple`.
+  //
+  // Each maps a dot's place in the order (0..1) to when it starts (0..1).
+  // The curve is easier to read backwards: where the output changes slowly,
+  // many dots start close together and the wave is moving FAST; where it
+  // changes quickly, they are spread out and the wave is moving slowly.
+  // ---------------------------------------------------------------------
+  const easings = {
+    // Constant pace from one side to the other.
+    even: (t) => t,
+    // Off hard and winding down - most of the board has gone in the first
+    // half of the spread, and the stragglers take the rest.
+    decelerate: (t) => t * t,
+    // The reverse: a slow start that gathers and finishes in a rush.
+    accelerate: (t) => 1 - (1 - t) * (1 - t),
+    // Smoothstep. Quick at both ends and lingering through the middle,
+    // which reads as the wave arriving, taking its time over the body of
+    // the board, then clearing out.
+    smooth: (t) => t * t * (3 - 2 * t),
+  };
+
+  easings.register = function register(name, fn) {
+    easings[name] = fn;
+  };
+
+  function resolveEasing(spec) {
+    if (typeof spec === 'function') return spec;
+    const fn = easings[spec];
+    return typeof fn === 'function' ? fn : easings.even;
+  }
+
+  // ---------------------------------------------------------------------
+  // Font
+  //
+  // A 5x7 bitmap, written out as pixels rather than packed into bit tables,
+  // because the only way anyone ever fixes a glyph is by looking at it. Row
+  // strings are joined with "|" to keep one glyph to one line; "#" is a lit
+  // dot. Five by seven is the smallest cell that holds a legible uppercase
+  // alphabet plus digits, and it is what real flip-dot destination signs
+  // use for the same reason.
+  //
+  // Lowercase maps onto the same glyphs rather than existing separately -
+  // at seven rows there is no room for descenders, so a lowercase set would
+  // have to be a worse-looking copy of this one.
+  // ---------------------------------------------------------------------
+  const FONT_W = 5;
+  const FONT_H = 7;
+  const GLYPH_SRC = {
+    A: '.###.|#...#|#...#|#####|#...#|#...#|#...#',
+    B: '####.|#...#|#...#|####.|#...#|#...#|####.',
+    C: '.###.|#...#|#....|#....|#....|#...#|.###.',
+    D: '####.|#...#|#...#|#...#|#...#|#...#|####.',
+    E: '#####|#....|#....|####.|#....|#....|#####',
+    F: '#####|#....|#....|####.|#....|#....|#....',
+    G: '.###.|#...#|#....|#.###|#...#|#...#|.###.',
+    H: '#...#|#...#|#...#|#####|#...#|#...#|#...#',
+    I: '#####|..#..|..#..|..#..|..#..|..#..|#####',
+    J: '..###|...#.|...#.|...#.|...#.|#..#.|.##..',
+    K: '#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#',
+    L: '#....|#....|#....|#....|#....|#....|#####',
+    M: '#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#',
+    N: '#...#|##..#|#.#.#|#..##|#...#|#...#|#...#',
+    O: '.###.|#...#|#...#|#...#|#...#|#...#|.###.',
+    P: '####.|#...#|#...#|####.|#....|#....|#....',
+    Q: '.###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#',
+    R: '####.|#...#|#...#|####.|#.#..|#..#.|#...#',
+    S: '.####|#....|#....|.###.|....#|....#|####.',
+    T: '#####|..#..|..#..|..#..|..#..|..#..|..#..',
+    U: '#...#|#...#|#...#|#...#|#...#|#...#|.###.',
+    V: '#...#|#...#|#...#|#...#|#...#|.#.#.|..#..',
+    W: '#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#',
+    X: '#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#',
+    Y: '#...#|#...#|.#.#.|..#..|..#..|..#..|..#..',
+    Z: '#####|....#|...#.|..#..|.#...|#....|#####',
+    0: '.###.|#...#|#..##|#.#.#|##..#|#...#|.###.',
+    1: '..#..|.##..|..#..|..#..|..#..|..#..|.###.',
+    2: '.###.|#...#|....#|...#.|..#..|.#...|#####',
+    3: '#####|...#.|..#..|...#.|....#|#...#|.###.',
+    4: '...#.|..##.|.#.#.|#..#.|#####|...#.|...#.',
+    5: '#####|#....|####.|....#|....#|#...#|.###.',
+    6: '..##.|.#...|#....|####.|#...#|#...#|.###.',
+    7: '#####|....#|...#.|..#..|.#...|.#...|.#...',
+    8: '.###.|#...#|#...#|.###.|#...#|#...#|.###.',
+    9: '.###.|#...#|#...#|.####|....#|...#.|.##..',
+    ' ': '.....|.....|.....|.....|.....|.....|.....',
+    '.': '.....|.....|.....|.....|.....|.##..|.##..',
+    ',': '.....|.....|.....|.....|.##..|.##..|.#...',
+    '!': '..#..|..#..|..#..|..#..|..#..|.....|..#..',
+    '?': '.###.|#...#|....#|...#.|..#..|.....|..#..',
+    "'": '..#..|..#..|.....|.....|.....|.....|.....',
+    '-': '.....|.....|.....|#####|.....|.....|.....',
+    ':': '.....|.##..|.##..|.....|.##..|.##..|.....',
+    '/': '....#|...#.|...#.|..#..|.#...|.#...|#....',
+    '*': '.....|#.#.#|.###.|#####|.###.|#.#.#|.....',
+    '+': '.....|..#..|..#..|#####|..#..|..#..|.....',
+  };
+
+  const GLYPHS = {};
+  Object.keys(GLYPH_SRC).forEach((ch) => {
+    GLYPHS[ch] = GLYPH_SRC[ch].split('|');
+  });
+
+  const font = { width: FONT_W, height: FONT_H, glyphs: GLYPHS };
+
+  // Builds the (x, y) => state accessor setGrid wants for a line of text.
+  // Separate from the instance so a caller can compose it - lay text over a
+  // pattern, measure it before committing - rather than only ever being able
+  // to hand the whole board over to it.
+  //
+  // Unmapped characters fall back to a space rather than throwing or drawing
+  // a tofu box: a sign that cannot render an accented character should lose
+  // the character, not the message.
+  function textGrid(str, cols, rows, opts = {}) {
+    const spacing = opts.spacing == null ? 1 : opts.spacing;
+    const on = opts.on == null ? 1 : opts.on;
+    const off = opts.off == null ? 0 : opts.off;
+    const chars = String(str).toUpperCase().split('');
+    const glyphs = chars.map((c) => GLYPHS[c] || GLYPHS[' ']);
+
+    const width = glyphs.length
+      ? glyphs.length * FONT_W + (glyphs.length - 1) * spacing
+      : 0;
+    const ox = opts.x == null ? Math.round((cols - width) / 2) : opts.x;
+    const oy = opts.y == null ? Math.round((rows - FONT_H) / 2) : opts.y;
+
+    // A lookup rather than a per-dot search over the glyphs: setGrid asks
+    // once per cell, and a long message on a big board would otherwise be
+    // a scan of every glyph for every dot.
+    const lit = new Set();
+    glyphs.forEach((glyph, gi) => {
+      const gx = ox + gi * (FONT_W + spacing);
+      for (let r = 0; r < FONT_H; r++) {
+        for (let c = 0; c < FONT_W; c++) {
+          if (glyph[r][c] !== '#') continue;
+          const px = gx + c;
+          const py = oy + r;
+          if (px < 0 || py < 0 || px >= cols || py >= rows) continue;
+          lit.add(py * cols + px);
+        }
+      }
+    });
+
+    return (x, y) => (lit.has(y * cols + x) ? on : off);
+  }
+
+  // ---------------------------------------------------------------------
+  // Color
+  // ---------------------------------------------------------------------
+  function parseColor(input) {
+    if (typeof input !== 'string') return [0, 0, 0];
+    const s = input.trim();
+    if (s[0] === '#') {
+      const h = s.slice(1);
+      if (h.length === 3) {
+        return [h[0] + h[0], h[1] + h[1], h[2] + h[2]].map((p) => parseInt(p, 16));
+      }
+      return [h.slice(0, 2), h.slice(2, 4), h.slice(4, 6)].map((p) => parseInt(p, 16));
+    }
+    const nums = s.match(/[\d.]+/g);
+    if (nums && nums.length >= 3) return nums.slice(0, 3).map(Number);
+    return [0, 0, 0];
+  }
+
+  function mixToward(rgb, target, amount) {
+    return [
+      Math.round(rgb[0] + (target[0] - rgb[0]) * amount),
+      Math.round(rgb[1] + (target[1] - rgb[1]) * amount),
+      Math.round(rgb[2] + (target[2] - rgb[2]) * amount),
+    ];
+  }
+
+  // ---------------------------------------------------------------------
+  // Sound
+  //
+  // A single dot's click is easy. The problem is a wave: six thousand dots
+  // flipping across half a second is six thousand clicks, which is not a
+  // clatter but white noise, and six thousand voices the audio thread can't
+  // schedule anyway. So clicks are collected per short window and collapsed
+  // into a handful of voices whose loudness grows with the square root of
+  // how many flips they stand for - which is roughly how a crowd of
+  // uncorrelated clicks actually sums, and is the difference between a
+  // board that sounds mechanical and one that hisses.
+  //
+  // The window's voices are panned toward where its flips happened, so a
+  // wipe audibly crosses the board.
+  // ---------------------------------------------------------------------
+  const CLICK_WINDOW_MS = 12;
+  const MAX_VOICES_PER_WINDOW = 4;
+
+  function createClicker(getVolume) {
+    let ctx = null;
+    let noise = null;
+    let pending = 0;
+    let panSum = 0;
+    let flushTimer = null;
+
+    // One short buffer of white noise, reused by every voice. Generating it
+    // per click would be the single most expensive thing this file does.
+    function ensureContext() {
+      if (ctx) return ctx;
+      const Ctor = global.AudioContext || global.webkitAudioContext;
+      if (!Ctor) return null;
+      ctx = new Ctor();
+      const frames = Math.ceil(ctx.sampleRate * 0.05);
+      noise = ctx.createBuffer(1, frames, ctx.sampleRate);
+      const data = noise.getChannelData(0);
+      for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+      return ctx;
+    }
+
+    function voice(gain, pan) {
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      src.playbackRate.value = 0.85 + Math.random() * 0.3;
+
+      // Bandpass around the ~2.5kHz tick of a small plastic disc hitting a
+      // stop. The spread per voice is what keeps a group of them from
+      // phasing into one tone.
+      const band = ctx.createBiquadFilter();
+      band.type = 'bandpass';
+      band.frequency.value = 1700 + Math.random() * 1600;
+      band.Q.value = 1.1 + Math.random() * 0.8;
+
+      // A touch of body under the tick, so it reads as a solid object
+      // rather than a hiss.
+      const body = ctx.createBiquadFilter();
+      body.type = 'lowpass';
+      body.frequency.value = 5200;
+
+      const amp = ctx.createGain();
+      const t = ctx.currentTime;
+      amp.gain.setValueAtTime(0, t);
+      amp.gain.linearRampToValueAtTime(gain, t + 0.001);
+      amp.gain.exponentialRampToValueAtTime(0.0001, t + 0.028 + Math.random() * 0.016);
+
+      const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      if (panner) panner.pan.value = Math.max(-1, Math.min(1, pan));
+
+      src.connect(band).connect(body).connect(amp);
+      if (panner) amp.connect(panner).connect(ctx.destination);
+      else amp.connect(ctx.destination);
+
+      src.start(t);
+      src.stop(t + 0.09);
+    }
+
+    function flush() {
+      flushTimer = null;
+      const n = pending;
+      const pan = n > 0 ? panSum / n : 0;
+      pending = 0;
+      panSum = 0;
+      if (!n || !ctx || ctx.state !== 'running') return;
+
+      const volume = getVolume();
+      if (volume <= 0) return;
+
+      const voices = Math.max(1, Math.min(MAX_VOICES_PER_WINDOW, Math.round(Math.sqrt(n))));
+      // sqrt(n) summing, held at a ceiling so a full-board flip is loud but
+      // not a clipped wall, then split across the voices actually firing.
+      const total = volume * 0.12 * Math.min(4.5, Math.sqrt(n));
+      for (let i = 0; i < voices; i++) {
+        voice(total / voices, pan + (Math.random() * 0.5 - 0.25));
+      }
+    }
+
+    return {
+      // Audio can only start from a gesture, so this is a no-op until the
+      // page has had one; arm() is wired to the first pointer/key event.
+      arm() {
+        const c = ensureContext();
+        if (c && c.state === 'suspended') c.resume();
+        return !!c;
+      },
+      click(panPosition) {
+        if (!ctx || ctx.state !== 'running') return;
+        pending++;
+        panSum += panPosition;
+        if (flushTimer === null) flushTimer = setTimeout(flush, CLICK_WINDOW_MS);
+      },
+      destroy() {
+        if (flushTimer !== null) clearTimeout(flushTimer);
+        flushTimer = null;
+        if (ctx && ctx.close) ctx.close();
+        ctx = null;
+      },
+    };
+  }
+
+  // Proper modulo - JS's remainder keeps the sign of the dividend, and every
+  // "which face is showing" question here wants the non-negative answer.
+  function mod(a, n) {
+    return ((a % n) + n) % n;
+  }
+
+  // Fisher-Yates over the changing cells, returned as cell index -> position
+  // in the shuffled order. Every cell gets a distinct position, which is the
+  // whole point: it is what separates "in a random order" from "each at a
+  // random time". See the `random` transition.
+  function shuffledRanks(cells) {
+    const order = cells.slice();
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const swap = order[i];
+      order[i] = order[j];
+      order[j] = swap;
+    }
+    const map = new Map();
+    for (let rank = 0; rank < order.length; rank++) map.set(order[rank], rank);
+    return map;
+  }
+
+  class FlipDots {
+    constructor(el, options = {}) {
+      if (!el) throw new Error('FlipDots: element is required');
+      injectStyles();
+      this.el = el;
+      this.options = { ...DEFAULTS, ...options };
+
+      this.canvas = document.createElement('canvas');
+      this.canvas.className = 'flip-dots__canvas';
+      this.canvas.setAttribute('aria-hidden', 'true');
+      // First child and behind everything, rather than appended on top:
+      // the board is a surface as much as it is a display, and a host
+      // should be able to put a headline on one without the dots covering
+      // it. An element with no children is unaffected either way.
+      this.el.insertBefore(this.canvas, this.el.firstChild);
+      this.ctx = this.canvas.getContext('2d');
+
+      this._reducedQuery = global.matchMedia
+        ? global.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+
+      // Indices mid-flight (including ones still waiting out a delay). The
+      // render loop exists only while this is non-empty, so a board at rest
+      // costs nothing at all.
+      this._active = new Set();
+      this._elapsed = 0;
+      this._lastNow = 0;
+      this._raf = null;
+      this._onScreen = true;
+      this._shadeCache = new Map();
+      this._edge = null;
+
+      this._clicker = createClicker(() => (this.options.sound ? this.options.volume : 0));
+      this._armSound = this._armSound.bind(this);
+      if (this.options.sound) this._listenForGesture();
+
+      this._tick = this._tick.bind(this);
+      this._resize = this._resize.bind(this);
+      this._onReducedChange = this._onReducedChange.bind(this);
+      if (this._reducedQuery && this._reducedQuery.addEventListener) {
+        this._reducedQuery.addEventListener('change', this._onReducedChange);
+      }
+
+      this._syncHinge();
+
+      this._resizeObserver = new ResizeObserver(this._resize);
+      this._resizeObserver.observe(this.el);
+
+      // Same reasoning as the canvas backgrounds here: requestAnimationFrame
+      // pauses itself for a hidden tab but not for an element that has
+      // merely scrolled past. Coming back snaps every dot to where it was
+      // headed rather than replaying a queue of stale delays.
+      this._intersectionObserver = new IntersectionObserver((entries) => {
+        const on = entries[entries.length - 1].isIntersecting;
+        if (on === this._onScreen) return;
+        this._onScreen = on;
+        if (on) this._start();
+        else {
+          this._stop();
+          this._settleAll();
+        }
+      }, { rootMargin: '150px' });
+      this._intersectionObserver.observe(this.el);
+
+      this._measure();
+    }
+
+    get reduced() {
+      return !!(this._reducedQuery && this._reducedQuery.matches);
+    }
+
+    get length() {
+      return this.cols * this.rows;
+    }
+
+    // The grid the component actually settled on, in px. `cols`/`rows`/
+    // `dotSize` are requests measured against the element's box and clamped
+    // by MIN_DOT_PX, so these are the answers - worth reading back rather
+    // than echoing what was asked for.
+    get dotPx() {
+      return this._dot;
+    }
+
+    get pitchPx() {
+      return this._pitch;
+    }
+
+    // ---- geometry ----------------------------------------------------
+
+    // Lays out the grid for the element's current size and (re)allocates the
+    // dot arrays. Square cells always: a non-square dot grid reads as a
+    // stretched image rather than as a board, and every transition's
+    // distance math quietly assumes a square cell too.
+    //
+    // Existing content is resampled nearest-neighbor rather than cleared, so
+    // a resize - or a grid-size change from a control - keeps showing
+    // whatever was on the board instead of blanking it.
+    _measure() {
+      const dpr = Math.min(global.devicePixelRatio || 1, 2);
+      this._dpr = dpr;
+      const w = Math.max(1, this.el.clientWidth);
+      const h = Math.max(1, this.el.clientHeight);
+      this._w = w;
+      this._h = h;
+      this.canvas.width = Math.round(w * dpr);
+      this.canvas.height = Math.round(h * dpr);
+      // The CSS size has to be set explicitly, not left to `inset: 0`. A
+      // canvas is a replaced element, so with `width: auto` it takes its
+      // intrinsic size - the backing store above, which is `dpr` times too
+      // big - instead of stretching to the box the way a plain div would.
+      // Left to the stylesheet, everything draws at double scale on a 2x
+      // display and the overflow is simply clipped away.
+      this.canvas.style.width = `${w}px`;
+      this.canvas.style.height = `${h}px`;
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const { cols, rows, dotSize, gap } = this.options;
+      const fill = Math.max(0.05, 1 - Math.min(0.9, gap));
+
+      let c;
+      let r;
+      if (cols > 0 && rows > 0) {
+        c = Math.round(cols);
+        r = Math.round(rows);
+      } else if (cols > 0) {
+        c = Math.round(cols);
+        r = Math.max(1, Math.round(h / (w / c)));
+      } else {
+        const pitch = Math.max(1, dotSize) / fill;
+        c = Math.max(1, Math.round(w / pitch));
+        r = Math.max(1, Math.round(h / pitch));
+      }
+
+      // Honor MIN_DOT_PX by thinning the grid rather than by drawing dots
+      // too small to read. Scaling both axes by the same factor keeps the
+      // aspect the caller asked for.
+      // Dot size scales inversely with the column count, so to lift a dot
+      // from `asked` up to MIN_DOT_PX the grid has to shrink by exactly
+      // asked/MIN - and flooring that lands at or just under it, which is
+      // the safe side. (A square root here looks plausible and is wrong:
+      // the root of a fraction is larger than the fraction, so it thins the
+      // grid by less than is needed and leaves the dots still too small.)
+      const pitchFor = (cc, rr) => Math.min(w / cc, h / rr);
+      const asked = pitchFor(c, r) * fill;
+      if (asked < MIN_DOT_PX) {
+        const scale = asked / MIN_DOT_PX;
+        c = Math.max(1, Math.floor(c * scale));
+        r = Math.max(1, Math.floor(r * scale));
+      }
+
+      const prev = this._state ? { cols: this.cols, rows: this.rows, state: this._state } : null;
+
+      this.cols = c;
+      this.rows = r;
+      this._pitch = pitchFor(c, r);
+      this._dot = this._pitch * fill;
+      // Centered in the box: the grid keeps square cells, so unless the
+      // element's aspect happens to match the grid's there is slack on one
+      // axis, and splitting it looks deliberate where pinning it to a corner
+      // looks like a bug.
+      this._originX = (w - this._pitch * c) / 2;
+      this._originY = (h - this._pitch * r) / 2;
+      // How far a leaning disc may stray from its cell's center: half the
+      // gap, so it reaches the cell's edge and no further. This is what
+      // lets a repaint clear exactly one cell - see _paintCell. A board
+      // with no gap has no room to lean, which is the honest answer anyway,
+      // since a disc leaning into a neighbor it is already touching would
+      // read as overlap rather than as depth.
+      this._leanMax = (this._pitch - this._dot) / 2;
+
+      this._allocate();
+      if (prev) this._resample(prev);
+      this._paintAll();
+    }
+
+    _allocate() {
+      const n = this.cols * this.rows;
+      this._state = new Uint8Array(n);      // what each dot is showing//heading to
+      this._turn = new Float64Array(n);     // continuous position, in half turns
+      this._target = new Float64Array(n);   // the half turn it is springing to
+      this._vel = new Float64Array(n);
+      this._faceEven = new Uint8Array(n);   // state painted on even half turns
+      this._faceOdd = new Uint8Array(n);    // ...and on odd ones
+      this._delay = new Float64Array(n);    // absolute time this dot may start
+      this._wob = new Float32Array(n);      // per-dot spring-rate variation
+      this._active.clear();
+
+      const jitter = this.options.jitter;
+      for (let i = 0; i < n; i++) {
+        this._wob[i] = 1 + (Math.random() * 2 - 1) * jitter * 0.35;
+      }
+    }
+
+    // Nearest-neighbor resample of the previous grid onto the new one. Dots
+    // land settled and flat rather than animating into place: a resize is
+    // not an update to the content, and treating it as one would fire a
+    // board-wide flip (and a board-wide clatter) every frame of a window
+    // drag.
+    _resample(prev) {
+      for (let y = 0; y < this.rows; y++) {
+        const sy = Math.min(prev.rows - 1, Math.floor((y / this.rows) * prev.rows));
+        for (let x = 0; x < this.cols; x++) {
+          const sx = Math.min(prev.cols - 1, Math.floor((x / this.cols) * prev.cols));
+          const s = prev.state[sy * prev.cols + sx];
+          const i = y * this.cols + x;
+          this._state[i] = s;
+          this._faceEven[i] = s;
+          this._faceOdd[i] = s;
+        }
+      }
+    }
+
+    // ---- state -------------------------------------------------------
+
+    // The core move. `turn` is continuous and unbounded-ish, `target` is the
+    // flat position it springs to, and which face you see is decided by the
+    // parity of the nearest flat position - so painting the *other* parity's
+    // face is always invisible, and that is what makes an arbitrary palette
+    // work on a two-sided disc.
+    //
+    // Mid-flight re-requests are the case worth following. A dot still short
+    // of edge-on has not revealed its destination face yet, so a new state
+    // just overwrites it and the dot carries on with its momentum intact.
+    // Past edge-on the destination is already showing, so it has to turn
+    // again - and if the new state is what it was *leaving*, it springs back
+    // the way it came rather than continuing round, which is both shorter and
+    // what a real disc being yanked back would do.
+    _request(i, state, startAt) {
+      const n = this.options.palette.length;
+      const s = Math.max(0, Math.min(n - 1, Math.round(state)));
+      this._state[i] = s;
+
+      // Where it will come to rest, and what face that will be showing.
+      const aimedAt = Math.round(this._target[i]);
+      const aimed = mod(aimedAt, 2) === 0 ? this._faceEven[i] : this._faceOdd[i];
+      // Settled on it already, or on its way there - either way there is
+      // nothing to do, and re-requesting must not restart the flip.
+      if (aimed === s) return;
+
+      const here = Math.round(this._turn[i]);
+      const shown = mod(here, 2) === 0 ? this._faceEven[i] : this._faceOdd[i];
+      if (shown === s) {
+        // What was asked for is what is on screen, so the dot is mid-flight
+        // away from it: spring back to the flat position it came from rather
+        // than carrying on round to meet it again.
+        this._target[i] = here;
+      } else {
+        const dir = this.options.directional ? (s > shown ? 1 : -1) : 1;
+        const t = here + dir;
+        this._target[i] = t;
+        if (mod(t, 2) === 0) this._faceEven[i] = s;
+        else this._faceOdd[i] = s;
+      }
+
+      this._delay[i] = startAt || 0;
+      this._active.add(i);
+      if (this.reduced) this._settle(i);
+      else this._start();
+    }
+
+    // Writes one dot. No choreography: an individual poke should land now.
+    set(x, y, state) {
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return this;
+      this._request(y * this.cols + x, state, 0);
+      return this;
+    }
+
+    get(x, y) {
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return -1;
+      return this._state[y * this.cols + x];
+    }
+
+    // Writes the whole board, choreographed. `data` is a 2D array, a flat
+    // array, or an array of strings read through `charMap` - the string form
+    // being there because a pattern someone typed by hand is the common
+    // case, and `['..##..', '.####.']` is readable where nested arrays of
+    // integers are not.
+    setGrid(data, opts = {}) {
+      const grid = this._normalize(data, opts.charMap);
+      if (!grid) return this;
+
+      const spec = 'transition' in opts ? opts.transition : this.options.transition;
+      const fn = resolveTransition(spec);
+      const ease = resolveEasing('easing' in opts ? opts.easing : this.options.easing);
+      const duration = ('duration' in opts ? opts.duration : this.options.duration) / 1000;
+
+      // First pass works out which dots are actually changing, before any
+      // of them are told to. Only the changing ones are choreographed - a
+      // dot already showing what it was asked for does not flip, so letting
+      // it take up a slot in the order would leave visible dead air where
+      // its turn came round and nothing happened. It also means a
+      // transition can be asked questions about the set as a whole, which
+      // is what `random` needs and could not have under a single pass.
+      const cells = [];
+      const targets = [];
+      for (let y = 0; y < this.rows; y++) {
+        for (let x = 0; x < this.cols; x++) {
+          const next = grid(x, y);
+          if (next === null || next === undefined) continue;
+          const i = y * this.cols + x;
+          if (this._state[i] === next && !this._active.has(i)) continue;
+          cells.push(i);
+          targets.push(next);
+        }
+      }
+      if (cells.length === 0) return this;
+
+      const ctx = {
+        cols: this.cols,
+        rows: this.rows,
+        // A shuffled update picks its wipe direction too - a shuffle that
+        // always wiped the same way would give itself away immediately.
+        direction: opts.direction
+          || (spec === 'shuffle'
+            ? WIPE_DIRECTIONS[Math.floor(Math.random() * WIPE_DIRECTIONS.length)]
+            : 'left'),
+        origin: opts.origin || null,
+        // How many dots this update actually touches.
+        count: cells.length,
+      };
+
+      // A dot's place in a random permutation of the changing dots, 0..1.
+      // Built on first use and not before: shuffling and mapping thousands
+      // of cells is real work, and all but one of the transitions here
+      // never ask.
+      let ranks = null;
+      ctx.rank = (x, y) => {
+        if (!ranks) ranks = shuffledRanks(cells);
+        return cells.length < 2 ? 0 : ranks.get(y * this.cols + x) / (cells.length - 1);
+      };
+
+      const now = this._elapsed;
+      for (let k = 0; k < cells.length; k++) {
+        const i = cells[k];
+        const x = i % this.cols;
+        const y = (i - x) / this.cols;
+        // Clamped before easing, because an easing is only defined over
+        // 0..1 and some of them turn non-monotonic outside it - which
+        // would have a dot further along the order start *earlier* than
+        // one behind it, and the wave visibly fold back on itself.
+        const place = Math.max(0, Math.min(1, fn(x, y, ctx)));
+        this._request(i, targets[k], now + ease(place) * duration);
+      }
+      return this;
+    }
+
+    // Returns an (x, y) => state accessor for whatever shape the caller
+    // passed, so setGrid's loop doesn't branch per dot. Out-of-range cells
+    // answer null, which setGrid reads as "leave this one alone" - a 5x5
+    // pattern written to a 40x24 board changes 25 dots and nothing else.
+    _normalize(data, charMap) {
+      if (typeof data === 'function') return data;
+      if (!Array.isArray(data) || data.length === 0) return null;
+
+      if (typeof data[0] === 'string') {
+        const map = charMap || null;
+        return (x, y) => {
+          const row = data[y];
+          if (typeof row !== 'string' || x >= row.length) return null;
+          const ch = row[x];
+          if (map) return ch in map ? map[ch] : null;
+          // With no charMap, a digit is its own state index and anything
+          // else is state 0 - enough for the common two- and three-color
+          // pattern without making the caller write a map for it.
+          const d = ch.charCodeAt(0) - 48;
+          return d >= 0 && d <= 9 ? d : 0;
+        };
+      }
+
+      if (Array.isArray(data[0])) {
+        return (x, y) => {
+          const row = data[y];
+          if (!row || x >= row.length) return null;
+          return row[x];
+        };
+      }
+
+      // Flat array, row-major.
+      return (x, y) => {
+        const i = y * this.cols + x;
+        return i < data.length ? data[i] : null;
+      };
+    }
+
+    // Writes a line of text across the whole board - lit dots for the
+    // glyphs, `off` everywhere else - centered unless `x`/`y` say otherwise.
+    // Goes through setGrid, so it takes a transition and an easing like any
+    // other whole-board update, which is what makes a message arrive on a
+    // wipe instead of simply being there.
+    text(str, opts = {}) {
+      return this.setGrid(textGrid(str, this.cols, this.rows, opts), opts);
+    }
+
+    // How wide a string would be, in dots, at this board's font. For
+    // deciding whether a message fits before committing to it.
+    measureText(str, opts = {}) {
+      const spacing = opts.spacing == null ? 1 : opts.spacing;
+      const n = String(str).length;
+      return n ? n * FONT_W + (n - 1) * spacing : 0;
+    }
+
+    // Partial writes. Each returns null outside its own area, which setGrid
+    // reads as "leave this one alone" - so a rect or a row is choreographed
+    // among its own dots and the rest of the board is untouched rather than
+    // being rewritten with what it already had.
+    rect(x, y, w, h, state, opts) {
+      return this.setGrid(
+        (cx, cy) => (cx >= x && cx < x + w && cy >= y && cy < y + h ? state : null),
+        opts,
+      );
+    }
+
+    // `states` is an array across the line, or a single state for all of it.
+    row(y, states, opts) {
+      const at = Array.isArray(states) ? (x) => (x < states.length ? states[x] : null) : () => states;
+      return this.setGrid((cx, cy) => (cy === y ? at(cx) : null), opts);
+    }
+
+    col(x, states, opts) {
+      const at = Array.isArray(states) ? (y) => (y < states.length ? states[y] : null) : () => states;
+      return this.setGrid((cx, cy) => (cx === x ? at(cy) : null), opts);
+    }
+
+    fill(state, opts) {
+      return this.setGrid(() => state, opts);
+    }
+
+    clear(opts) {
+      return this.fill(0, opts);
+    }
+
+    randomize(opts) {
+      const n = this.options.palette.length;
+      return this.setGrid(() => Math.floor(Math.random() * n), opts);
+    }
+
+    // A copy of what is on the board, row-major. Handy for saving a frame,
+    // and for diffing in tests.
+    snapshot() {
+      return this._state.slice();
+    }
+
+    // Grid coordinates of the dot under a client-space point (a pointer
+    // event's clientX/clientY), or null if the point missed - including the
+    // slack around a centered grid, which is background rather than a dot.
+    // Here rather than in page code because the pitch and the centering
+    // offset are this instance's business, and every hover/paint/ripple-from
+    // -here interaction needs exactly this answer.
+    dotAt(clientX, clientY) {
+      const rect = this.canvas.getBoundingClientRect();
+      const x = Math.floor((clientX - rect.left - this._originX) / this._pitch);
+      const y = Math.floor((clientY - rect.top - this._originY) / this._pitch);
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return null;
+      return [x, y];
+    }
+
+    // ---- animation ---------------------------------------------------
+
+    _start() {
+      if (this._raf || !this._onScreen || this.reduced) return;
+      this._lastNow = performance.now();
+      this._raf = requestAnimationFrame(this._tick);
+    }
+
+    _stop() {
+      if (!this._raf) return;
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+
+    // Drops a dot onto its target with no travel left.
+    _settle(i) {
+      this._turn[i] = this._target[i];
+      this._vel[i] = 0;
+      this._active.delete(i);
+      // Rebase to keep `turn` small over a long-lived board: shifting both
+      // by an even number of half turns leaves face parity - and so the
+      // visible state - untouched.
+      const base = this._target[i] - mod(this._target[i], 2);
+      this._turn[i] -= base;
+      this._target[i] -= base;
+      this._paintCell(i);
+    }
+
+    _settleAll() {
+      Array.from(this._active).forEach((i) => this._settle(i));
+    }
+
+    _tick(now) {
+      const dt = Math.min(0.05, (now - this._lastNow) / 1000);
+      this._lastNow = now;
+      this._elapsed += dt;
+
+      const { stiffness, overshoot } = this.options;
+      // bounce 0 -> critically damped, 1 -> loose. Expressed as a damping
+      // ratio rather than a raw coefficient so the character of the flip
+      // survives a change of stiffness.
+      const zeta = 1 - Math.min(1, Math.max(0, this.options.bounce)) * 0.68;
+      const steps = Math.max(1, Math.ceil(dt / SUB_STEP));
+      const h = dt / steps;
+      const clicks = [];
+
+      this._active.forEach((i) => {
+        if (this._delay[i] > this._elapsed) return;
+
+        const k = stiffness * this._wob[i];
+        const c = 2 * zeta * Math.sqrt(k);
+        const target = this._target[i];
+        const faceBefore = mod(Math.round(this._turn[i]), 2);
+        // Which side of the target the dot is approaching from decides
+        // which side its stop is on.
+        const approach = Math.sign(target - this._turn[i]) || 1;
+
+        let turn = this._turn[i];
+        let vel = this._vel[i];
+        for (let s = 0; s < steps; s++) {
+          vel += (-k * (turn - target) - c * vel) * h;
+          turn += vel * h;
+          // The magnet. A real disc cannot rotate past its stop, so travel
+          // beyond the target is capped and what velocity is left rebounds
+          // - the overshoot you see is the disc flexing against the stop,
+          // not swinging past it.
+          const past = (turn - target) * approach;
+          if (past > overshoot) {
+            turn = target + overshoot * approach;
+            vel = -vel * 0.25;
+          }
+        }
+        this._turn[i] = turn;
+        this._vel[i] = vel;
+
+        const faceAfter = mod(Math.round(turn), 2);
+        // Passing edge-on is both when the face swaps and when the disc
+        // meets its stop, so it is the honest moment for the click.
+        if (faceAfter !== faceBefore) clicks.push(i);
+
+        if (Math.abs(turn - target) < 0.0015 && Math.abs(vel) < 0.02) {
+          this._settle(i);
+        } else {
+          this._paintCell(i);
+        }
+      });
+
+      if (this.options.sound && clicks.length) {
+        const cols = this.cols;
+        clicks.forEach((i) => {
+          const x = i % cols;
+          this._clicker.click(cols > 1 ? (x / (cols - 1)) * 1.6 - 0.8 : 0);
+        });
+      }
+
+      if (this._active.size === 0) {
+        this._stop();
+        return;
+      }
+      this._raf = requestAnimationFrame(this._tick);
+    }
+
+    // ---- drawing -----------------------------------------------------
+
+    _entry(state) {
+      const p = this.options.palette;
+      const e = p[Math.max(0, Math.min(p.length - 1, state))];
+      return typeof e === 'string' ? { fill: e } : (e || { fill: '#000' });
+    }
+
+    // The rim color, derived once per palette when `edgeColor` is null: the
+    // average of every face mixed toward black. Averaging rather than
+    // picking one end means the rim lands between the palette's extremes
+    // whatever they are, so it stays visible against both the darkest face
+    // and the lightest - which is the whole job, and is why this is derived
+    // rather than left to the host to get right.
+    _edgeRgb() {
+      if (this._edge) return this._edge;
+      if (this.options.edgeColor) {
+        this._edge = parseColor(this.options.edgeColor);
+        return this._edge;
+      }
+      const p = this.options.palette;
+      const sum = [0, 0, 0];
+      for (let i = 0; i < p.length; i++) {
+        const rgb = parseColor(this._entry(i).fill);
+        sum[0] += rgb[0];
+        sum[1] += rgb[1];
+        sum[2] += rgb[2];
+      }
+      const avg = [sum[0] / p.length, sum[1] / p.length, sum[2] / p.length];
+      this._edge = mixToward(avg, [0, 0, 0], 0.42);
+      return this._edge;
+    }
+
+    // The color to draw a face at a given foreshortening, quantized to 64
+    // steps and cached: a board redrawing hundreds of dots a frame would
+    // otherwise spend most of its time building `rgb(...)` strings. Both
+    // effects below are functions of `squash` alone, so one step indexes
+    // both and the cache stays small.
+    _shaded(state, squash) {
+      const step = Math.round(squash * 63);
+      const key = state * 64 + step;
+      const hit = this._shadeCache.get(key);
+      if (hit) return hit;
+
+      const s = step / 63;
+      const entry = this._entry(state);
+      // Lambert-ish: the face darkens as it turns away from the light.
+      // Toward black, not toward transparent - the dot is in shadow, not
+      // fading out, and over a light background fading would read as a
+      // ghost rather than as a tilt.
+      const lit = mixToward(parseColor(entry.fill), [0, 0, 0], this.options.shade * (1 - s) * 0.7);
+      // ...and then the rim takes over, steeply, only as the face runs out
+      // of width - see `edgeFalloff` for why it has to be steep.
+      const edge = 'edge' in entry ? parseColor(entry.edge) : this._edgeRgb();
+      const c = mixToward(lit, edge, Math.pow(1 - s, this.options.edgeFalloff));
+
+      const css = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+      this._shadeCache.set(key, css);
+      return css;
+    }
+
+    _paintAll() {
+      const { ctx } = this;
+      if (this.options.background) {
+        ctx.fillStyle = this.options.background;
+        ctx.fillRect(0, 0, this._w, this._h);
+      } else {
+        ctx.clearRect(0, 0, this._w, this._h);
+      }
+      for (let i = 0; i < this._state.length; i++) this._drawDot(i);
+    }
+
+    // Repaints one cell: clear it back to the background, then draw. Only
+    // the cells that moved are touched, so a board with twenty dots in
+    // flight costs twenty small rects rather than a full-canvas redraw.
+    //
+    // The cleared rect is exactly the cell and never a pixel more, which is
+    // what makes this safe to do per dot: a padded clear would reach into
+    // the neighbors and shave the dots already drawn there, and the only
+    // repair for that is repainting a whole neighborhood per dirty cell. A
+    // disc that stays inside its own cell (see _leanMax) needs none of it.
+    // Precomputes what the hinge angle means for drawing, so _drawDot does
+    // no trigonometry or branching arithmetic per dot per frame.
+    _syncHinge() {
+      // Folded onto 0..180: a hinge line has no near end and far end, so an
+      // axle at 190 degrees is the same axle as one at 10.
+      const folded = mod(Number(this.options.hinge) || 0, 180);
+      this._hingeRad = (folded * Math.PI) / 180;
+      // Within a tenth of a degree of flat or upright counts as aligned, so
+      // a slider resting on 0 or 90 takes the crisp snapped path rather than
+      // falling into the rotated one over a rounding error.
+      const off = folded % 90;
+      this._hingeAligned = off < 0.1 || off > 89.9;
+      this._hingeUpright = this._hingeAligned && Math.abs(folded - 90) < 0.1;
+    }
+
+    // Snaps a CSS-pixel coordinate to a whole device pixel. Cell boundaries
+    // land on fractions of a pixel otherwise, and a fill that stops halfway
+    // through a pixel is antialiased against what was already there - so
+    // every cell leaves a faint seam along its edge, and a board of them
+    // draws a visible grid over the panel. Deriving both of a cell's edges
+    // from the same snapped boundary means neighbors share it exactly:
+    // no seam, and no overlap to shave the next dot either.
+    _snap(v) {
+      return Math.round(v * this._dpr) / this._dpr;
+    }
+
+    _paintCell(i) {
+      const { ctx } = this;
+      const x = i % this.cols;
+      const y = Math.floor(i / this.cols);
+      const left = this._snap(this._originX + x * this._pitch);
+      const top = this._snap(this._originY + y * this._pitch);
+      const right = this._snap(this._originX + (x + 1) * this._pitch);
+      const bottom = this._snap(this._originY + (y + 1) * this._pitch);
+      if (this.options.background) {
+        ctx.fillStyle = this.options.background;
+        ctx.fillRect(left, top, right - left, bottom - top);
+      } else {
+        ctx.clearRect(left, top, right - left, bottom - top);
+      }
+      this._drawDot(i);
+    }
+
+    _drawDot(i) {
+      const { ctx } = this;
+      const { shape, thickness, perspective } = this.options;
+      const x = i % this.cols;
+      const y = Math.floor(i / this.cols);
+
+      const turn = this._turn[i];
+      const phase = turn * Math.PI;
+      const squash = Math.abs(Math.cos(phase));
+      const face = mod(Math.round(turn), 2) === 0 ? this._faceEven[i] : this._faceOdd[i];
+
+      const d = this._dot;
+      const edge = Math.max(0.5, d * thickness);
+      // The face foreshortens to nothing at 90 degrees but the disc's own
+      // edge does not, so the drawn extent never goes below `edge`. Without
+      // this the flip has a frame where the dot is simply gone, and that
+      // gap is exactly what makes a CSS-transform flip look like paper.
+      const extent = Math.max(edge, d * squash);
+
+      // Swinging toward the viewer on the way round. sin is signed, so the
+      // dot leans one way through the first half of the turn and the other
+      // way through the second - which is what sells the hinge. Capped at
+      // the cell's own slack so a repaint never has to touch a neighbor.
+      const lean = Math.max(-this._leanMax, Math.min(this._leanMax,
+        Math.sin(phase) * d * perspective));
+
+      // The disc foreshortens perpendicular to its axle, and leans the same
+      // way - so both follow the hinge angle rather than a fixed axis.
+      const rad = this._hingeRad;
+      const ox = -Math.sin(rad) * lean;
+      const oy = Math.cos(rad) * lean;
+
+      // The cell's own bounds, snapped to whole device pixels. Everything
+      // below is measured from these rather than from a fractional center
+      // and a width, which is what keeps square dots at zero gap from
+      // antialiasing against the background along every edge and drawing a
+      // grid of seams over the board.
+      const left = this._snap(this._originX + x * this._pitch);
+      const top = this._snap(this._originY + y * this._pitch);
+      const right = this._snap(this._originX + (x + 1) * this._pitch);
+      const bottom = this._snap(this._originY + (y + 1) * this._pitch);
+
+      const entry = this._entry(face);
+      const border = 'border' in entry ? entry.border : this.options.borderColor;
+      ctx.fillStyle = this._shaded(face, squash);
+
+      // A disc that is flat on is not foreshortened at all, so whatever its
+      // axle angle, what you see is the plain axis-aligned shape - and it
+      // may as well be drawn through the crisp snapped path. This is not
+      // just an optimization: a resting board is exactly where seams would
+      // show, so a diagonal axle has to come back to the snapped path by the
+      // time it settles or it would reintroduce them.
+      const flatOn = squash > 0.9995;
+
+      if (this._hingeAligned || flatOn) {
+        // The drawn shape stays axis-aligned, so it can be built from the
+        // snapped cell bounds by insetting and neighbors agree exactly
+        // where the edge between them falls.
+        const upright = this._hingeAligned && this._hingeUpright;
+        const boxW = upright ? extent : d;
+        const boxH = this._hingeAligned ? (upright ? d : extent) : d;
+        const insetX = ((right - left) - boxW) / 2;
+        const insetY = ((bottom - top) - boxH) / 2;
+
+        const x0 = this._snap(left + insetX + ox);
+        const y0 = this._snap(top + insetY + oy);
+        let x1 = this._snap(right - insetX + ox);
+        let y1 = this._snap(bottom - insetY + oy);
+        // Snapping can collapse the edge-on sliver onto a single boundary.
+        // One device pixel is the thinnest a disc may ever draw - at zero it
+        // would vanish, which is the dead frame `thickness` exists to stop.
+        const onePx = 1 / this._dpr;
+        if (x1 - x0 < onePx) x1 = x0 + onePx;
+        if (y1 - y0 < onePx) y1 = y0 + onePx;
+        const w = x1 - x0;
+        const hh = y1 - y0;
+
+        ctx.beginPath();
+        if (shape === 'square') {
+          ctx.rect(x0, y0, w, hh);
+        } else if (shape === 'rounded' && ctx.roundRect) {
+          ctx.roundRect(x0, y0, w, hh, Math.min(w, hh) * 0.28);
+        } else {
+          ctx.ellipse(x0 + w / 2, y0 + hh / 2, w / 2, hh / 2, 0, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        if (border) {
+          ctx.lineWidth = Math.max(0.5, d * this.options.borderWidth);
+          ctx.strokeStyle = border;
+          ctx.stroke();
+        }
+        return;
+      }
+
+      // A diagonal axle, part way through its turn. The foreshortening is no
+      // longer along either screen axis, so there is no axis-aligned box to
+      // snap to and the dot is drawn under a transform instead. Nothing is
+      // lost by it: the seams that snapping prevents only appear where dots
+      // tile edge to edge, which is the resting board - and a resting board
+      // is flat on, which the branch above has already taken.
+      const cx = (left + right) / 2 + ox;
+      const cy = (top + bottom) / 2 + oy;
+      // Foreshortening as a fraction of the disc's full width. Floored well
+      // above zero because a scale of exactly 0 is a singular transform,
+      // which canvas declines to draw through at all.
+      const k = Math.max(0.0005, extent / d);
+
+      ctx.save();
+      if (shape !== 'circle') {
+        // A squashed circle always fits inside the circle it came from, so
+        // it cannot leave its cell. A squashed *square* can: at 45 degrees
+        // and fully edge-on it collapses onto its own diagonal, which is
+        // longer than the cell is wide, and the ends would reach into the
+        // neighbors - whose dots have already been drawn and are not going
+        // to be drawn again. Clipping to the cell is what keeps "a dot
+        // never leaves its cell" true for every shape and angle, and so
+        // keeps the one-rect-per-dot repaint correct.
+        ctx.beginPath();
+        ctx.rect(left, top, right - left, bottom - top);
+        ctx.clip();
+      }
+      // Squash along the axle's perpendicular, and only along it: rotate the
+      // world so the axle lies flat, compress, then rotate back, and draw
+      // the dot's own shape in its own orientation inside that. Rotating the
+      // *shape* by the hinge angle instead would be a different thing
+      // entirely - a square would sit as a diamond even lying flat on, when
+      // a disc that is not foreshortened at all should look exactly like
+      // one on any other axle.
+      ctx.translate(cx, cy);
+      ctx.rotate(rad);
+      ctx.scale(1, k);
+      ctx.rotate(-rad);
+      ctx.beginPath();
+      if (shape === 'square') {
+        ctx.rect(-d / 2, -d / 2, d, d);
+      } else if (shape === 'rounded' && ctx.roundRect) {
+        ctx.roundRect(-d / 2, -d / 2, d, d, d * 0.28);
+      } else {
+        ctx.ellipse(0, 0, d / 2, d / 2, 0, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      if (border) {
+        ctx.lineWidth = Math.max(0.5, d * this.options.borderWidth);
+        ctx.strokeStyle = border;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ---- lifecycle ---------------------------------------------------
+
+    _listenForGesture() {
+      document.addEventListener('pointerdown', this._armSound, { once: true });
+      document.addEventListener('keydown', this._armSound, { once: true });
+    }
+
+    _armSound() {
+      this._clicker.arm();
+    }
+
+    // Starts audio now, for a page with its own "sound on" button - a
+    // gesture that already happened cannot be waited for.
+    enableSound() {
+      this.options.sound = true;
+      this._clicker.arm();
+      return this;
+    }
+
+    _onReducedChange() {
+      if (this.reduced) {
+        this._stop();
+        this._settleAll();
+      }
+    }
+
+    // New option values, e.g. from a control panel. Anything that changes
+    // the grid's shape or the dots' size re-measures (which resamples the
+    // content onto the new grid); a palette or shading change only
+    // invalidates the color cache and repaints.
+    update(newOptions = {}) {
+      const before = this.options;
+      const structural = ['cols', 'rows', 'dotSize', 'gap', 'jitter', 'perspective']
+        .some((k) => k in newOptions && newOptions[k] !== before[k]);
+      const recolor = ['palette', 'shade', 'edgeColor', 'edgeFalloff', 'background', 'borderColor', 'borderWidth', 'shape', 'hinge', 'thickness']
+        .some((k) => k in newOptions);
+
+      this.options = { ...before, ...newOptions };
+
+      if ('hinge' in newOptions) this._syncHinge();
+      if ('sound' in newOptions && newOptions.sound) this._clicker.arm();
+      if (recolor) {
+        this._shadeCache.clear();
+        this._edge = null;
+      }
+
+      if (structural) this._measure();
+      else if (recolor) this._paintAll();
+      return this;
+    }
+
+    _resize() {
+      this._measure();
+    }
+
+    destroy() {
+      this._stop();
+      this._resizeObserver.disconnect();
+      this._intersectionObserver.disconnect();
+      if (this._reducedQuery && this._reducedQuery.removeEventListener) {
+        this._reducedQuery.removeEventListener('change', this._onReducedChange);
+      }
+      document.removeEventListener('pointerdown', this._armSound);
+      document.removeEventListener('keydown', this._armSound);
+      this._clicker.destroy();
+      this.canvas.remove();
+    }
+  }
+
+  FlipDots.transitions = transitions;
+  FlipDots.easings = easings;
+  FlipDots.font = font;
+  FlipDots.textGrid = textGrid;
+  FlipDots.defaults = DEFAULTS;
+
+  FlipDots.initAll = function initAll(selector = '.flip-dots', options = {}) {
+    return Array.from(document.querySelectorAll(selector))
+      .filter((el) => !el.__flipDotsInstance)
+      .map((el) => {
+        const instance = new FlipDots(el, options);
+        el.__flipDotsInstance = instance;
+        return instance;
+      });
+  };
+
+  // Look up the instance auto-init already created for an element (or the
+  // first match of a selector) - page code should use this rather than
+  // calling initAll() again, which would find nothing left to claim.
+  FlipDots.get = function get(elOrSelector) {
+    if (!elOrSelector) return null;
+    const el = typeof elOrSelector === 'string'
+      ? document.querySelector(elOrSelector)
+      : elOrSelector;
+    return el ? el.__flipDotsInstance || null : null;
+  };
+
+  FlipDots.getAll = function getAll(selector = '.flip-dots') {
+    return Array.from(document.querySelectorAll(selector))
+      .map((el) => el.__flipDotsInstance)
+      .filter(Boolean);
+  };
+
+  global.FlipDots = FlipDots;
+
+  function autoInit() {
+    FlipDots.initAll();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInit);
+  } else {
+    autoInit();
+  }
+})(window);

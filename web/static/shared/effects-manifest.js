@@ -179,5 +179,13 @@
       jsPath: '/carousel/dial/dial.js',
       docsPath: '/docs/carousel/dial.html',
     },
+    {
+      slug: 'flip-dots',
+      name: 'Flip Dots',
+      category: 'components',
+      demoPath: '/components/flip-dots/index.html',
+      jsPath: '/components/flip-dots/flip-dots.js',
+      docsPath: '/docs/components/flip-dots.html',
+    },
   ];
 })(window);
