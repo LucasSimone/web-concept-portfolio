@@ -283,7 +283,7 @@ const [flipDotsPreview] = FlipDots.initAll('#flipDotsPreview', {
   gap: 0.26,
   background: '#ffffff',
   palette: ['#e9e9e9', '#15171b'],
-  stiffness: 640,
+  flipDuration: 115,
   jitter: 0.3,
   duration: 850,
 });

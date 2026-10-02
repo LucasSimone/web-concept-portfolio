@@ -16,12 +16,13 @@
     </div>
 
     <div class="control-row">
-      <label><span class="label-text">Stiffness <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stiffness">?<span class="hint" role="tooltip" id="hint-stiffness">The spring constant driving a disc to its stop. Higher is a faster, harder flip; lower makes the half turn visibly take its time.</span></span></span><span id="stiffnessVal" class="value"></span></label>
-      <input id="stiffnessRange" type="range" min="80" max="1600" step="20" value="520" />
+      <label><span class="label-text">Flip time <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-flipDuration">?<span class="hint" role="tooltip" id="hint-flipDuration">How long one disc takes to reach its stop. This and Bounce are the only two numbers in the spring, and they split cleanly: Bounce decides what the motion looks like, this decides how fast that same motion plays. The readout also shows how long it takes to stop ringing afterward, and the spring constant it works out to — drag Bounce and watch the settle figure move while the flip time holds still.</span></span></span><span id="flipDurationVal" class="value"></span></label>
+      <input id="flipDurationRange" type="range" min="40" max="900" step="5" value="130" />
+      <p class="fd-derived" id="flipDurationDerived"></p>
     </div>
 
     <div class="control-row">
-      <label><span class="label-text">Bounce <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-bounce">?<span class="hint" role="tooltip" id="hint-bounce">How under-damped the spring is. 0 is critically damped — the disc arrives and stops dead. Higher lets it ring against its stop before settling, which is most of what makes arrival feel physical.</span></span></span><span id="bounceVal" class="value"></span></label>
+      <label><span class="label-text">Bounce <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-bounce">?<span class="hint" role="tooltip" id="hint-bounce">How under-damped the spring is. 0 is critically damped — the disc arrives and stops dead. Higher lets it ring against its stop before settling, which is most of what makes arrival feel physical. It changes the character of the flip without changing how long the flip takes.</span></span></span><span id="bounceVal" class="value"></span></label>
       <input id="bounceRange" type="range" min="0" max="1" step="0.02" value="0.55" />
     </div>
 

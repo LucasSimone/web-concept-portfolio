@@ -298,6 +298,15 @@ main {
   opacity: 0.7;
 }
 
+/* Figures the component derives rather than ones you set — on their own
+   line under the slider so they read as output, not as another control. */
+.fd-derived {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.45;
+}
+
 .hint-toggle {
   display: inline-flex;
   align-items: center;

@@ -1,15 +1,15 @@
 /**
- * Flip Dots — tuning rig
- * -----------------------
- * Phase-one scaffolding, not the shipped demo. Its whole job is to put every
- * mechanical parameter of a single flip under a slider so the feel can be
- * found by hand, and to keep content changing on the board so there is
- * always something to judge. Once the values are settled they get baked into
- * flip-dots.js's DEFAULTS and most of this panel goes away.
+ * Flip Dots — demo page
+ * ----------------------
+ * Drives the five boards on the page. Every control in the panel maps onto
+ * one real option, so the panel doubles as the options reference: there is
+ * nothing here a host could not pass to initAll.
  *
- * The content patterns below are deliberately dumb — a checkerboard and some
- * banded noise are enough to watch a transition cross the board, and nothing
- * here is meant to survive into the real demo.
+ * The content patterns are deliberately dumb — a checkerboard and some
+ * banded noise are enough to watch a transition cross a board, and they are
+ * staging for the component rather than part of it. The clock further down
+ * is the one that earns its place: it is the only example driven by
+ * something other than a timer picking shapes.
  */
 document.addEventListener('DOMContentLoaded', () => {
   // flip-dots.js's own auto-init already claimed the board by the time this
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---- profiles ------------------------------------------------------
   const PROFILES = {
     default: {
-      stiffness: 520, bounce: 0.55, overshoot: 0.055, jitter: 0.18,
+      flipDuration: 125, bounce: 0.55, overshoot: 0.055, jitter: 0.18,
       shade: 0.45, perspective: 0.14, thickness: 0.09, hinge: 0, duration: 600,
       transition: 'ripple', easing: 'even',
     },
@@ -106,37 +106,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // pace is what makes it read as a machine running down rather than a
     // cursor sweeping past at constant speed.
     classic: {
-      stiffness: 680, bounce: 0.5, overshoot: 0.05, jitter: 0.42,
+      flipDuration: 115, bounce: 0.5, overshoot: 0.05, jitter: 0.42,
       shade: 0.52, perspective: 0.17, thickness: 0.11, hinge: 0, duration: 1600,
       transition: 'rows', easing: 'decelerate', palette: 'amber',
     },
-    // Fast and tight: at the stop in ~100ms against the default's ~127, and
-    // done ringing in ~243 against ~430. Note the bounce is barely lower
-    // than the default's — dropping it further makes the flip *slower*, not
-    // crisper, because the extra damping costs more approach time than the
-    // extra stiffness buys back.
+    // Fast and tight. The bounce is barely lower than the default's, and
+    // deliberately so — under the old stiffness-based controls, dropping
+    // bounce further made the flip *slower* rather than crisper, because
+    // extra damping cost more approach time than extra stiffness bought
+    // back. Stating the time directly takes that trap away: the component
+    // now works out whatever spring is needed to hit 100ms at this bounce.
     crisp: {
-      stiffness: 1100, bounce: 0.45, overshoot: 0.035, jitter: 0.12,
+      flipDuration: 100, bounce: 0.45, overshoot: 0.035, jitter: 0.12,
       shade: 0.4, perspective: 0.1, thickness: 0.08, hinge: 0, duration: 350,
       transition: 'wipe', easing: 'even',
     },
     // A slower, weightier disc that takes its time over the half turn and
     // lands hard.
     heavy: {
-      stiffness: 240, bounce: 0.7, overshoot: 0.08, jitter: 0.22,
+      flipDuration: 160, bounce: 0.7, overshoot: 0.08, jitter: 0.22,
       shade: 0.55, perspective: 0.2, thickness: 0.12, hinge: 0, duration: 900,
       transition: 'ripple', easing: 'smooth',
     },
     // Loose and ringy, with a lot of spread between dots.
     loose: {
-      stiffness: 160, bounce: 0.95, overshoot: 0.14, jitter: 0.5,
+      flipDuration: 165, bounce: 0.95, overshoot: 0.14, jitter: 0.5,
       shade: 0.5, perspective: 0.26, thickness: 0.1, hinge: 0, duration: 2200,
       transition: 'random', easing: 'accelerate',
     },
     // No shading, no lean, no edge — what the flip looks like as a pure
     // squash, which is the thing everything else above is there to avoid.
     flat: {
-      stiffness: 520, bounce: 0.55, overshoot: 0.055, jitter: 0.18,
+      flipDuration: 125, bounce: 0.55, overshoot: 0.055, jitter: 0.18,
       shade: 0, perspective: 0, thickness: 0.02, hinge: 0, duration: 600,
       transition: 'ripple', easing: 'even',
     },
@@ -144,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const controls = {
     profile: document.getElementById('profileSelect'),
-    stiffness: document.getElementById('stiffnessRange'),
+    flipDuration: document.getElementById('flipDurationRange'),
     bounce: document.getElementById('bounceRange'),
     overshoot: document.getElementById('overshootRange'),
     jitter: document.getElementById('jitterRange'),
@@ -170,7 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const readout = document.getElementById('fdReadout');
 
   function syncLabels() {
-    document.getElementById('stiffnessVal').textContent = controls.stiffness.value;
+    document.getElementById('flipDurationVal').textContent = `${controls.flipDuration.value}ms`;
+    // Read back off the board rather than recomputed here, and kept on
+    // their own line because neither is a control. The settle time is the
+    // interesting one: it moves when Bounce moves while the flip time holds
+    // still, which is the whole point of keeping those two apart.
+    document.getElementById('flipDurationDerived').textContent =
+      `settles ${Math.round(board.settleMs)}ms · spring k≈${Math.round(board.springConstant)}`;
     document.getElementById('bounceVal').textContent = Number(controls.bounce.value).toFixed(2);
     document.getElementById('overshootVal').textContent = `${Math.round(Number(controls.overshoot.value) * 180)}°`;
     document.getElementById('jitterVal').textContent = Number(controls.jitter.value).toFixed(2);
@@ -200,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Every slider maps one range input onto one option.
   const numeric = [
-    ['stiffness', 'stiffness'],
+    ['flipDuration', 'flipDuration'],
     ['bounce', 'bounce'],
     ['overshoot', 'overshoot'],
     ['jitter', 'jitter'],
@@ -405,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // dot between, 12 characters needs 71 columns.
       cols: 72,
       gap: 0.2,
-      stiffness: 680,
+      flipDuration: 110,
       bounce: 0.5,
       jitter: 0.42,
       transition: 'rows',
@@ -523,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ...PALETTES.amber,
       cols: 54,
       gap: 0.18,
-      stiffness: 700,
+      flipDuration: 110,
       jitter: 0.35,
       transition: 'instant',
     });
@@ -569,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gap: 0.3,
       background: '#0b0c0f',
       palette: ['#15181d', '#2f3947'],
-      stiffness: 420,
+      flipDuration: 140,
       jitter: 0.4,
       duration: 2600,
       easing: 'smooth',

@@ -108,6 +108,99 @@ board.setGrid(grid, { transition: 'wipe' });</code></pre>
       </div>
 
       <div class="recipe">
+        <h3>Driving one dot yourself</h3>
+        <p>
+          <code>set()</code> takes the same four questions a transition
+          answers for a whole board, so hand-rolled choreography is not a
+          lesser path - a transition is just a convenient way to generate
+          <code>delay</code> for every dot at once.
+        </p>
+        <pre><code>board.set(4, 2, 1, {
+  delay: 120,          // ms before this dot starts
+  flipDuration: 300,   // this dot's own half turn
+  bounce: 0.9,         // how hard this one rings
+  direction: -1,       // force the turn direction
+  silent: true,        // no click from this one
+});</code></pre>
+        <p>
+          The same keys work on <code>setGrid</code>, where they apply to
+          every dot of that update. Note <code>duration</code> is the
+          spread - how long the whole update takes to roll out - and
+          <code>flipDuration</code> is one dot's own turn. They're
+          independent, which is what lets a slow wave be made of fast
+          flips, or a fast wave of slow ones.
+        </p>
+        <pre><code>board.setGrid(grid, { transition: 'rows', duration: 1600, flipDuration: 90 });</code></pre>
+        <p>
+          <code>direction</code> is the one worth knowing about. Normally a
+          dot's turn direction comes from comparing palette indices, which
+          reads well when the palette is a scale (dark to light) and means
+          nothing when it isn't (red, blue, yellow). Forcing it lets a whole
+          wave turn the same way regardless of what colors are involved -
+          as does <code>directional: false</code> on the board.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Knowing when it has landed</h3>
+        <p>
+          How long an update takes is <code>duration</code> plus a flip plus
+          whatever ringing <code>bounce</code> adds plus per-dot jitter -
+          not a sum worth reconstructing with <code>setTimeout</code>. The
+          board says so itself.
+        </p>
+        <pre><code>board.el.addEventListener('flip-dots:settle', () =&gt; {
+  board.setGrid(nextFrame, { transition: 'shuffle' });
+});
+
+board.settled            // nothing is moving
+board.isAnimating(4, 2)  // is this dot mid-flight?
+board.settle();          // cut the current update short</code></pre>
+        <p>
+          The event marks a transition rather than a state: it fires once
+          when the board goes from moving to still, and a board that is
+          already still stays quiet however many times it's ticked, settled
+          or scrolled back into view. For per-dot granularity there is
+          <code>onFlip</code>, which is a plain callback rather than an
+          event because a board-wide wave is thousands of them in a single
+          frame.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Flip time and bounce</h3>
+        <p>
+          The spring has exactly two numbers and they divide cleanly.
+          <code>bounce</code> decides what the motion looks like;
+          <code>flipDuration</code> decides how fast that same motion plays.
+          That separation is exact rather than approximate - the trajectory
+          depends on the damping ratio alone, and the spring constant does
+          nothing but scale the time axis - so changing the duration gives
+          you the identical flip sped up or slowed down, and changing bounce
+          gives you a different flip.
+        </p>
+        <pre><code>// Same character, half the time
+FlipDots.initAll('.flip-dots', { flipDuration: 65, bounce: 0.55 });
+
+// Same timing, far rattlier
+FlipDots.initAll('.flip-dots', { flipDuration: 130, bounce: 0.95 });</code></pre>
+        <p>
+          Which is why <code>stiffness</code> is not a third control -
+          it is <code>flipDuration</code> in spring units, and setting it
+          ignores the duration. The component works the constant out for
+          you, and <code>springConstant</code> reads back the answer.
+        </p>
+        <p>
+          One honest limit at the quiet end: as bounce approaches 0 the
+          spring barely crosses its target at all, so the constant needed to
+          arrive by a deadline runs away faster than the integrator can
+          follow. Below about <code>bounce: 0.2</code> a short
+          <code>flipDuration</code> becomes a request rather than a
+          guarantee, and the dot may take a little longer than asked.
+        </p>
+      </div>
+
+      <div class="recipe">
         <h3>Any number of colors</h3>
         <p>
           A dot's state is an index into <code>palette</code>, so colors
@@ -293,8 +386,10 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><td><code>background</code></td><td><code>'#0c0d10'</code></td><td>Behind the dots. <code>null</code> leaves the canvas transparent</td></tr>
           <tr><td><code>borderColor</code></td><td><code>null</code></td><td>Rim on every disc, unless its palette entry overrides it. Off by default so dots can materialize out of nothing</td></tr>
           <tr><td><code>borderWidth</code></td><td><code>0.08</code></td><td>Rim width as a fraction of dot diameter</td></tr>
-          <tr><td><code>stiffness</code></td><td><code>520</code></td><td>Spring constant. Higher is a faster, harder flip</td></tr>
-          <tr><td><code>bounce</code></td><td><code>0.55</code></td><td>0 is critically damped - arrives and stops dead. Higher rings against the stop before settling</td></tr>
+          <tr><td><code>flipDuration</code></td><td><code>130</code></td><td>How long one dot takes to reach its stop, in ms. Time to <em>arrive</em>, not to stop ringing - see <code>settleMs</code></td></tr>
+          <tr><td><code>bounce</code></td><td><code>0.55</code></td><td>0 is critically damped - arrives and stops dead. Higher rings against the stop before settling. Changes the character of the flip without changing how long it takes</td></tr>
+          <tr><td><code>stiffness</code></td><td><code>null</code></td><td>The same control as <code>flipDuration</code>, in spring units. Set one or the other; this wins when it isn't null</td></tr>
+          <tr><td><code>onFlip</code></td><td><code>null</code></td><td><code>(x, y, state, board)</code> as each dot passes edge-on and shows its new face. Off by default - a board-wide wave is thousands of calls in one frame</td></tr>
           <tr><td><code>overshoot</code></td><td><code>0.055</code></td><td>How far past flat the disc may flex when it hits its stop, in half turns (0.055 is about 10&#176;)</td></tr>
           <tr><td><code>jitter</code></td><td><code>0.18</code></td><td>Random variation in each dot's spring rate, so a row doesn't flip in lockstep</td></tr>
           <tr><td><code>shade</code></td><td><code>0.45</code></td><td>How much a face darkens as it turns away from the light</td></tr>
@@ -318,8 +413,12 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><th>Method</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>set(x, y, state)</code></td><td>One dot, flipped immediately with no choreography</td></tr>
+          <tr><td><code>set(x, y, state, opts)</code></td><td>One dot. <code>opts</code> takes <code>delay</code>, <code>flipDuration</code>, <code>bounce</code>, <code>direction</code>, <code>silent</code></td></tr>
           <tr><td><code>get(x, y)</code></td><td>That dot's state, or -1 if out of range</td></tr>
+          <tr><td><code>settled</code></td><td>Whether everything has come to rest</td></tr>
+          <tr><td><code>isAnimating(x, y)</code></td><td>Whether that dot is mid-flight or waiting out a delay</td></tr>
+          <tr><td><code>settle()</code></td><td>Drops everything onto its target immediately, cutting an update short</td></tr>
+          <tr><td><code>springConstant</code> / <code>settleMs</code></td><td>The effective spring, and roughly how long a flip takes to stop ringing</td></tr>
           <tr><td><code>setGrid(data, opts)</code></td><td>The whole board, choreographed. <code>opts</code> takes <code>transition</code>, <code>easing</code>, <code>duration</code>, <code>direction</code>, <code>origin</code>, <code>charMap</code></td></tr>
           <tr><td><code>text(str, opts)</code></td><td>A line of text in the 5&#215;7 font, centered by default. Same <code>opts</code> as <code>setGrid</code>, plus <code>x</code>, <code>y</code>, <code>on</code>, <code>off</code>, <code>spacing</code></td></tr>
           <tr><td><code>measureText(str, opts)</code></td><td>How wide that string would be, in dots</td></tr>
@@ -332,6 +431,7 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><td><code>update(options)</code></td><td>New option values. Grid changes re-measure and resample; color changes just repaint</td></tr>
           <tr><td><code>enableSound()</code></td><td>Start audio now, for a gesture that has already happened</td></tr>
           <tr><td><code>destroy()</code></td><td>Tears down observers, audio and the canvas</td></tr>
+          <tr><td><code>flip-dots:settle</code></td><td>DOM event on the root, once each time the board goes from moving to still</td></tr>
           <tr><td><code>cols</code> / <code>rows</code> / <code>length</code></td><td>The grid actually settled on - read these rather than echoing what you asked for</td></tr>
           <tr><td><code>dotPx</code> / <code>pitchPx</code></td><td>Effective dot diameter and cell pitch, in px</td></tr>
         </tbody>

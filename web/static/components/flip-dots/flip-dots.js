@@ -110,10 +110,24 @@
     borderWidth: 0.08, // fraction of dot diameter
 
     // --- mechanics --------------------------------------------------
-    // Spring constant. Higher is a faster, harder flip.
-    stiffness: 520,
+    // How long one dot takes to reach its stop, in milliseconds. This and
+    // `bounce` are the only two numbers in the spring, and they divide
+    // cleanly: bounce decides what the motion looks like, this decides how
+    // fast that same motion plays. Changing it is the same flip sped up or
+    // slowed down; changing bounce is a different flip.
+    //
+    // Note this is time to the *stop*, not to fully stopped ringing - the
+    // visible travel. A bouncy dot reaches its stop on time and rattles
+    // against it for a while afterward; see `settleMs` for that figure.
+    flipDuration: 130,
     // 0 = critically damped (no overshoot at all), 1 = loose and ringy.
     bounce: 0.55,
+    // The same control as `flipDuration`, in spring units, for anyone who
+    // would rather state the force than the time. Set one or the other:
+    // this wins when it isn't null, and `flipDuration` is then ignored.
+    // Kept because the integrator wants a spring constant anyway and there
+    // is no reason to hide it, not because both are meant to be used.
+    stiffness: null,
     // How far past the stop the disc is allowed to travel, in half turns.
     // This is the magnet it slams into: travel is clamped here and the
     // remaining velocity rebounds, which is what gives arrival its thunk.
@@ -180,6 +194,13 @@
     // gesture has already happened.
     sound: false,
     volume: 0.5,
+
+    // --- hooks ------------------------------------------------------
+    // Called as each dot passes edge-on and shows its new face, with
+    // (x, y, state, board). Off by default because a board-wide wave is
+    // thousands of calls in a frame - take it only if you want them. For
+    // "the whole update has landed", listen for flip-dots:settle instead.
+    onFlip: null,
   };
 
   // ---------------------------------------------------------------------
@@ -595,6 +616,75 @@
     return ((a % n) + n) % n;
   }
 
+  // ---------------------------------------------------------------------
+  // The spring, in two numbers
+  //
+  // `bounce` becomes a damping ratio, which is what decides the SHAPE of
+  // the motion - whether the disc glides to its stop or slams and rattles.
+  // `flipDuration` becomes a spring constant, which does nothing to that
+  // shape and only scales the time axis. That separation is exact rather
+  // than approximate: write the spring in units of w0*t and the trajectory
+  // depends on the damping ratio alone, so two dots with the same bounce
+  // and different durations trace the identical curve at different speeds.
+  // It survives the magnet stop too, since that triggers on a position
+  // threshold and rebounds by a plain multiplier - neither cares how fast
+  // the clock is running.
+  //
+  // Which is why there is no third knob here, and why a control panel
+  // offering both a duration and a stiffness would be lying: there are two
+  // degrees of freedom, and stiffness is simply duration in other units.
+  // ---------------------------------------------------------------------
+  // Shared stand-in for "no per-dot overrides", so the common path neither
+  // allocates an options object nor has to null-check before every lookup.
+  const EMPTY = {};
+
+  function dampingRatio(bounce) {
+    return 1 - Math.min(1, Math.max(0, bounce)) * 0.68;
+  }
+
+  // Ceiling on the spring constant, set by the integrator rather than by
+  // taste. The loop steps at SUB_STEP with an explicit method, which stays
+  // stable only while the step is small against the spring's own period;
+  // past roughly w0 * SUB_STEP = 0.25 it starts gaining energy instead of
+  // losing it, and a dot will sail through its stop and settle showing the
+  // wrong face. 5600 keeps w0 under 75, which covers every flip time down
+  // to about 38ms - comfortably past the point where a flip reads as
+  // instant anyway.
+  const MAX_STIFFNESS = 5600;
+
+  // Spring constant that puts a dot at its stop after `ms`. This is the
+  // standard rise time of an underdamped second-order step response,
+  // t = (PI - acos(z)) / (w0 * sqrt(1 - z*z)), solved for w0 - exact, not a
+  // fitted curve: measured against the real integrator it tracks the
+  // requested time to within a millisecond from 60ms to 500ms.
+  //
+  // Both clamps below guard the same end of the range. As damping
+  // approaches critical the spring barely crosses its target at all, so the
+  // constant needed to "arrive" by a deadline runs away to infinity - at
+  // bounce 0 and 150ms the raw formula asks for 213,000, which is twenty
+  // times past what the integrator can hold together. Capping the damping
+  // used *for the mapping* at 0.95 keeps the answer sane while the
+  // integration itself still runs at the true ratio, so bounce 0 remains
+  // genuinely critically damped. The honest cost: at very low bounce a
+  // requested flip time is a request, and the dot may take a little longer.
+  function stiffnessFor(ms, zeta) {
+    const t = Math.max(0.001, ms / 1000);
+    const z = Math.min(0.95, Math.max(0, zeta));
+    const w0 = (Math.PI - Math.acos(z)) / (t * Math.sqrt(1 - z * z));
+    return Math.min(MAX_STIFFNESS, w0 * w0);
+  }
+
+  // Roughly when the ringing falls below the threshold _tick settles at:
+  // the decay envelope is e^(-zeta*w0*t), so this is where that reaches the
+  // settle tolerance. An estimate rather than a measurement - the magnet
+  // rebound isn't in it - but close enough to report (it calls ~455ms where
+  // the real integrator takes ~430ms) and the only honest way to show a
+  // number that nothing in the options sets directly.
+  function settleMsFor(k, zeta) {
+    const decay = Math.max(0.0001, zeta * Math.sqrt(k));
+    return (6.5 / decay) * 1000;
+  }
+
   // Fisher-Yates over the changing cells, returned as cell index -> position
   // in the shuffled order. Every cell gets a distinct position, which is the
   // whole point: it is what separates "in a random order" from "each at a
@@ -643,6 +733,7 @@
       this._onScreen = true;
       this._shadeCache = new Map();
       this._edge = null;
+      this._movedSinceSettle = false;
 
       this._clicker = createClicker(() => (this.options.sound ? this.options.volume : 0));
       this._armSound = this._armSound.bind(this);
@@ -656,6 +747,7 @@
       }
 
       this._syncHinge();
+      this._syncSpring();
 
       this._resizeObserver = new ResizeObserver(this._resize);
       this._resizeObserver.observe(this.el);
@@ -797,12 +889,52 @@
       this._faceOdd = new Uint8Array(n);    // ...and on odd ones
       this._delay = new Float64Array(n);    // absolute time this dot may start
       this._wob = new Float32Array(n);      // per-dot spring-rate variation
+      // The spring each dot is actually running, resolved once when it is
+      // asked to flip rather than recomputed every frame for every dot.
+      // This is what makes per-dot timing free: the loop was already doing
+      // a per-dot multiply for jitter, and now it just reads the answer.
+      this._k = new Float32Array(n);
+      this._c = new Float32Array(n);
+      this._silent = new Uint8Array(n);     // suppress this dot's click
       this._active.clear();
 
       const jitter = this.options.jitter;
+      const base = this._baseSpring();
       for (let i = 0; i < n; i++) {
         this._wob[i] = 1 + (Math.random() * 2 - 1) * jitter * 0.35;
+        this._k[i] = base.k * this._wob[i];
+        this._c[i] = 2 * base.zeta * Math.sqrt(this._k[i]);
       }
+    }
+
+    // The spring the board's own options describe, before any per-dot
+    // override. `stiffness` wins when the host set it, since a host that
+    // states a force has opted out of stating a time. Cached rather than
+    // recomputed per request: an acos and a square root per dot of a
+    // board-wide update would be real work for an answer that only changes
+    // when update() is called.
+    _syncSpring() {
+      this._springZeta = dampingRatio(this.options.bounce);
+      this._springK = this.options.stiffness != null
+        ? this.options.stiffness
+        : stiffnessFor(this.options.flipDuration, this._springZeta);
+    }
+
+    _baseSpring() {
+      return { k: this._springK, zeta: this._springZeta };
+    }
+
+    // The effective spring constant, after resolving flipDuration. Read-only
+    // and derived - `options.stiffness` is the override, this is the answer.
+    get springConstant() {
+      return this._baseSpring().k;
+    }
+
+    // Roughly how long a flip takes to stop ringing, as opposed to
+    // `flipDuration`, which is how long it takes to arrive.
+    get settleMs() {
+      const { k, zeta } = this._baseSpring();
+      return settleMsFor(k, zeta);
     }
 
     // Nearest-neighbor resample of the previous grid onto the new one. Dots
@@ -839,7 +971,11 @@
     // again - and if the new state is what it was *leaving*, it springs back
     // the way it came rather than continuing round, which is both shorter and
     // what a real disc being yanked back would do.
-    _request(i, state, startAt) {
+    // `opts` carries the per-dot overrides - `flipDuration`, `bounce`,
+    // `stiffness`, `direction`, `silent`. The same object is reused across
+    // every dot of a setGrid rather than built per cell, so a board-wide
+    // update allocates nothing here.
+    _request(i, state, startAt, opts = EMPTY) {
       const n = this.options.palette.length;
       const s = Math.max(0, Math.min(n - 1, Math.round(state)));
       this._state[i] = s;
@@ -859,23 +995,79 @@
         // than carrying on round to meet it again.
         this._target[i] = here;
       } else {
-        const dir = this.options.directional ? (s > shown ? 1 : -1) : 1;
+        // A forced direction beats the state comparison, which is what lets
+        // a caller turn a whole wave the same way over a palette that has no
+        // natural order for "up" to mean anything against.
+        const dir = opts.direction != null
+          ? (opts.direction < 0 ? -1 : 1)
+          : (this.options.directional ? (s > shown ? 1 : -1) : 1);
         const t = here + dir;
         this._target[i] = t;
         if (mod(t, 2) === 0) this._faceEven[i] = s;
         else this._faceOdd[i] = s;
       }
 
+      // Resolve this dot's spring once, here, rather than per frame. Jitter
+      // still rides on top of a caller's own duration: it is the mechanical
+      // slop of one physical disc, not a property of the instruction.
+      const zeta = opts.bounce != null ? dampingRatio(opts.bounce) : this._springZeta;
+      let k;
+      if (opts.stiffness != null) k = opts.stiffness;
+      else if (opts.flipDuration != null) k = stiffnessFor(opts.flipDuration, zeta);
+      else if (opts.bounce != null) k = stiffnessFor(this.options.flipDuration, zeta);
+      else k = this._springK;
+      this._k[i] = k * this._wob[i];
+      this._c[i] = 2 * zeta * Math.sqrt(this._k[i]);
+      this._silent[i] = opts.silent ? 1 : 0;
+
       this._delay[i] = startAt || 0;
       this._active.add(i);
+      this._movedSinceSettle = true;
       if (this.reduced) this._settle(i);
       else this._start();
     }
 
-    // Writes one dot. No choreography: an individual poke should land now.
-    set(x, y, state) {
+    // Writes one dot. Bare, it lands now - an individual poke should.
+    //
+    // `opts` is the whole per-dot vocabulary, and it is deliberately the
+    // same four questions a transition answers for a board at once:
+    //
+    //   delay         ms before this dot starts
+    //   flipDuration  ms for this dot's own half turn
+    //   bounce        how hard this dot rings against its stop
+    //   direction     1 or -1, forcing which way it turns
+    //   silent        no click from this one
+    //
+    // With these, hand-rolled choreography is not a lesser path than a
+    // transition - a transition is just a convenient way to generate
+    // `delay` for every dot at once.
+    set(x, y, state, opts = EMPTY) {
       if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return this;
-      this._request(y * this.cols + x, state, 0);
+      const at = opts.delay ? this._elapsed + opts.delay / 1000 : 0;
+      this._request(y * this.cols + x, state, at, opts);
+      return this;
+    }
+
+    // Whether everything has come to rest. False while any dot is moving or
+    // still waiting out a delay.
+    get settled() {
+      return this._active.size === 0;
+    }
+
+    // Whether this particular dot is mid-flight (or waiting to start).
+    isAnimating(x, y) {
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return false;
+      return this._active.has(y * this.cols + x);
+    }
+
+    // Drops everything onto its target immediately, with no travel. For
+    // cutting an update short - a visitor who navigated away from what the
+    // board was mid-way through saying should not have to watch it finish.
+    settle() {
+      if (this.settled) return this;
+      this._stop();
+      this._settleAll();
+      this._announceSettle();
       return this;
     }
 
@@ -953,7 +1145,12 @@
         // would have a dot further along the order start *earlier* than
         // one behind it, and the wave visibly fold back on itself.
         const place = Math.max(0, Math.min(1, fn(x, y, ctx)));
-        this._request(i, targets[k], now + ease(place) * duration);
+        // `opts` doubles as the per-dot override bag - flipDuration, bounce,
+        // direction and silent mean the same here as they do on set(), and
+        // apply to every dot of this update. Note `duration` is the spread
+        // and `flipDuration` is one dot's own turn: the two are independent,
+        // which is what lets a slow wave be made of fast flips.
+        this._request(i, targets[k], now + ease(place) * duration, opts);
       }
       return this;
     }
@@ -1071,6 +1268,11 @@
     // ---- animation ---------------------------------------------------
 
     _start() {
+      // Nothing to animate means no loop - without this, anything that
+      // speculatively starts one (coming back on screen, say) would spin up
+      // a frame whose only act is to notice it has nothing to do and
+      // announce a settle that never un-settled.
+      if (this._active.size === 0) return;
       if (this._raf || !this._onScreen || this.reduced) return;
       this._lastNow = performance.now();
       this._raf = requestAnimationFrame(this._tick);
@@ -1105,20 +1307,17 @@
       this._lastNow = now;
       this._elapsed += dt;
 
-      const { stiffness, overshoot } = this.options;
-      // bounce 0 -> critically damped, 1 -> loose. Expressed as a damping
-      // ratio rather than a raw coefficient so the character of the flip
-      // survives a change of stiffness.
-      const zeta = 1 - Math.min(1, Math.max(0, this.options.bounce)) * 0.68;
+      const { overshoot } = this.options;
       const steps = Math.max(1, Math.ceil(dt / SUB_STEP));
       const h = dt / steps;
-      const clicks = [];
+      const flipped = [];
 
       this._active.forEach((i) => {
         if (this._delay[i] > this._elapsed) return;
 
-        const k = stiffness * this._wob[i];
-        const c = 2 * zeta * Math.sqrt(k);
+        // Resolved when this dot was asked to flip - see _request.
+        const k = this._k[i];
+        const c = this._c[i];
         const target = this._target[i];
         const faceBefore = mod(Math.round(this._turn[i]), 2);
         // Which side of the target the dot is approaching from decides
@@ -1145,8 +1344,8 @@
 
         const faceAfter = mod(Math.round(turn), 2);
         // Passing edge-on is both when the face swaps and when the disc
-        // meets its stop, so it is the honest moment for the click.
-        if (faceAfter !== faceBefore) clicks.push(i);
+        // meets its stop, so it is the honest moment to call a dot flipped.
+        if (faceAfter !== faceBefore) flipped.push(i);
 
         if (Math.abs(turn - target) < 0.0015 && Math.abs(vel) < 0.02) {
           this._settle(i);
@@ -1155,19 +1354,48 @@
         }
       });
 
-      if (this.options.sound && clicks.length) {
+      if (flipped.length) {
         const cols = this.cols;
-        clicks.forEach((i) => {
+        const onFlip = this.options.onFlip;
+        const sound = this.options.sound;
+        for (let f = 0; f < flipped.length; f++) {
+          const i = flipped[f];
           const x = i % cols;
-          this._clicker.click(cols > 1 ? (x / (cols - 1)) * 1.6 - 0.8 : 0);
-        });
+          if (sound && !this._silent[i]) {
+            this._clicker.click(cols > 1 ? (x / (cols - 1)) * 1.6 - 0.8 : 0);
+          }
+          // A per-dot callback rather than a DOM event: a board-wide wave is
+          // thousands of these in one frame, and dispatching thousands of
+          // events would cost more than the animation does. Off unless the
+          // host asks for it.
+          if (onFlip) onFlip(x, (i - x) / cols, this._state[i], this);
+        }
       }
 
       if (this._active.size === 0) {
         this._stop();
+        this._announceSettle();
         return;
       }
       this._raf = requestAnimationFrame(this._tick);
+    }
+
+    // Fired once each time the board goes from moving to still. This is the
+    // hook for chaining: the settle time of an update is `duration` plus a
+    // flip plus whatever ringing bounce adds plus per-dot jitter, which is
+    // not a sum a caller should be reconstructing with setTimeout.
+    //
+    // Guarded on something actually having moved since the last one, so it
+    // marks a transition rather than a state. A board that is already still
+    // can be asked to settle, or stopped and restarted, any number of times
+    // without a listener hearing about it.
+    _announceSettle() {
+      if (!this._movedSinceSettle) return;
+      this._movedSinceSettle = false;
+      this.el.dispatchEvent(new CustomEvent('flip-dots:settle', {
+        bubbles: true,
+        detail: { board: this },
+      }));
     }
 
     // ---- drawing -----------------------------------------------------
@@ -1483,6 +1711,9 @@
       this.options = { ...before, ...newOptions };
 
       if ('hinge' in newOptions) this._syncHinge();
+      if ('flipDuration' in newOptions || 'bounce' in newOptions || 'stiffness' in newOptions) {
+        this._syncSpring();
+      }
       if ('sound' in newOptions && newOptions.sound) this._clicker.arm();
       if (recolor) {
         this._shadeCache.clear();
