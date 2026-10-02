@@ -93,10 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ---- profiles ------------------------------------------------------
   const PROFILES = {
+    // Shuffle rather than a single named transition: the page arrives already
+    // showing that the transition is a plug-in point, and the auto cycle
+    // below picks a fresh one every beat instead of repeating one shape.
     default: {
       flipDuration: 125, bounce: 0.55, overshoot: 0.055, jitter: 0.18,
       shade: 0.45, perspective: 0.14, thickness: 0.09, hinge: 0, duration: 600,
-      transition: 'ripple', easing: 'even',
+      transition: 'shuffle', easing: 'even',
     },
     // A departure board. Everything here is in service of one impression:
     // a sign made of a few thousand separate mechanical parts that are not
@@ -128,11 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
       shade: 0.55, perspective: 0.2, thickness: 0.12, hinge: 0, duration: 900,
       transition: 'ripple', easing: 'smooth',
     },
-    // Loose and ringy, with a lot of spread between dots.
+    // Loose and ringy, with a lot of spread between dots. The only profile
+    // that moves the auto cycle: at a 2200ms spread plus the ringing this
+    // bounce adds, the default pace starts the next pattern while the last
+    // one is still crossing the board, and what should read as a slow wave
+    // reads as the board never holding still.
     loose: {
       flipDuration: 165, bounce: 0.95, overshoot: 0.14, jitter: 0.5,
       shade: 0.5, perspective: 0.26, thickness: 0.1, hinge: 0, duration: 2200,
-      transition: 'random', easing: 'accelerate',
+      transition: 'random', easing: 'accelerate', cycle: 3500,
     },
     // No shading, no lean, no edge — what the flip looks like as a pure
     // squash, which is the thing everything else above is there to avoid.
@@ -169,6 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const readout = document.getElementById('fdReadout');
+
+  // The pace the markup starts at, so a profile that doesn't name one can
+  // put the control back rather than leaving whatever the last profile set.
+  const DEFAULT_CYCLE_MS = Number(controls.cycle.value);
 
   function syncLabels() {
     document.getElementById('flipDurationVal').textContent = `${controls.flipDuration.value}ms`;
@@ -306,6 +317,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
     board.update(options);
+    // The auto cycle is the page's own timer rather than a board option, so
+    // it goes through its control the same way, and the timer is rebuilt
+    // around whatever that control now says.
+    controls.cycle.value = profile.cycle == null ? DEFAULT_CYCLE_MS : profile.cycle;
+    syncCycle();
     syncLabels();
   }
 
@@ -609,5 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncLabels();
   syncReadout();
   syncCycle();
-  apply('blobs', { transition: 'ripple' });
+  // No transition override: the opening reveal is the default profile's own
+  // transition, so what arrives on screen is what the panel says.
+  apply('blobs');
 });
