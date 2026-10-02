@@ -462,12 +462,22 @@
   margin-bottom: 100px;
 }
 
-/* A lab with no cards yet keeps the sweep's box - so the section reads
-   as a shelf waiting to be filled rather than a heading with nothing under
-   it - and swaps the cards for a centered note (see .sweep-empty,
-   injected by sweep.js). The guide lines are left out of the markup
-   entirely: sweep.js positions those off the first card's measured
-   height, which an empty track can't provide. */
+/* Same reservation for the same reason, and now the one that needs it
+   most: the Misc lab is the last thing on the page, so there is nothing
+   below it whose spacing would absorb a lifting card's overflow. Without
+   this the page's scrollable height grows and shrinks as the card lifts
+   and settles, toggling the scrollbar. */
+#miscCarousel {
+  margin-bottom: 100px;
+}
+
+/* Kept for the next lab that opens before it has a card, though no lab on
+   the page is in that state now: an empty one keeps the sweep's box - so
+   the section reads as a shelf waiting to be filled rather than a heading
+   with nothing under it - and swaps the cards for a centered note (see
+   .sweep-empty, injected by sweep.js). Such a lab also leaves the guide
+   lines out of its markup entirely, since sweep.js positions those off the
+   first card's measured height and an empty track can't provide one. */
 .sweep.is-empty {
   margin-bottom: 60px;
 }

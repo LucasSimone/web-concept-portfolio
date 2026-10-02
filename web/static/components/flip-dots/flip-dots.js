@@ -37,10 +37,17 @@
  *
  *   FlipDots.get('#board').setGrid(rows, { transition: 'ripple' });
  *
- * NOTE: this is the phase-one animation rig. The full content API (text,
- * images, frame sequences), the sprite-atlas draw path and the rest of the
- * transition set are still to come; what is here is everything the feel
- * depends on.
+ * Content arrives as one of four things, and they are all the same thing
+ * underneath - an `(x, y) => state` accessor handed to `setGrid`:
+ *
+ *   a grid     arrays, strings, or an accessor of your own
+ *   text       `text()`, over the 5x7 bitmap font below
+ *   an image   `FlipDots.imageGrid()`, over any <video>/<img>/canvas
+ *   a sequence `play()`, which is a frame source plus a clock
+ *
+ * The last two compose: a camera mirror is `play()` driving a function that
+ * returns `imageGrid(video, ...)`, and the component needs to know nothing
+ * about cameras for that to work.
  */
 (function (global) {
   const STYLE_ID = 'flip-dots-styles';
@@ -185,6 +192,21 @@
     // FlipDots.easings, or a function. See that registry for why this is
     // separate from the transition rather than baked into each one.
     easing: 'even',
+
+    // --- playback ---------------------------------------------------
+    // Frames per second for play(). Read live, so update({ fps }) retimes
+    // a sequence already running.
+    //
+    // There is a real ceiling above this and it is `flipDuration`: a disc
+    // cannot turn twice in the time it takes to turn once, so past about
+    // 1000/flipDuration the frames arrive while the dots are still mid-
+    // turn, and what you get is each dot chasing the latest value instead
+    // of the sequence being shown. That is not a failure - a camera at 30
+    // on a 130ms flip still reads as a camera - but it is the board
+    // smearing rather than playing, and it is why the default sits a long
+    // way under film rate. The honest frame rate of a flip-dot board is
+    // the frame rate of its discs.
+    fps: 12,
 
     // --- sound ------------------------------------------------------
     // Off by default - a component that starts making noise in someone
@@ -467,6 +489,480 @@
   }
 
   // ---------------------------------------------------------------------
+  // Images
+  //
+  // Anything drawable - a <video>, an <img>, a canvas, an ImageBitmap - as
+  // the same `(x, y) => state` accessor setGrid takes. The conversion is
+  // three steps, and only the third is interesting:
+  //
+  //   1. draw the source into a canvas the size of the GRID, so the
+  //      browser's own resampler does the averaging. One dot is one pixel
+  //      here; there is no separate sampling pass to get wrong.
+  //   2. read the luminance back.
+  //   3. decide which state each cell's gray lands on.
+  //
+  // Step three is the whole problem, because a board has no grays. A
+  // two-color board has two values and a photograph has two hundred, so
+  // the shades in between have to be traded for a pattern of dots whose
+  // density reads as the gray it replaced - dithering. Which dither is a
+  // different question here than it is in print: ink does not move, and
+  // every dot that changes on this board is a disc that physically turns.
+  // See DITHERS for what that costs.
+  //
+  // Returns null when the source has no pixels yet - a <video> that has not
+  // started, an <img> that has not loaded. Both setGrid and play() read
+  // null as "nothing to write", so a caller never has to check readyState.
+  // ---------------------------------------------------------------------
+
+  // The classic 4x4 ordered-dither threshold matrix, as the order its
+  // cells are turned on in. Recursive by construction, which is why it
+  // tiles without the seams a hand-drawn matrix would have.
+  const BAYER4 = [
+    0, 8, 2, 10,
+    12, 4, 14, 6,
+    3, 11, 1, 9,
+    15, 7, 13, 5,
+  ];
+
+  const DITHERS = {
+    // No dither: every cell to its nearest state. Crisp and posterized -
+    // right for a logo or a silhouette, and wrong for a face, which comes
+    // out as two blobs.
+    none: 'none',
+    // Ordered (Bayer). A fixed threshold per grid position, so the same
+    // gray always resolves to the same dots. On a board that matters more
+    // than it looks: a scene holding still produces an identical frame,
+    // and an identical frame flips nothing. This is the default for that
+    // reason rather than for how it looks.
+    ordered: 'ordered',
+    // Floyd-Steinberg error diffusion. Better gradients and much better
+    // edges, at the cost of being a function of the whole frame: a pixel
+    // changing in one corner shifts the error that reaches everywhere
+    // after it, so a still scene still shimmers and a board that could
+    // have held perfectly still flips a few hundred discs a second
+    // instead. Worth it for a single image; think twice for a sequence.
+    diffusion: 'diffusion',
+  };
+
+  // Scratch canvases for the conversions, resized as needed. At grid
+  // resolution these are a few thousand pixels, so `willReadFrequently` is
+  // the right trade - the readback happens every frame of a sequence, and
+  // keeping the surface on the CPU costs far less than stalling on a GPU
+  // fetch twenty times a second.
+  //
+  // Keyed rather than shared, because imageGrid and imagePalette want
+  // different sizes and alternating between them on one canvas would
+  // reallocate the backing store twice a frame.
+  const scratches = new Map();
+
+  function scratchCtx(w, h, key = 'grid') {
+    let canvas = scratches.get(key);
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      scratches.set(key, canvas);
+    }
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    return canvas.getContext('2d', { willReadFrequently: true });
+  }
+
+  function sourceSize(src) {
+    const w = src.videoWidth || src.naturalWidth || src.width || 0;
+    const h = src.videoHeight || src.naturalHeight || src.height || 0;
+    return [w, h];
+  }
+
+  // Draws `src` into a w*h context under `fit`, optionally mirrored.
+  // Returns false when the source has nothing to draw yet.
+  function drawFitted(ctx, src, w, h, fit, mirror) {
+    const [sw, sh] = sourceSize(src);
+    if (!sw || !sh) return false;
+
+    let dw = w;
+    let dh = h;
+    if (fit !== 'stretch') {
+      // cover fills the grid and loses the overhang; contain keeps the
+      // whole frame and leaves bands of state 0, which on a board reads as
+      // unlit panel rather than as letterboxing - honest either way, but
+      // cover is what a mirror wants.
+      const scale = fit === 'contain'
+        ? Math.min(w / sw, h / sh)
+        : Math.max(w / sw, h / sh);
+      dw = sw * scale;
+      dh = sh * scale;
+    }
+
+    ctx.save();
+    ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    // Mirrored by reflecting the canvas rather than by reading the pixels
+    // back to front: the flip is free here and the read loop stays a
+    // straight walk.
+    if (mirror) ctx.setTransform(-1, 0, 0, 1, w, 0);
+    ctx.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.restore();
+    return true;
+  }
+
+  // Fraction of the darkest and lightest cells autoLevels throws away
+  // before stretching. Without a tail, one blown highlight or one black
+  // doorway behind the subject sets the whole range and the stretch does
+  // nothing.
+  const AUTO_TAIL = 0.02;
+  // Below this the frame is close to flat - a capped lens, a wall - and
+  // stretching it would amplify sensor noise into a full-contrast image of
+  // nothing.
+  const AUTO_MIN_SPAN = 0.08;
+
+  function autoStretch(lum) {
+    const bins = new Uint32Array(64);
+    for (let i = 0; i < lum.length; i++) bins[Math.min(63, (lum[i] * 64) | 0)]++;
+
+    const drop = Math.floor(lum.length * AUTO_TAIL);
+    let lo = 0;
+    let hi = 63;
+    for (let acc = 0; lo < 63; lo++) {
+      acc += bins[lo];
+      if (acc > drop) break;
+    }
+    for (let acc = 0; hi > 0; hi--) {
+      acc += bins[hi];
+      if (acc > drop) break;
+    }
+
+    const base = lo / 64;
+    const span = (hi + 1) / 64 - base;
+    if (span < AUTO_MIN_SPAN) return;
+    for (let i = 0; i < lum.length; i++) {
+      lum[i] = Math.min(1, Math.max(0, (lum[i] - base) / span));
+    }
+  }
+
+  // Which entry of `pal` a color is closest to, by straight RGB distance.
+  // Not a perceptual metric: a proper one (CIEDE2000, or even Lab) would
+  // place the boundaries slightly better, and at the sizes a board works
+  // at - a handful of colors, a few thousand cells - the difference does
+  // not survive the dithering on top of it. Cheap and predictable wins.
+  function nearestColor(pal, r, g, b) {
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < pal.length; i++) {
+      const c = pal[i];
+      const dr = r - c[0];
+      const dg = g - c[1];
+      const db = b - c[2];
+      const d = dr * dr + dg * dg + db * db;
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  // Mean distance from each palette entry to its nearest neighbor - how far
+  // apart the available colors are. Ordered dithering needs this: the
+  // threshold it adds has to be scaled to the gap it is trying to dither
+  // across, or a tight palette gets shredded and a sparse one barely
+  // dithers at all.
+  function paletteSpread(pal) {
+    if (pal.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < pal.length; i++) {
+      let nearest = Infinity;
+      for (let j = 0; j < pal.length; j++) {
+        if (i === j) continue;
+        const a = pal[i];
+        const b = pal[j];
+        const d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+        if (d < nearest) nearest = d;
+      }
+      total += nearest;
+    }
+    return total / pal.length;
+  }
+
+  // The `match` path: every cell to the nearest of a given set of colors,
+  // rather than to a step on a brightness ramp. This is what makes a board
+  // show a picture in color instead of in shades - and it is a different
+  // job from the luminance path, not a variation on it, because "nearest"
+  // is now a question about three axes at once and brightness order has
+  // stopped meaning anything.
+  function matchGrid(px, cols, rows, pal, dither, invert, contrast, brightness) {
+    const n = cols * rows;
+    const out = new Uint8Array(n);
+    // A working copy in RGB, because diffusion writes error back into it.
+    const rgb = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const p = i * 4;
+      for (let c = 0; c < 3; c++) {
+        let v = px[p + c];
+        if (invert) v = 255 - v;
+        if (contrast !== 1 || brightness !== 0) {
+          v = (v - 128) * contrast + 128 + brightness * 255;
+        }
+        rgb[i * 3 + c] = v;
+      }
+    }
+
+    if (dither === 'diffusion') {
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const k = i * 3;
+          const got = nearestColor(pal, rgb[k], rgb[k + 1], rgb[k + 2]);
+          out[i] = got;
+          const chosen = pal[got];
+          for (let c = 0; c < 3; c++) {
+            const err = rgb[k + c] - chosen[c];
+            if (err === 0) continue;
+            if (x + 1 < cols) rgb[k + 3 + c] += err * 0.4375;
+            if (y + 1 < rows) {
+              const below = (i + cols) * 3 + c;
+              if (x > 0) rgb[below - 3] += err * 0.1875;
+              rgb[below] += err * 0.3125;
+              if (x + 1 < cols) rgb[below + 3] += err * 0.0625;
+            }
+          }
+        }
+      }
+      return out;
+    }
+
+    if (dither === 'none') {
+      for (let i = 0; i < n; i++) {
+        const k = i * 3;
+        out[i] = nearestColor(pal, rgb[k], rgb[k + 1], rgb[k + 2]);
+      }
+      return out;
+    }
+
+    // Ordered: nudge the cell along every axis by the same signed amount
+    // before matching, so cells falling between two palette colors land on
+    // one or the other in a fixed pattern. Half the spread is the useful
+    // amplitude - enough to cross a boundary for a color sitting midway,
+    // not so much that a cell sitting squarely on a palette color gets
+    // pushed off it.
+    const amplitude = paletteSpread(pal) * 0.5;
+    for (let y = 0; y < rows; y++) {
+      const brow = (y & 3) * 4;
+      for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        const k = i * 3;
+        const m = ((BAYER4[brow + (x & 3)] + 0.5) / 16 - 0.5) * amplitude;
+        out[i] = nearestColor(pal, rgb[k] + m, rgb[k + 1] + m, rgb[k + 2] + m);
+      }
+    }
+    return out;
+  }
+
+  function imageGrid(source, cols, rows, opts = {}) {
+    if (!source || !(cols > 0) || !(rows > 0)) return null;
+    const ctx = scratchCtx(cols, rows);
+    if (!ctx) return null;
+    if (!drawFitted(ctx, source, cols, rows, opts.fit || 'cover', !!opts.mirror)) {
+      return null;
+    }
+
+    const n = cols * rows;
+    const px = ctx.getImageData(0, 0, cols, rows).data;
+    const remap = Array.isArray(opts.states) ? opts.states : null;
+    const accessor = (out) => (x, y) => {
+      if (x < 0 || y < 0 || x >= cols || y >= rows) return null;
+      const level = out[y * cols + x];
+      return remap ? (remap[level] == null ? null : remap[level]) : level;
+    };
+
+    // Color matching takes over entirely when `match` is given: there is no
+    // brightness ramp left to apply levels or autoLevels to.
+    if (Array.isArray(opts.match) && opts.match.length >= 2) {
+      return accessor(matchGrid(
+        px, cols, rows,
+        opts.match.map((c) => parseColor(typeof c === 'string' ? c : (c && c.fill) || '#000')),
+        DITHERS[opts.dither] || DITHERS.ordered,
+        !!opts.invert,
+        opts.contrast == null ? 1 : opts.contrast,
+        opts.brightness == null ? 0 : opts.brightness,
+      ));
+    }
+
+    const lum = new Float32Array(n);
+    // Rec. 709 luminance - green weighted far above blue because that is
+    // how brightness is actually perceived, and a plain channel average
+    // turns a blue shirt into a light gray one.
+    for (let i = 0; i < n; i++) {
+      const p = i * 4;
+      lum[i] = (px[p] * 0.2126 + px[p + 1] * 0.7152 + px[p + 2] * 0.0722) / 255;
+    }
+
+    if (opts.autoLevels) autoStretch(lum);
+
+    const contrast = opts.contrast == null ? 1 : opts.contrast;
+    const brightness = opts.brightness == null ? 0 : opts.brightness;
+    if (contrast !== 1 || brightness !== 0) {
+      // Contrast pivots on mid gray so it opens and closes the range
+      // rather than also darkening it.
+      for (let i = 0; i < n; i++) {
+        const v = (lum[i] - 0.5) * contrast + 0.5 + brightness;
+        lum[i] = v < 0 ? 0 : (v > 1 ? 1 : v);
+      }
+    }
+    if (opts.invert) for (let i = 0; i < n; i++) lum[i] = 1 - lum[i];
+
+    const levels = Math.max(2, Math.round(opts.levels == null ? 2 : opts.levels));
+    const top = levels - 1;
+    const out = new Uint8Array(n);
+    const dither = DITHERS[opts.dither] || DITHERS.ordered;
+
+    if (dither === 'diffusion') {
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          const want = lum[i] * top;
+          const got = Math.max(0, Math.min(top, Math.round(want)));
+          out[i] = got;
+          // The error is carried in luminance units, not state units, so
+          // it means the same thing at two levels as at sixteen.
+          const err = (want - got) / top;
+          if (err !== 0) {
+            if (x + 1 < cols) lum[i + 1] += err * 0.4375;
+            if (y + 1 < rows) {
+              if (x > 0) lum[i + cols - 1] += err * 0.1875;
+              lum[i + cols] += err * 0.3125;
+              if (x + 1 < cols) lum[i + cols + 1] += err * 0.0625;
+            }
+          }
+        }
+      }
+    } else if (dither === 'none') {
+      for (let i = 0; i < n; i++) {
+        out[i] = Math.max(0, Math.min(top, Math.round(lum[i] * top)));
+      }
+    } else {
+      for (let y = 0; y < rows; y++) {
+        const brow = (y & 3) * 4;
+        for (let x = 0; x < cols; x++) {
+          const i = y * cols + x;
+          // The matrix cell as a threshold inside one state's worth of
+          // gray: a cell sitting a third of the way between two states
+          // turns on in the third of the pattern whose threshold it clears.
+          const m = (BAYER4[brow + (x & 3)] + 0.5) / 16;
+          out[i] = Math.max(0, Math.min(top, Math.floor(lum[i] * top + m)));
+        }
+      }
+    }
+
+    return accessor(out);
+  }
+
+  // How many iterations the clustering below gets. Six is past where the
+  // centers stop visibly moving on photographic input, and the cost is
+  // linear in it.
+  const KMEANS_ITERATIONS = 6;
+
+  // The colors actually in an image, as a palette to hand straight to
+  // `palette` - and then to `imageGrid`'s `match`, which is the pair that
+  // makes a board show a picture in its own colors rather than in shades
+  // of someone else's.
+  //
+  // k-means over a downsampled frame. The one thing worth knowing is the
+  // initialization, because on a sequence it matters more than the
+  // algorithm: seeded from the previous palette when one is passed, and
+  // otherwise from evenly spaced points along the frame's own brightness
+  // order. Never from random points. Random seeding converges somewhere
+  // just as good, but somewhere *different* each call - and a palette that
+  // jumps between two equally good answers every second is a board that
+  // changes color for no reason the viewer can see.
+  function imagePalette(source, count = 4, opts = {}) {
+    const k = Math.max(2, Math.min(16, Math.round(count)));
+    const w = Math.max(8, Math.round(opts.sample || 48));
+    const h = Math.max(6, Math.round(w * 0.75));
+    const ctx = scratchCtx(w, h, 'palette');
+    if (!ctx || !source) return null;
+    if (!drawFitted(ctx, source, w, h, opts.fit || 'cover', !!opts.mirror)) return null;
+
+    const px = ctx.getImageData(0, 0, w, h).data;
+    const n = w * h;
+    const luma = (i) => px[i * 4] * 0.2126 + px[i * 4 + 1] * 0.7152 + px[i * 4 + 2] * 0.0722;
+
+    const centers = [];
+    const seed = Array.isArray(opts.seed) && opts.seed.length === k ? opts.seed : null;
+    if (seed) {
+      seed.forEach((c) => centers.push(parseColor(typeof c === 'string' ? c : (c && c.fill) || '#000')));
+    } else {
+      const order = Array.from({ length: n }, (_, i) => i).sort((a, b) => luma(a) - luma(b));
+      for (let c = 0; c < k; c++) {
+        const i = order[Math.min(n - 1, Math.floor(((c + 0.5) / k) * n))];
+        centers.push([px[i * 4], px[i * 4 + 1], px[i * 4 + 2]]);
+      }
+    }
+
+    const sums = new Float64Array(k * 3);
+    const counts = new Uint32Array(k);
+    for (let iter = 0; iter < KMEANS_ITERATIONS; iter++) {
+      sums.fill(0);
+      counts.fill(0);
+      for (let i = 0; i < n; i++) {
+        const p = i * 4;
+        const c = nearestColor(centers, px[p], px[p + 1], px[p + 2]);
+        sums[c * 3] += px[p];
+        sums[c * 3 + 1] += px[p + 1];
+        sums[c * 3 + 2] += px[p + 2];
+        counts[c]++;
+      }
+      for (let c = 0; c < k; c++) {
+        // An empty cluster keeps where it was rather than being re-seeded
+        // somewhere new: a color nothing in this frame is near is usually
+        // a color something in the next frame will be, and moving it would
+        // be the same jump that random seeding causes.
+        if (!counts[c]) continue;
+        centers[c] = [
+          sums[c * 3] / counts[c],
+          sums[c * 3 + 1] / counts[c],
+          sums[c * 3 + 2] / counts[c],
+        ];
+      }
+    }
+
+    const hex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+    const toHex = (c) => `#${hex(c[0])}${hex(c[1])}${hex(c[2])}`;
+
+    // Order is not cosmetic here, and this is the subtle half of keeping a
+    // sequence stable.
+    //
+    // A palette index IS a dot's state. Reorder the palette and every dot
+    // on the board is silently reassigned to a different color without one
+    // of them being asked to flip - and worse, the NEXT frame then matches
+    // those cells to the new arrangement and flips them all at once. Two
+    // clusters of nearly equal brightness - a mid brown and a mid teal, say
+    // - will trade places under a luminance sort on nothing more than
+    // sensor noise, so sorting every call makes a board that is holding
+    // perfectly still flicker once a second for no reason the scene gave
+    // it. Seeding the clustering does not help: it preserves which cluster
+    // is which, and then the sort throws that away again.
+    //
+    // So the sort happens only when there is no previous answer to stay
+    // consistent with. A seeded call hands back its clusters in the seed's
+    // own order, which is the order the first unseeded call sorted them
+    // into - approximately dark to light, and more importantly the same
+    // order as last time.
+    if (seed) return centers.map(toHex);
+
+    // Dark to light, so a first result is a drop-in `palette`: every other
+    // part of this component reads a palette as a brightness ramp, and a
+    // host that switches `match` back off should get something sane rather
+    // than a scrambled one.
+    return centers
+      .slice()
+      .sort((a, b) => (a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722)
+        - (b[0] * 0.2126 + b[1] * 0.7152 + b[2] * 0.0722))
+      .map(toHex);
+  }
+
+  // ---------------------------------------------------------------------
   // Color
   // ---------------------------------------------------------------------
   function parseColor(input) {
@@ -746,12 +1242,15 @@
       this._shadeCache = new Map();
       this._edge = null;
       this._movedSinceSettle = false;
+      // The running sequence, or null. See the playback section below.
+      this._playback = null;
 
       this._clicker = createClicker(() => (this.options.sound ? this.options.volume : 0));
       this._armSound = this._armSound.bind(this);
       if (this.options.sound) this._listenForGesture();
 
       this._tick = this._tick.bind(this);
+      this._playTick = this._playTick.bind(this);
       this._resize = this._resize.bind(this);
       this._onReducedChange = this._onReducedChange.bind(this);
       if (this._reducedQuery && this._reducedQuery.addEventListener) {
@@ -777,6 +1276,10 @@
           this._stop();
           this._settleAll();
         }
+        // A sequence is held across the same boundary, and for a stronger
+        // reason than the render loop: a board playing a camera off screen
+        // is a camera being read for nobody.
+        this._syncPlayClock();
       }, { rootMargin: '150px' });
       this._intersectionObserver.observe(this.el);
 
@@ -1174,9 +1677,17 @@
     // pattern written to a 40x24 board changes 25 dots and nothing else.
     _normalize(data, charMap) {
       if (typeof data === 'function') return data;
-      if (!Array.isArray(data) || data.length === 0) return null;
+      // A typed array is the flat row-major form. Worth accepting
+      // alongside a plain array because it is what `snapshot()` hands
+      // back - so a saved frame goes straight back on the board - and
+      // because a clip of frames wants to be one byte per dot rather than
+      // one boxed number. DataView is the one view that isn't indexable,
+      // and BYTES_PER_ELEMENT is what tells it apart.
+      const typed = ArrayBuffer.isView(data) && !!data.BYTES_PER_ELEMENT;
+      if (!typed && !Array.isArray(data)) return null;
+      if (data.length === 0) return null;
 
-      if (typeof data[0] === 'string') {
+      if (!typed && typeof data[0] === 'string') {
         const map = charMap || null;
         return (x, y) => {
           const row = data[y];
@@ -1191,7 +1702,7 @@
         };
       }
 
-      if (Array.isArray(data[0])) {
+      if (!typed && Array.isArray(data[0])) {
         return (x, y) => {
           const row = data[y];
           if (!row || x >= row.length) return null;
@@ -1276,6 +1787,194 @@
       const y = Math.floor((clientY - rect.top - this._originY) / this._pitch);
       if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return null;
       return [x, y];
+    }
+
+    // ---- playback ----------------------------------------------------
+    //
+    // A board showing a sequence rather than a state. There are exactly two
+    // halves to this - a source of frames and a clock - and keeping them
+    // apart is why one method covers both a canned clip and a live feed.
+    //
+    //   an array     one entry per frame, each anything setGrid takes.
+    //                A clip: known length, loops by default.
+    //   a function   (frame, board) => content. Open-ended, and the
+    //                interesting one: a camera, a simulation, a game of
+    //                life, a progress bar reading a real number. Return
+    //                null and the board holds what it is already showing,
+    //                so a source with nothing new to say costs nothing.
+    //
+    // Frames are dropped, never queued. A board is a physical display with
+    // a real refresh limit - one half turn per dot per `flipDuration` - and
+    // a queue would let a source that outruns it push the board further and
+    // further behind the thing it is supposed to be mirroring. Falling
+    // behind by a frame is a dropped frame; falling behind by a hundred is
+    // a different display entirely.
+    //
+    // What playback is NOT is a mode. Nothing here locks the board: set(),
+    // setGrid() and text() all still write, and the next frame simply
+    // writes over them. A board can be played and poked at the same time.
+    //
+    // One thing this deliberately does NOT do is stop for
+    // prefers-reduced-motion, and it is the one place in the component
+    // where the setting is the host's call rather than ours. Everywhere
+    // else "reduce motion" has an unambiguous answer - the dot arrives
+    // without the flip - but a sequence has no still to fall back to that
+    // the component could pick. A board autoplaying a decorative loop
+    // should not run at all; a board a visitor started to look at their own
+    // camera plainly should. The component cannot tell those apart, so it
+    // reads `reduced` for the flip and leaves the clock to the caller. Both
+    // sides of that choice are on this site: see home.js for the loop that
+    // opts out, and mirror/mirror.js for the one that doesn't.
+    play(source, opts = {}) {
+      const list = Array.isArray(source) ? source : null;
+      if (!list && typeof source !== 'function') return this;
+      if (list && list.length === 0) return this;
+
+      // A second play() replaces the first rather than layering on it -
+      // two clocks writing the same board is never what was meant.
+      this._stopPlayClock();
+      const start = Math.max(0, Math.round(opts.start || 0));
+      this._playback = {
+        list,
+        fn: list ? null : source,
+        // null means "whatever the board's fps option says", so
+        // update({ fps }) retimes a running sequence. A figure passed here
+        // is this sequence's own and ignores the option.
+        fps: opts.fps == null ? null : Number(opts.fps),
+        loop: opts.loop !== false,
+        onFrame: typeof opts.onFrame === 'function' ? opts.onFrame : null,
+        index: list ? start % list.length : start,
+        paused: false,
+        next: 0,
+        raf: null,
+        // Playback defaults to no choreography, where the rest of the
+        // component defaults to a ripple. A transition is a wave crossing
+        // the board; running one inside every frame of a sequence is the
+        // choreography fighting the content, and at any real frame rate
+        // there isn't time for it anyway. Overridable because a slow clip
+        // of a few frames is exactly where it earns its place.
+        //
+        // The whole bag is carried through rather than the setGrid keys
+        // picked out of it, so `fps`, `loop`, `start` and `onFrame` ride
+        // along into every write. They mean nothing to setGrid or _request
+        // today, which is what makes this safe - and is also the reason a
+        // future per-dot option must not be given one of those four names.
+        opts: { transition: 'instant', ...opts },
+      };
+      this._syncPlayClock();
+      return this;
+    }
+
+    // Whether the clock is running. False while paused, while the board is
+    // off screen, and when there is no sequence loaded at all.
+    get playing() {
+      return !!(this._playback && this._playback.raf);
+    }
+
+    // Which frame goes up next, or -1 with nothing loaded. For an array
+    // source this counts past the end and wraps on read, so it is a frame
+    // count as much as an index.
+    get frame() {
+      return this._playback ? this._playback.index : -1;
+    }
+
+    // Holds the sequence where it is. The board keeps whatever frame is on
+    // it - pausing a sequence is not clearing it.
+    pause() {
+      if (!this._playback) return this;
+      this._playback.paused = true;
+      this._stopPlayClock();
+      return this;
+    }
+
+    resume() {
+      if (!this._playback) return this;
+      this._playback.paused = false;
+      this._syncPlayClock();
+      return this;
+    }
+
+    // Ends playback and forgets the sequence. The board is left showing the
+    // last frame, which is almost always what is wanted - clear() after
+    // this if not.
+    stop() {
+      this._stopPlayClock();
+      this._playback = null;
+      return this;
+    }
+
+    // Jumps to a frame. Takes effect on the next beat of the clock rather
+    // than drawing immediately, so seeking a running sequence does not
+    // double up with the frame already due.
+    seek(index) {
+      if (!this._playback) return this;
+      const at = Math.max(0, Math.round(index));
+      const list = this._playback.list;
+      this._playback.index = list ? at % list.length : at;
+      return this;
+    }
+
+    // The clock runs only while there is a sequence, the host has not
+    // paused it, and the board is on screen - the same gating the render
+    // loop uses, for the same reason.
+    _syncPlayClock() {
+      const pb = this._playback;
+      if (!pb || pb.paused || !this._onScreen) {
+        this._stopPlayClock();
+        return;
+      }
+      if (pb.raf) return;
+      // Due now, so starting or resuming puts a frame up immediately
+      // instead of showing the old one for one more interval.
+      pb.next = performance.now();
+      pb.raf = requestAnimationFrame(this._playTick);
+    }
+
+    _stopPlayClock() {
+      const pb = this._playback;
+      if (!pb || !pb.raf) return;
+      cancelAnimationFrame(pb.raf);
+      pb.raf = null;
+    }
+
+    _playTick(now) {
+      const pb = this._playback;
+      if (!pb || !pb.raf) return;
+      pb.raf = requestAnimationFrame(this._playTick);
+      if (now < pb.next) return;
+
+      // Clamped at both ends: a rate of zero would make the deadline
+      // meaningless, and anything past the display's own refresh is a
+      // number the clock cannot honor whatever the board could.
+      const fps = pb.fps == null ? this.options.fps : pb.fps;
+      const interval = 1000 / Math.max(0.1, Math.min(120, Number(fps) || 1));
+      // Scheduled off the deadline rather than off `now`, so the sequence
+      // keeps real time instead of losing the slack in every frame - but
+      // never pushed further back than the present, which is what makes a
+      // stall cost one dropped frame instead of a burst replaying the
+      // backlog at full speed.
+      pb.next = Math.max(now, pb.next + interval);
+      this._playFrame();
+    }
+
+    _playFrame() {
+      const pb = this._playback;
+      const at = pb.index;
+      const content = pb.list ? pb.list[at % pb.list.length] : pb.fn(at, this);
+      pb.index = at + 1;
+      // null is "nothing new", not "an empty board" - see play().
+      if (content != null) this.setGrid(content, pb.opts);
+      if (pb.onFrame) pb.onFrame(at, this);
+
+      // Only a list can run out; a function source is open-ended by nature
+      // and ends when the host stops it.
+      if (pb.list && !pb.loop && pb.index >= pb.list.length) {
+        this.stop();
+        this.el.dispatchEvent(new CustomEvent('flip-dots:end', {
+          bubbles: true,
+          detail: { board: this },
+        }));
+      }
     }
 
     // ---- animation ---------------------------------------------------
@@ -1744,6 +2443,7 @@
 
     destroy() {
       this._stop();
+      this.stop();
       this._resizeObserver.disconnect();
       this._intersectionObserver.disconnect();
       if (this._reducedQuery && this._reducedQuery.removeEventListener) {
@@ -1760,6 +2460,8 @@
   FlipDots.easings = easings;
   FlipDots.font = font;
   FlipDots.textGrid = textGrid;
+  FlipDots.imageGrid = imageGrid;
+  FlipDots.imagePalette = imagePalette;
   FlipDots.defaults = DEFAULTS;
 
   FlipDots.initAll = function initAll(selector = '.flip-dots', options = {}) {

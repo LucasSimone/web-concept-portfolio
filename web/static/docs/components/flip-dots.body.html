@@ -15,8 +15,10 @@
         other in a single flip.
       </p>
       <p>
-        Write single dots, whole grids, patterns or text. Who flips when is
-        a separate question from how a dot moves, and both are open: a
+        Write single dots, whole grids, patterns, text, images, or a
+        sequence of frames - and they are all one thing underneath, an
+        <code>(x, y) =&gt; state</code> accessor. Who flips when is a
+        separate question from how a dot moves, and both are open: a
         registry of transitions decides the order, a registry of easings
         decides the pace, and either takes a function of your own.
       </p>
@@ -413,6 +415,231 @@ board.setGrid((x, y) =&gt; (top(x, y) || bottom(x, y) ? 1 : 0));</code></pre>
       </div>
 
       <div class="recipe">
+        <h3>Images</h3>
+        <p>
+          <code>FlipDots.imageGrid()</code> turns anything drawable - a
+          <code>&lt;video&gt;</code>, an <code>&lt;img&gt;</code>, a canvas,
+          an <code>ImageBitmap</code> - into the same
+          <code>(x, y) =&gt; state</code> accessor a hand-written pattern
+          would be. It is <code>textGrid()</code>'s counterpart: it
+          converts, it doesn't commit, so the result goes through
+          <code>setGrid</code> like any other content and takes a
+          transition like any other update.
+        </p>
+        <pre><code>board.setGrid(FlipDots.imageGrid(img, board.cols, board.rows, {
+  levels: board.options.palette.length,
+}), { transition: 'ripple' });</code></pre>
+        <p>
+          The source is drawn into a canvas the size of the
+          <em>grid</em>, so one dot is one pixel and the browser's own
+          resampler does the averaging - there is no separate sampling pass
+          to get wrong. Pass the live <code>cols</code>/<code>rows</code>
+          rather than a remembered pair: the grid is measured against the
+          element's box, so it changes with the window.
+        </p>
+        <p>
+          It returns <code>null</code> when the source has no pixels yet -
+          a <code>&lt;video&gt;</code> that hasn't started, an
+          <code>&lt;img&gt;</code> that hasn't loaded. Both
+          <code>setGrid</code> and <code>play</code> read <code>null</code>
+          as "nothing to write", so there is no <code>readyState</code>
+          check to remember.
+        </p>
+        <table class="opts-table">
+          <thead>
+            <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>levels</code></td><td><code>2</code></td><td>How many states to spread brightness over. Pass <code>palette.length</code>; level 0 is the darkest</td></tr>
+            <tr><td><code>match</code></td><td><code>null</code></td><td>An array of colors to send each cell to the nearest of, instead of to a step on a brightness ramp. Takes over from <code>levels</code> and <code>autoLevels</code> entirely - see below</td></tr>
+            <tr><td><code>dither</code></td><td><code>'ordered'</code></td><td><code>'ordered'</code>, <code>'diffusion'</code> or <code>'none'</code> - see below</td></tr>
+            <tr><td><code>fit</code></td><td><code>'cover'</code></td><td><code>'cover'</code> fills the grid and crops the overhang, <code>'contain'</code> keeps the whole frame and leaves bands of state 0, <code>'stretch'</code> distorts</td></tr>
+            <tr><td><code>mirror</code></td><td><code>false</code></td><td>Flip horizontally. What a camera pointed at its own viewer needs</td></tr>
+            <tr><td><code>invert</code></td><td><code>false</code></td><td>Dark for light - for a palette where the lit state is the background</td></tr>
+            <tr><td><code>autoLevels</code></td><td><code>false</code></td><td>Stretch each frame's own range to fill the palette, discarding the darkest and lightest 2%. What makes a camera in an unknown room readable; the cost is that a bright object entering the shot re-levels everything else</td></tr>
+            <tr><td><code>brightness</code> / <code>contrast</code></td><td><code>0</code> / <code>1</code></td><td>Fixed adjustment instead - contrast pivots on mid gray, so it opens the range rather than also darkening it. The stable choice when the lighting is known</td></tr>
+            <tr><td><code>states</code></td><td><code>null</code></td><td>Array mapping brightness level onto state, for a palette that doesn't run dark to light. An entry of <code>null</code> leaves those dots alone, which is how a mask is written</td></tr>
+          </tbody>
+        </table>
+        <p>
+          <strong>Which dither, and why it is a different question here.</strong>
+          A two-color board has no grays, so the shades in between have to
+          be traded for a pattern of dots whose density reads as the gray
+          it replaced. <code>'diffusion'</code> (Floyd-Steinberg) does that
+          better by every measure print cares about - until you remember
+          that here, every dot that changes is a disc that physically
+          turns. Diffusion carries each cell's error into its neighbors, so
+          one pixel moving in the corner of a frame shifts the answer
+          everywhere after it, and a scene holding perfectly still still
+          costs hundreds of flips a second. <code>'ordered'</code> (Bayer)
+          thresholds each cell against a fixed grid position, so the same
+          gray always resolves to the same dots: a still scene produces an
+          identical frame, and an identical frame flips nothing. That is
+          why it is the default, and it is a property of the display rather
+          than a judgement about how it looks. <code>'none'</code> is
+          nearest-state - crisp and posterized, right for a logo or a
+          silhouette, and wrong for a face.
+        </p>
+        <p>
+          <strong>Color, matched to the image.</strong> Everything above
+          treats an image as brightness, which is the right model for a
+          board whose palette someone chose in advance. The other way round
+          is <code>FlipDots.imagePalette()</code>: cluster the image down to
+          the colors actually in it, make those the board's palette, and
+          then <code>match</code> sends every cell to the nearest of them.
+          A disc stops being light or dark and becomes the color of whatever
+          is in front of the lens.
+        </p>
+        <pre><code>const palette = FlipDots.imagePalette(video, 6, { seed: board.options.palette });
+board.update({ palette });
+
+board.setGrid(FlipDots.imageGrid(video, board.cols, board.rows, {
+  match: palette,
+}));</code></pre>
+        <p>
+          A first result is sorted dark to light, so it drops straight into
+          <code>palette</code> and still behaves if you switch
+          <code>match</code> back off.
+        </p>
+        <p>
+          On a sequence, re-cluster every second or so rather than every
+          frame, and always pass the previous answer as <code>seed</code>.
+          Seeding is not an optimization - it is what keeps the board from
+          flickering, and the reason is worth following, because nothing
+          about it is visible in the API.
+        </p>
+        <p>
+          A palette index <em>is</em> a dot's state. So re-ordering the
+          palette reassigns every dot on the board at once, without one of
+          them being asked to flip - and then the next frame matches those
+          cells against the new arrangement and flips all of them together.
+          Two clusters whose brightness happens to cross will trade places
+          under a luminance sort, which is a board-wide flicker triggered by
+          a scene doing nothing more than getting slightly lighter. So
+          <code>imagePalette</code> sorts only when it has no previous
+          answer to stay consistent with: a seeded call hands its clusters
+          back in the seed's order, keeping cluster six meaning cluster six
+          however the brightnesses move.
+        </p>
+        <p>
+          Worth adding a deadband on top, on the caller's side: if no color
+          has moved more than a few units, keep the palette you have rather
+          than adopting the new one. Sensor noise walks a cluster center
+          around by a unit or two between frames even in a still room, and
+          an identical palette is what makes an identical frame - which, as
+          with the dither above, is what flips nothing at all.
+        </p>
+        <p>
+          <code>match</code> takes <code>dither</code> like the brightness
+          path does - ordered perturbs each cell along all three axes by the
+          same amount before matching, diffusion carries the error per
+          channel - and the ordered default stays the default for exactly
+          the same reason. What it does not take is <code>levels</code> or
+          <code>autoLevels</code>: there is no ramp left to divide or to
+          stretch.
+        </p>
+      </div>
+
+      <div class="recipe">
+        <h3>Playback</h3>
+        <p>
+          <code>play()</code> is a frame source plus a clock. The source is
+          either an array - one entry per frame, each anything
+          <code>setGrid</code> takes - or a function the board asks for
+          content on every beat, which is the live case.
+        </p>
+        <pre><code>// A clip: known length, loops by default
+board.play(frames, { fps: 12 });
+
+// A live source, asked for a frame at a time
+board.play((frame) =&gt; nextGridFrom(sensor), { fps: 8 });
+
+board.pause();   // holds the clock, leaves the frame on the board
+board.resume();
+board.stop();    // ends it, leaving the last frame up</code></pre>
+        <p>
+          Returning <code>null</code> from a function source holds the
+          board on whatever it is already showing, so a source with nothing
+          new to say costs nothing - and a live source is open-ended by
+          nature, so only an array can run out. When one does and
+          <code>loop</code> is false, the board fires
+          <code>flip-dots:end</code>.
+        </p>
+        <p>
+          Playback defaults to <code>transition: 'instant'</code> where the
+          rest of the component defaults to a ripple. A transition is a
+          wave crossing the board; running one inside every frame of a
+          sequence is the choreography fighting the content, and at any
+          real frame rate there isn't time for it anyway. It is still an
+          override, because a slow clip of a few frames is exactly where it
+          earns its place.
+        </p>
+        <p>
+          Frames are dropped, never queued. A board is a physical display
+          with a real refresh limit - one half turn per disc per
+          <code>flipDuration</code> - and a queue would only let a source
+          that outruns it push the board further and further behind the
+          thing it is meant to be showing. Falling behind by a frame is a
+          dropped frame; falling behind by a hundred is a different display
+          entirely. For the same reason the clock holds while the board is
+          scrolled out of view, and <code>playing</code> reads false then:
+          use your own flag rather than that getter if what you need is
+          what the visitor asked for.
+        </p>
+        <p>
+          There is a ceiling above <code>fps</code> and it is
+          <code>flipDuration</code>: a disc cannot turn twice in the time
+          it takes to turn once. Past about
+          <code>1000 / flipDuration</code> the frames arrive while the dots
+          are still mid-turn and each one chases the latest value instead
+          of the sequence being shown - which is not a failure, since a dot
+          handed a new state mid-flight keeps its momentum and re-aims, and
+          fast motion smearing is what a real panel does too. It is just
+          the board smearing rather than playing, and worth knowing which
+          one you asked for.
+        </p>
+        <p>
+          Nothing about playback is a mode. <code>set()</code>,
+          <code>setGrid()</code> and <code>text()</code> all still write
+          while a sequence runs; the next frame simply writes over them.
+        </p>
+        <p>
+          <strong>Reduced motion is yours to decide here</strong>, and it is
+          the one place in the component where that is true. Everywhere else
+          <code>prefers-reduced-motion</code> has an unambiguous answer and
+          the component just applies it: the dot arrives without the flip.
+          A sequence has no still to fall back to that the component could
+          pick for you - a decorative loop autoplaying on a card should not
+          run at all, while a board someone started to watch their own
+          camera plainly should. So <code>play()</code> keeps its clock
+          either way, and a host that is animating something nobody asked
+          for should check the query and write one frame instead.
+        </p>
+<pre><code>if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  board.setGrid(frames[0]);
+} else {
+  board.play(frames, { fps: 12 });
+}</code></pre>
+        <p>
+          Composed with <code>imageGrid()</code> above, a camera mirror is
+          the whole of it - and the component needs to know nothing about
+          cameras:
+        </p>
+        <pre><code>board.play(() =&gt; FlipDots.imageGrid(video, board.cols, board.rows, {
+  levels: board.options.palette.length,
+  mirror: true,
+  autoLevels: true,
+}), { fps: 20 });</code></pre>
+        <p>
+          That is a page of its own:
+          <a href="/components/flip-dots/mirror/index.html">the camera mirror</a>,
+          which is the snippet above plus the parts that are actually about
+          cameras - asking for the device, saying what happened when the
+          answer is no, and releasing it again.
+        </p>
+      </div>
+
+      <div class="recipe">
         <h3>The hinge</h3>
         <p>
           <code>hinge</code> is the angle of the axle each disc turns on,
@@ -503,6 +730,7 @@ board.el.addEventListener('pointerleave', () =&gt; board.update({ volume: 0 }));
           <tr><td><code>transition</code></td><td><code>'ripple'</code></td><td>Default for <code>setGrid</code>: a name from <code>FlipDots.transitions</code>, or a function</td></tr>
           <tr><td><code>duration</code></td><td><code>600</code></td><td>Milliseconds from the first dot starting to the last one starting</td></tr>
           <tr><td><code>easing</code></td><td><code>'even'</code></td><td>How the clock runs while a transition plays: a name from <code>FlipDots.easings</code>, or a function</td></tr>
+          <tr><td><code>fps</code></td><td><code>12</code></td><td>Frame rate for <code>play()</code>, read live - so <code>update({ fps })</code> retimes a sequence already running. The real ceiling is <code>flipDuration</code>; see the playback recipe</td></tr>
           <tr><td><code>sound</code></td><td><code>false</code></td><td>A synthesized click as each disc meets its stop. Switching it on is also what arms the audio for the page's next pointer or key event</td></tr>
           <tr><td><code>volume</code></td><td><code>0.5</code></td><td>0 to 1, read at the moment each click sounds - so <code>volume: 0</code> is a live mute rather than a reason not to turn <code>sound</code> on</td></tr>
           <tr><td><code>onFlip</code></td><td><code>null</code></td><td><code>(x, y, state, board)</code> as each dot passes edge-on and shows its new face. Off by default - a board-wide wave is thousands of calls in one frame</td></tr>
@@ -528,12 +756,19 @@ board.el.addEventListener('pointerleave', () =&gt; board.update({ volume: 0 }));
           <tr><td><code>rect(x, y, w, h, state, opts)</code></td><td>A rectangular block</td></tr>
           <tr><td><code>row(y, states, opts)</code> / <code>col(x, states, opts)</code></td><td>One line of the grid</td></tr>
           <tr><td><code>randomize(opts)</code></td><td>Every dot to a random state</td></tr>
-          <tr><td><code>snapshot()</code></td><td>A copy of what's on the board as a flat row-major <code>Uint8Array</code>. Handy for saving a frame or diffing in a test - but note <code>setGrid</code>'s array forms are plain arrays, so putting one back takes <code>Array.from()</code></td></tr>
+          <tr><td><code>snapshot()</code></td><td>A copy of what's on the board as a flat row-major <code>Uint8Array</code>. Handy for saving a frame or diffing in a test, and <code>setGrid</code> takes one straight back - a typed array is read as the flat row-major form</td></tr>
+          <tr><td><code>play(source, opts)</code></td><td>Plays a sequence. <code>source</code> is an array of frames or a function <code>(frame, board) =&gt; content | null</code>. <code>opts</code> takes <code>fps</code>, <code>loop</code>, <code>start</code>, <code>onFrame</code>, plus anything <code>setGrid</code> takes - <code>transition</code> defaults to <code>'instant'</code> here. A second call replaces the first</td></tr>
+          <tr><td><code>pause()</code> / <code>resume()</code></td><td>Holds the clock and lets it go again. The frame on the board stays up either way</td></tr>
+          <tr><td><code>stop()</code></td><td>Ends playback and forgets the sequence, leaving the last frame showing</td></tr>
+          <tr><td><code>seek(index)</code></td><td>Jumps to a frame, taking effect on the next beat rather than drawing immediately</td></tr>
+          <tr><td><code>playing</code></td><td>Whether the clock is running - false while paused, <em>and</em> while the board is off screen</td></tr>
+          <tr><td><code>frame</code></td><td>Which frame goes up next, or -1 with nothing loaded. It counts past the end of an array and wraps on read, so it is a frame count as much as an index</td></tr>
           <tr><td><code>dotAt(clientX, clientY)</code></td><td><code>[x, y]</code> of the dot under a client-space point, or <code>null</code> if it missed - including the slack around a centered grid, which is background rather than a dot</td></tr>
           <tr><td><code>update(options)</code></td><td>New option values. Grid changes re-measure and resample; color changes just repaint</td></tr>
           <tr><td><code>enableSound()</code></td><td>Start audio now, for a gesture that has already happened</td></tr>
           <tr><td><code>destroy()</code></td><td>Tears down observers, audio and the canvas</td></tr>
           <tr><td><code>flip-dots:settle</code></td><td>DOM event on the root, once each time the board goes from moving to still</td></tr>
+          <tr><td><code>flip-dots:end</code></td><td>DOM event on the root when a non-looping array source reaches its last frame. A function source never ends on its own</td></tr>
           <tr><td><code>cols</code> / <code>rows</code> / <code>length</code></td><td>The grid actually settled on - read these rather than echoing what you asked for</td></tr>
           <tr><td><code>dotPx</code> / <code>pitchPx</code></td><td>Effective dot diameter and cell pitch, in px</td></tr>
           <tr><td><code>el</code></td><td>The host element - what <code>flip-dots:settle</code> is dispatched on, and what the canvas was inserted into</td></tr>
@@ -543,6 +778,8 @@ board.el.addEventListener('pointerleave', () =&gt; board.update({ volume: 0 }));
           <tr><td><code>FlipDots.get(elOrSelector)</code></td><td>The instance on an element or the first match of a selector, or <code>null</code>. What page code should use rather than calling <code>initAll</code> again, which would find nothing left to claim</td></tr>
           <tr><td><code>FlipDots.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code></td></tr>
           <tr><td><code>FlipDots.textGrid(str, cols, rows, opts)</code></td><td>A line of text as a bare <code>(x, y) =&gt; state</code> accessor, taking the same <code>x</code>, <code>y</code>, <code>on</code>, <code>off</code>, <code>spacing</code> as <code>text()</code>. Composable, where <code>text()</code> commits the whole board</td></tr>
+          <tr><td><code>FlipDots.imageGrid(source, cols, rows, opts)</code></td><td>Anything drawable as a bare <code>(x, y) =&gt; state</code> accessor, or <code>null</code> if it has no pixels yet. See the Images recipe for its options</td></tr>
+          <tr><td><code>FlipDots.imagePalette(source, count, opts)</code></td><td>The colors actually in an image, clustered to <code>count</code> of them - a palette to hand to <code>update()</code> and to <code>imageGrid</code>'s <code>match</code>. <code>opts</code> takes <code>seed</code>, <code>sample</code>, <code>fit</code> and <code>mirror</code>. Sorted dark to light <em>unless</em> seeded, in which case it keeps the seed's order - which on a sequence is the difference between a live board and a flickering one</td></tr>
           <tr><td><code>FlipDots.font</code></td><td><code>{ width, height, glyphs }</code> for the 5&#215;7 bitmap - measure capacity off <code>width</code> rather than writing a character count down</td></tr>
           <tr><td><code>FlipDots.transitions</code> / <code>FlipDots.easings</code></td><td>The two registries, each a plain object of named functions plus a <code>register(name, fn)</code> - so a built-in can be read, wrapped or replaced, not just added to</td></tr>
           <tr><td><code>FlipDots.defaults</code></td><td>The defaults table above, live. Each instance copies it at construction, so editing it changes what later instances start from and leaves existing ones alone</td></tr>

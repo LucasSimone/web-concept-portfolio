@@ -1,15 +1,16 @@
 /**
  * Flip Dots — demo page
  * ----------------------
- * Drives the five boards on the page. Every control in the panel maps onto
- * one real option, so the panel doubles as the options reference: there is
+ * Drives the boards on the page. Every control in the panel maps onto one
+ * real option, so the panel doubles as the options reference: there is
  * nothing here a host could not pass to initAll.
  *
  * The content patterns are deliberately dumb — a checkerboard and some
  * banded noise are enough to watch a transition cross a board, and they are
- * staging for the component rather than part of it. The clock further down
- * is the one that earns its place: it is the only example driven by
- * something other than a timer picking shapes.
+ * staging for the component rather than part of it. The two further down are
+ * the ones that earn their place: the clock is driven by something other
+ * than a timer picking shapes, and the clip is a sequence rather than a
+ * state. The live half of playback is its own page — see mirror/.
  */
 document.addEventListener('DOMContentLoaded', () => {
   // flip-dots.js's own auto-init already claimed the board by the time this
@@ -578,6 +579,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tick();
     syncClock();
+  }
+
+  // ---- playback: a clip ------------------------------------------------
+  // The array form of play(): one entry per frame, each a flat row-major
+  // byte per dot — the same shape snapshot() hands back. A bouncing ball
+  // rather than another field of noise, because playback is the one thing
+  // on this page that needs something with identity moving through it; a
+  // pattern changing every beat would be indistinguishable from the auto
+  // cycle at the top.
+  //
+  // The live form — a function the board asks for a frame — is on the
+  // camera mirror linked under this board.
+  const film = FlipDots.get('#fdFilm');
+  if (film) {
+    film.update({
+      ...PALETTES.mono, dotSize: 11, gap: 0.2, flipDuration: 115, bounce: 0.5, jitter: 0.2,
+    });
+
+    const FILM_FRAMES = 56;
+    const FILM_FPS = 14;
+    const BOUNCES = 3;
+
+    // Frames are sized to the grid, and the grid is measured against the
+    // element's box — so this is a function of the board rather than a
+    // constant, and a resize means a new clip (see below).
+    function buildFilm() {
+      const cols = film.cols;
+      const rows = film.rows;
+      const ground = rows - 1;
+      const r = Math.max(1.4, rows * 0.13);
+      const ceiling = Math.max(0, rows - 2 - r * 2);
+
+      return Array.from({ length: FILM_FRAMES }, (_, f) => {
+        const t = f / FILM_FRAMES;
+        // On at one edge and off the other, so the loop has no seam where
+        // the ball teleports back.
+        const cx = t * (cols + r * 4) - r * 2;
+        const height = Math.abs(Math.sin(Math.PI * t * BOUNCES));
+        // Squashed at the contacts and stretched in the air — the same
+        // trade every disc on this page is making, which is most of why a
+        // ball made of discs reads as one object rather than as a cluster.
+        const squash = 1 - 0.4 * Math.max(0, 1 - height * 5);
+        const rx = r / squash;
+        const ry = r * squash;
+        const cy = ground - 1 - ry - height * ceiling;
+
+        const frame = new Uint8Array(cols * rows);
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const dx = (x - cx) / rx;
+            const dy = (y - cy) / ry;
+            if (y === ground || dx * dx + dy * dy <= 1) frame[y * cols + x] = 1;
+          }
+        }
+        return frame;
+      });
+    }
+
+    const filmReadout = document.getElementById('fdFilmReadout');
+    function syncFilm() {
+      filmReadout.textContent = `${FILM_FRAMES} frames at ${FILM_FPS}fps · `
+        + `${film.cols} × ${film.rows}`;
+    }
+
+    let filmPaused = false;
+    film.play(buildFilm(), { fps: FILM_FPS });
+
+    const filmToggle = document.getElementById('fdFilmToggle');
+    filmToggle.addEventListener('click', () => {
+      filmPaused = !filmPaused;
+      filmToggle.textContent = filmPaused ? 'Resume' : 'Pause';
+      filmToggle.setAttribute('aria-pressed', String(!filmPaused));
+      if (filmPaused) film.pause();
+      else film.resume();
+    });
+
+    // A resize re-measures the grid, which the precomputed frames are
+    // sized against — so they have to be rebuilt. Resumed at the frame it
+    // was on rather than from the start: nobody dragging a window edge
+    // asked for the ball to jump back to the left. Debounced because a
+    // drag is hundreds of these and each one rebuilds the whole clip.
+    let filmRebuild = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(filmRebuild);
+      filmRebuild = setTimeout(() => {
+        film.play(buildFilm(), { fps: FILM_FPS, start: film.frame });
+        // play() starts running by definition, so an explicitly paused
+        // board has to be put back.
+        if (filmPaused) film.pause();
+        syncFilm();
+      }, 160);
+    });
+
+    syncFilm();
   }
 
   // ---- the board as a surface -----------------------------------------

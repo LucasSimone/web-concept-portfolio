@@ -1,0 +1,235 @@
+/* Staging for the Flip Dots mirror. The component ships its own CSS inside
+   flip-dots.js; the only thing a host has to supply is the box the board
+   measures itself against, which is .mi-stage below.
+
+   This page is deliberately self-contained rather than borrowing the demo
+   page's stylesheet next door: that one is laid out around a 300px controls
+   panel this page doesn't have, and the handful of shared type rules are
+   cheaper to repeat than to untangle. */
+
+.mi-intro {
+  padding: 8vh 10vw 0;
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.mi-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+/* Set apart from the body copy with a rule rather than a tint: it is the
+   one paragraph on the page a visitor is entitled to find before they
+   decide whether to hand over a camera. */
+.mi-privacy {
+  max-width: 46rem;
+  margin: 20px 0 0;
+  padding-left: 14px;
+  border-left: 2px solid #000;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mi-status {
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  opacity: 0.6;
+  min-height: 1.2em;
+}
+
+.mi-status[data-state="error"] {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.mi-stage-wrap {
+  padding: 4vh 10vw 10vh;
+}
+
+/* Full width of the section, so the board's right edge lines up with the
+   controls sitting under it rather than stopping short of them. That means
+   no max-width, which in turn means the height has to be governed: at this
+   width a 4:3 board is taller than most viewports and would push its own
+   controls off the bottom of the screen. 3:2 is the compromise - wider than
+   the 4:3 a webcam hands over, so a 'cover' fit trims a little top and
+   bottom, and short enough to sit on screen with its controls. The
+   max-height is the backstop on a very wide window. */
+.mi-stage {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  min-height: 300px;
+  max-height: calc(100vh - 190px);
+  border: 1px solid #000;
+}
+
+/* Fullscreen hands the element the whole screen, but the rules above are
+   still the ones styling it — so the box it measures its grid against would
+   stay 3:2 and capped 190px short of the screen unless both are lifted
+   here. The max-height is the one that has to go: it exists to leave room
+   for the controls under the board, and in fullscreen there are no controls
+   to leave room for.
+
+   Separate blocks rather than a selector list: an unrecognized
+   pseudo-element invalidates the whole selector, so pairing the prefixed
+   and unprefixed spellings in one rule means browsers that know only one of
+   them apply neither. */
+.mi-stage:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+}
+
+.mi-stage:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+}
+
+/* Kept in the document and rendered, just not visibly: a <video> removed
+   from the page or set to display:none is not guaranteed to keep decoding
+   frames, and a frame that never decodes is a board that never updates. */
+.mi-source {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mi-notes h2 {
+  margin: 0 0 4px;
+  font-size: clamp(24px, 3.5vw, 36px);
+  letter-spacing: -0.02em;
+}
+
+.mi-notes h3 {
+  margin: 44px 0 0;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.mi-notes pre {
+  max-width: 46rem;
+  margin: 20px 0 0;
+  padding: 16px 18px;
+  overflow-x: auto;
+  border: 1px solid #000;
+  background: #f6f5f2;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mi-notes code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+}
+
+.fd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.fd-btn {
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+}
+
+/* Anchors share the button treatment, which a browser gives neither the
+   inline-block nor the undecorated text of on its own. */
+a.fd-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.fd-btn:hover {
+  background: #000;
+  color: #fff;
+}
+
+.fd-btn[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.fd-btn[disabled]:hover {
+  background: #fff;
+  color: #000;
+}
+
+.fd-btn--primary {
+  min-width: 9rem;
+  background: #000;
+  color: #fff;
+}
+
+.fd-btn--primary:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* Pushed to the far end of the row: it leaves the page rather than driving
+   the board, and the gap is what says so. */
+.fd-btn--end {
+  margin-left: auto;
+}
+
+.fd-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.fd-field select {
+  font: inherit;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 6px 8px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+}
+
+.fd-readout {
+  margin: 14px 0 0;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}

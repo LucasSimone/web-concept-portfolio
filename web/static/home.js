@@ -12,6 +12,15 @@
  * and runs immediately, before DOMContentLoaded — same guarantee an
  * inline script had.
  */
+
+// Whether the OS has "reduce motion" set - shared by the Mirror card's
+// playback below, the Liftoff wiring after it and the Transition Lab loop
+// at the end, all of which skip their own motion entirely in that case
+// rather than just tuning it down. Declared up here rather than beside the
+// first of them because the card previews come before the hover wiring and
+// a const is not readable above its own declaration.
+const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
 function setupFilter(filterId, gridId, onChange) {
   const filter = document.getElementById(filterId);
   const cards = Array.from(document.querySelectorAll(`#${gridId} .variation-card[data-type]`));
@@ -498,6 +507,248 @@ if (flipDotsPreview) {
   flipDotsHover = { el: flipDotsPreview.el, enter, leave };
 }
 
+// --- Misc Lab: the Mirror card ---------------------------------------
+// The mirror page plays the camera by handing play() a function that
+// answers with FlipDots.imageGrid(video, ...). This card is that same
+// pipeline with the video swapped for a figure drawn on a canvas - which
+// is the honest way to preview it, because a homepage has no business
+// asking anyone for a camera, and because the point being made is about
+// the component rather than about the device.
+//
+// Finer dots than the Flip Dots card next door, and for a reason: that one
+// shows words and shapes, which want big legible discs, while this one
+// shows continuous tone, which needs enough cells to dither across before
+// a face stops being a face. Three states rather than two for the same
+// reason - a mid gray is most of what makes the shading read at this size.
+// Set below if the card is on the page, and read by HOVER_EFFECTS - the
+// same arrangement flipDotsHover uses just above.
+let mirrorHover = null;
+
+// Note the palette runs LIGHT to dark, which is backwards from the order
+// imageGrid maps brightness onto (level 0 is its darkest state) and from
+// every other palette in this component. It is deliberate and it is the
+// one thing about this card worth knowing: the card is white paper sitting
+// on a white page, so the state a mostly-empty board should be in is the
+// page's own white, and the darkest state is the ink. The scene below is
+// drawn to suit - a near-black wall, a lit figure - so the wall lands on
+// level 0 and comes out as blank card. Reordering the palette rather than
+// inverting the scene is what keeps the top index meaning "the state that
+// reads as marked", which is what nameGrid asks for with
+// `palette.length - 1` and what every text write on this site assumes.
+const [mirrorPreview] = FlipDots.initAll('#mirrorPreview', {
+  dotSize: 6,
+  gap: 0.24,
+  background: '#ffffff',
+  palette: ['#ededed', '#a8acb3', '#15171b'],
+  flipDuration: 105,
+  bounce: 0.5,
+  jitter: 0.3,
+});
+
+if (mirrorPreview) {
+  // Drawn well above dot resolution and left to imageGrid to average down:
+  // the gradients are the whole point, and a shape drawn at grid size would
+  // have nothing between its light and dark to dither with.
+  const SCENE_W = 192;
+  const SCENE_H = 144;
+  const MIRROR_FPS = 12;
+
+  const scene = document.createElement('canvas');
+  scene.width = SCENE_W;
+  scene.height = SCENE_H;
+  const sceneCtx = scene.getContext('2d');
+
+  // A head and shoulders in front of a lit wall. Everything here is a
+  // gradient rather than a flat fill, because flat fills are exactly what
+  // a two- or three-state board cannot show anything interesting about -
+  // the dithering needs tone to work on.
+  function drawFigure(t) {
+    const bob = Math.sin(t * 1.9) * SCENE_H * 0.016;
+    const sway = Math.sin(t * 0.85) * SCENE_W * 0.045;
+    const tilt = Math.sin(t * 0.55) * 0.14;
+
+    // The wall stays well down the range so it lands on state 0 and the
+    // card reads as mostly empty panel. A lit backdrop would dither into a
+    // field of half-on dots and bury the figure in texture.
+    sceneCtx.fillStyle = '#0b0e12';
+    sceneCtx.fillRect(0, 0, SCENE_W, SCENE_H);
+
+    const cx = SCENE_W / 2 + sway;
+    // Cropped close. A webcam sits an arm's length away, and at forty dots
+    // across, a figure that leaves room around itself leaves a head six
+    // dots wide - which is not enough cells for a face to survive being
+    // reduced to three states.
+    const headR = SCENE_H * 0.27;
+    const headY = SCENE_H * 0.38 + bob;
+
+    // Shoulders: one ellipse running off the bottom of the frame, so the
+    // figure is cut off the way a webcam cuts it off rather than floating.
+    const body = sceneCtx.createLinearGradient(0, headY + headR * 0.6, 0, SCENE_H);
+    body.addColorStop(0, '#e8ecf1');
+    body.addColorStop(1, '#6d747e');
+    sceneCtx.fillStyle = body;
+    sceneCtx.beginPath();
+    sceneCtx.ellipse(cx, SCENE_H * 1.06 + bob, SCENE_W * 0.47, SCENE_H * 0.46, tilt * 0.4, 0, Math.PI * 2);
+    sceneCtx.fill();
+
+    sceneCtx.fillStyle = '#c8ced7';
+    sceneCtx.beginPath();
+    sceneCtx.ellipse(cx, headY + headR * 1.0, headR * 0.42, headR * 0.6, tilt, 0, Math.PI * 2);
+    sceneCtx.fill();
+
+    // Lit from the upper left, which is what gives the dither a ramp to
+    // run down the far cheek instead of a flat shape with a hard edge.
+    const skin = sceneCtx.createRadialGradient(
+      cx - headR * 0.4, headY - headR * 0.45, headR * 0.12,
+      cx, headY, headR * 1.25,
+    );
+    skin.addColorStop(0, '#ffffff');
+    skin.addColorStop(0.55, '#dfe4ea');
+    skin.addColorStop(1, '#79808b');
+    sceneCtx.fillStyle = skin;
+    sceneCtx.beginPath();
+    sceneCtx.ellipse(cx, headY, headR * 0.82, headR, tilt, 0, Math.PI * 2);
+    sceneCtx.fill();
+
+    // Eyes and the line of a mouth, as shadows. The board shows the lit
+    // half of the scene, so these come out as gaps in the head rather than
+    // as marks on it - which is exactly how a face reads on a real sign.
+    sceneCtx.fillStyle = '#10141a';
+    const eyeY = headY - headR * 0.12;
+    [-1, 1].forEach((side) => {
+      sceneCtx.beginPath();
+      sceneCtx.ellipse(
+        cx + side * headR * 0.36 + tilt * headR * 0.7, eyeY,
+        headR * 0.15, headR * 0.12, 0, 0, Math.PI * 2,
+      );
+      sceneCtx.fill();
+    });
+    sceneCtx.beginPath();
+    sceneCtx.ellipse(
+      cx + tilt * headR * 0.7, headY + headR * 0.45,
+      headR * 0.26, headR * 0.07, tilt, 0, Math.PI * 2,
+    );
+    sceneCtx.fill();
+  }
+
+  function nameGrid(board) {
+    return FlipDots.textGrid('MIRROR', board.cols, board.rows, {
+      on: board.options.palette.length - 1,
+    });
+  }
+
+  // The loop: figure, then the name, then back. Phrased as one frame
+  // source rather than two timers, because that is what play() is for -
+  // the clock is already running and the only question each beat is what
+  // to put up.
+  const CYCLE = 108;
+  const NAME_AT = 84;
+  // Both ends of the loop get choreography, and deliberately not the same
+  // kind. The word arrives on a wipe, which is a sign changing; the person
+  // comes back on a dissolve, which is an image resolving. They are the two
+  // things this card is claiming the component can be.
+  const REVEAL_MS = 480;
+  // Frames to hold while that dissolve plays out, so the next live frame
+  // doesn't overwrite the choreography a beat after it started. The spread
+  // is `REVEAL_MS`, and the last disc still needs its own flip on top, so
+  // this rounds up and adds one.
+  const REVEAL_HOLD = Math.ceil((REVEAL_MS / 1000) * MIRROR_FPS) + 1;
+
+  // Advanced only on frames that actually draw, so the figure does not keep
+  // walking through its bob and sway while the name is up or a transition
+  // is playing. Hidden motion would read as a jump when it came back.
+  let figureFrame = 0;
+  let holding = 0;
+
+  function figureGrid() {
+    drawFigure(figureFrame / MIRROR_FPS);
+    figureFrame++;
+    return FlipDots.imageGrid(scene, mirrorPreview.cols, mirrorPreview.rows, {
+      levels: mirrorPreview.options.palette.length,
+      dither: 'ordered',
+      mirror: true,
+      // Opened up rather than left as drawn: three states across a card
+      // this size is a coarse ladder, and a scene that uses the middle of
+      // the range lands most of itself on the middle rung. Pushing the
+      // ends apart is what keeps the head solid and the wall empty.
+      contrast: 1.3,
+    });
+  }
+
+  // Writes the figure straight to the board so it can arrive choreographed,
+  // and tells the loop to sit still while it does. Returning a frame from
+  // the source instead would land on playback's own `transition: 'instant'`
+  // and the picture would simply cut in.
+  function revealFigure() {
+    mirrorPreview.setGrid(figureGrid(), { transition: 'dissolve', duration: REVEAL_MS });
+    holding = REVEAL_HOLD;
+  }
+
+  // One frame and no clock under reduced motion, which this card has to
+  // decide for itself. The component suppresses the flip - every dot
+  // settles onto its target with no travel - but a sequence is motion of a
+  // second kind, and a board cutting to a new picture twelve times a second
+  // is exactly the thing the setting asks a page not to do. A still of the
+  // figure says what the card is for without any of it.
+  if (prefersReducedMotion) {
+    mirrorPreview.setGrid(figureGrid());
+  } else {
+    mirrorPreview.play((i) => {
+      // Mid-transition: hold whatever was written rather than stepping on it.
+      if (holding > 0) {
+        holding--;
+        return null;
+      }
+      const phase = i % CYCLE;
+      if (phase === NAME_AT) {
+        // Written straight to the board rather than returned, for the same
+        // reason as revealFigure above. Playback is not a mode: setGrid still
+        // works while a sequence runs, and returning null holds what it wrote.
+        mirrorPreview.setGrid(nameGrid(mirrorPreview), {
+          transition: 'wipe', duration: 520,
+        });
+        return null;
+      }
+      if (phase > NAME_AT) return null;
+      // The first frame after the name has been held: the person resolving
+      // back out of the word.
+      if (phase === 0) {
+        revealFigure();
+        return null;
+      }
+      return figureGrid();
+    }, { fps: MIRROR_FPS });
+  }
+
+  // --- hover ------------------------------------------------------------
+  // Hovering holds the card on its own name, the same way the Flip Dots
+  // card next door does. pause() is the whole mechanism: it stops the clock
+  // and leaves whatever is up, so writing the name over the held frame is
+  // all that is left to do - and resuming puts the figure back on the next
+  // beat with nothing to restore.
+  //
+  // Driven from HOVER_EFFECTS at the end of this file rather than from the
+  // board's own pointer events, for the same reason Liftoff is: the sweep
+  // slides cards out from under a stationary pointer, and native
+  // enter/leave on a moving target fires in orders no effect wants.
+  mirrorHover = {
+    el: mirrorPreview.el,
+    enter() {
+      mirrorPreview.pause();
+      mirrorPreview.setGrid(nameGrid(mirrorPreview), {
+        transition: 'wipe', duration: 420,
+      });
+    },
+    leave() {
+      // The same dissolve the loop uses, because this is the same moment:
+      // the word going back to the person. Started before resume() so the
+      // first live frame is already inside the hold and cannot cut over it.
+      revealFigure();
+      mirrorPreview.resume();
+    },
+  };
+}
+
 // --- Carousel Lab card previews --------------------------------------
 // Every other lab's cards show the effect they link to actually running,
 // and these four now do the same with their own mechanism: a real Sweep,
@@ -599,11 +850,6 @@ Dial.initAll('.cp-disc', {
   clickToSelect: false,
   wheelEnabled: false,
 });
-
-// Whether the OS has "reduce motion" set - shared by the Liftoff wiring
-// below and the Transition Lab loop further down, both of which skip their
-// own motion entirely in that case rather than just tuning it down.
-const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 // Liftoff: initialized on every .liftoff-card element, across every lab
 // (see style.css for why each card needs its own inner wrapper rather
@@ -711,10 +957,17 @@ if (!prefersReducedMotion) {
     flipDotsHover[method]();
   }
 
+  // The Mirror card holding on its name while hovered - same arrangement
+  // and same reasoning as the one above it.
+  function mirrorOn(card, method) {
+    if (!mirrorHover || card !== mirrorHover.el) return;
+    mirrorHover[method]();
+  }
+
   // Every homepage hover/focus-reactive effect a card can carry, so adding
   // one only means adding it here instead of hunting down every hover/focus
   // call site below.
-  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn];
+  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn, mirrorOn];
   function hoverPopOn(card, method) {
     HOVER_EFFECTS.forEach((effectOn) => effectOn(card, method));
   }
@@ -724,7 +977,7 @@ if (!prefersReducedMotion) {
   // Liftoff (and, where present, Spotlight) instance via .get() -
   // Transition Lab's transitionGrid gets one too, entirely independent of
   // that grid's own cover/reveal hover delegate further down.
-  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid', 'carouselLabGrid', 'componentsGrid'].forEach((gridId) => {
+  ['variationGrid', 'backgroundGrid', 'transitionGrid', 'conceptGrid', 'carouselLabGrid', 'componentsGrid', 'miscGrid'].forEach((gridId) => {
     const grid = document.getElementById(gridId);
     if (!grid) return;
     bindHoverDelegate(grid, '.liftoff-card', (el, prevEl) => {

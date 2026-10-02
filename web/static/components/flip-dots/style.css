@@ -119,6 +119,15 @@ main {
   opacity: 0.55;
 }
 
+/* The clip board. Shallow and wide, so the ball has somewhere to travel and
+   the grid stays coarse enough that one dot of it is visible as one dot. */
+.fd-film {
+  width: 100%;
+  aspect-ratio: 16 / 5;
+  min-height: 150px;
+  border: 1px solid #000;
+}
+
 .fd-clock {
   width: 100%;
   aspect-ratio: 54 / 15;
@@ -179,6 +188,14 @@ main {
   background: #fff;
   color: #000;
   cursor: pointer;
+}
+
+/* Anchors share the button treatment, which a browser gives neither the
+   inline-block nor the undecorated text of on its own. */
+a.fd-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .fd-btn:hover {

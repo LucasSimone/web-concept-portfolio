@@ -102,6 +102,28 @@
       </div>
     </section>
 
+    <section class="fd-stage-wrap">
+      <p class="eyebrow">Playback</p>
+      <h2>A sequence, not a state</h2>
+      <p class="intro">
+        <code>play()</code> is a frame source plus a clock. The source is
+        either an array of frames &#8212; a clip, like the one below &#8212;
+        or a function the board asks for content every beat, which is the
+        live case. Frames are dropped rather than queued: a board is a
+        physical display with a real refresh limit of one half turn per disc,
+        and a queue would only let a fast source push it further and further
+        behind the thing it is meant to be showing.
+      </p>
+
+      <div class="flip-dots fd-film" id="fdFilm"></div>
+
+      <div class="fd-actions">
+        <button type="button" class="fd-btn fd-btn--primary" id="fdFilmToggle" aria-pressed="true">Pause</button>
+        <span class="fd-bar__note" id="fdFilmReadout"></span>
+        <a class="fd-btn fd-btn--end" href="/components/flip-dots/mirror/index.html">Camera mirror &#8594;</a>
+      </div>
+    </section>
+
     <section class="fd-bg-demo flip-dots" id="fdBackdrop">
       <div class="fd-bg-demo__inner">
         <p class="eyebrow">As a surface</p>

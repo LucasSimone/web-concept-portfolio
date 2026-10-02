@@ -347,17 +347,25 @@
     </p>
   </section>
 
-  <!-- Empty labs: the sweep shell and its guide lines are left out until
-       there's a card to put in them (sweep.js sizes both off the first
-       card's measured box, and there's nothing to measure yet). Adding the
-       first card here means restoring the same
-       .sweep > .sweep-line + .sweep-track markup the labs above
-       use and dropping .sweep-empty - sweep.js's own auto-init picks
-       it up from there with no explicit wiring needed in home.js, unless
-       it wants custom options. -->
-  <div class="sweep is-empty" id="miscCarousel">
-    <div class="sweep-track" id="miscGrid"></div>
-    <p class="sweep-empty">Nothing here yet</p>
+  <div class="sweep" id="miscCarousel">
+  <div class="sweep-line" data-sweep-line="top"></div>
+  <div class="sweep-line" data-sweep-line="bottom"></div>
+  <div class="sweep-track" id="miscGrid">
+    <!-- Same arrangement as the Flip Dots card above: the card IS a live
+         board, and its own labels are hidden (.fd-card) because the board
+         writes the name itself. What this one plays is the mirror page's
+         pipeline exactly - play() driving FlipDots.imageGrid over a
+         drawable - with a figure drawn on a canvas standing in for the
+         camera, so the card shows what the page does without a card on a
+         homepage ever asking anyone for a camera. See home.js. -->
+    <a class="variation-card sweep-card liftoff-host fd-card" href="/components/flip-dots/mirror/index.html" data-type="camera">
+      <div class="liftoff-card flip-dots" id="mirrorPreview">
+        <div class="type">Camera</div>
+        <div class="title-wrap"><h2>Mirror</h2></div>
+        <div class="go">View →</div>
+      </div>
+    </a>
+  </div>
   </div>
 
   <script src="/text-effects/double-speak/double-speak.js"></script>

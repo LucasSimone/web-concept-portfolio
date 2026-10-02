@@ -1,0 +1,153 @@
+
+  <main>
+    <section class="mi-intro">
+      <p class="eyebrow">Flip Dots &#183; Playback</p>
+      <h1>Mirror</h1>
+      <p class="intro">
+        The same component as the demo next door, playing your camera. Every
+        frame the board asks a function for content, the function hands back
+        the camera&#8217;s current frame as a grid of states, and a few
+        thousand discs turn to meet it. Nothing here knows what a camera is
+        &#8212; the board plays a sequence, and the sequence happens to be
+        live.
+      </p>
+      <p class="mi-privacy">
+        The video never leaves this page. There is no upload, no recording
+        and no server in this: the frame is drawn into a canvas, averaged
+        down to the size of the grid, and thrown away. Stopping the camera
+        releases it.
+      </p>
+
+      <div class="fd-actions">
+        <button type="button" class="fd-btn fd-btn--primary" id="miToggle">Start camera</button>
+        <button type="button" class="fd-btn" id="miFreeze" aria-pressed="false" disabled>Freeze</button>
+        <a class="fd-btn fd-btn--end" href="/components/flip-dots/index.html">&#8592; Flip Dots demo</a>
+      </div>
+      <p class="mi-status" id="miStatus">Camera off.</p>
+    </section>
+
+    <section class="mi-stage-wrap">
+      <div class="flip-dots mi-stage" id="miBoard"></div>
+
+      <div class="fd-actions">
+        <label class="fd-field">
+          <span>Dots</span>
+          <select id="miRes">
+            <option value="coarse">Coarse</option>
+            <option value="medium" selected>Medium</option>
+            <option value="fine">Fine</option>
+            <option value="detail">Detail</option>
+          </select>
+        </label>
+        <label class="fd-field">
+          <span>Palette</span>
+          <select id="miPalette">
+            <option value="grays" selected>Four grays</option>
+            <option value="mono">Mono</option>
+            <option value="amber">Amber</option>
+            <option value="paper">Paper</option>
+            <option value="live">Live color</option>
+          </select>
+        </label>
+        <label class="fd-field">
+          <span>Dither</span>
+          <select id="miDither">
+            <option value="ordered" selected>Ordered</option>
+            <option value="diffusion">Diffusion</option>
+            <option value="none">None</option>
+          </select>
+        </label>
+        <button type="button" class="fd-btn fd-btn--end" id="miSound" aria-pressed="false">Sound off</button>
+        <button type="button" class="fd-btn" id="miFullscreen">Fullscreen</button>
+      </div>
+
+      <p class="fd-readout" id="miReadout"></p>
+    </section>
+
+    <section class="mi-stage-wrap mi-notes">
+      <p class="eyebrow">How it is wired</p>
+      <h2>Six lines, and none of them are about cameras</h2>
+      <p class="intro">
+        <code>play()</code> takes either an array of frames or a function to
+        ask for one. <code>imageGrid()</code> turns anything drawable
+        &#8212; a <code>&lt;video&gt;</code>, an <code>&lt;img&gt;</code>, a
+        canvas &#8212; into the same <code>(x, y) =&gt; state</code>
+        accessor a hand-written pattern would be. Putting one inside the
+        other is the whole of this page.
+      </p>
+      <pre><code>const board = FlipDots.get('#board');
+
+board.play(() =&gt; FlipDots.imageGrid(video, board.cols, board.rows, {
+  levels: board.options.palette.length,
+  mirror: true,
+  autoLevels: true,
+  dither: 'ordered',
+}), { fps: 20 });</code></pre>
+      <p class="intro">
+        The grid is measured off the element&#8217;s own box, so the camera
+        is resampled to whatever the board turned out to be rather than the
+        other way round &#8212; change the dot size above and the next frame
+        arrives at the new resolution with nothing to rewire.
+      </p>
+
+      <h3>Why ordered dither, by default, on a board</h3>
+      <p class="intro">
+        A two-color board has no grays, so the shades in between have to be
+        traded for a pattern of dots whose density reads as the gray it
+        replaced. Diffusion dithering does that better by every measure
+        print cares about &#8212; until you remember that here, every dot
+        that changes is a disc that physically turns. Diffusion carries each
+        cell&#8217;s error into its neighbors, so one pixel moving in the
+        corner of the frame shifts the answer everywhere after it, and a
+        scene holding perfectly still still costs hundreds of flips a
+        second. Ordered dither thresholds each cell against a fixed
+        position, so a still scene produces an identical frame, and an
+        identical frame flips nothing. Switch between them above and listen
+        to how much more work the board is doing.
+      </p>
+
+      <h3>Live color &#8212; a palette lifted from the room</h3>
+      <p class="intro">
+        Every other palette here is a decision made in advance. Set it to
+        <em>Live color</em> and the board stops working in shades of
+        someone else&#8217;s colors and starts working in yours.
+        <code>FlipDots.imagePalette()</code> clusters the frame down to the
+        six colors actually in it, those become the board&#8217;s palette,
+        and <code>imageGrid</code>&#8217;s <code>match</code> option sends
+        every cell to the nearest one instead of to a step on a brightness
+        ramp &#8212; so a disc is no longer light or dark, it is the color
+        of whatever is in front of you.
+      </p>
+      <pre><code>const palette = FlipDots.imagePalette(video, 6, { seed: board.options.palette });
+board.update({ palette });
+
+FlipDots.imageGrid(video, board.cols, board.rows, { match: palette });</code></pre>
+      <p class="intro">
+        The palette is re-clustered about once a second rather than every
+        frame, seeded with the previous answer, and only adopted when a
+        color has actually moved. All three are guarding the same thing,
+        and it is the same thing the dither note above is about: a palette
+        index <em>is</em> a dot&#8217;s state, so re-ordering the palette
+        reassigns every disc on the board at once. Two clusters of nearly
+        equal brightness will trade places on nothing more than sensor
+        noise, which is a board that flickers once a second while the room
+        holds perfectly still. Seeding keeps cluster six meaning cluster
+        six; the deadband keeps a still room producing the identical
+        palette, and an identical palette flips nothing.
+      </p>
+
+      <h3>The frame rate of a disc</h3>
+      <p class="intro">
+        The board plays at 20fps and its discs take 110ms each to turn, so
+        frames land while the previous turn is still in the air. That is
+        deliberate: a dot handed a new state mid-flight keeps its momentum
+        and re-aims rather than restarting, so fast motion smears across the
+        panel the way it would on a real one. Past that, asking for more
+        frames does not buy more picture &#8212; it just means a larger
+        share of the board never finishes a turn.
+      </p>
+    </section>
+  </main>
+
+  <script src="/components/flip-dots/flip-dots.js"></script>
+  <script src="mirror.js"></script>
