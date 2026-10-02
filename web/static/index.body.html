@@ -208,10 +208,37 @@
   <div class="sweep-line" data-sweep-line="top"></div>
   <div class="sweep-line" data-sweep-line="bottom"></div>
   <div class="sweep-track" id="carouselLabGrid">
+    <!-- Each of these four cards carries a live, miniature instance of the
+         very mechanism it links to - the same thing the Background and Text
+         Effect cards above do with their own effects, rather than a picture
+         of one. All four are driven purely by their own `autoplay` timer and
+         are inert as far as input goes: `pointer-events: none` on the
+         .carousel-preview wrapper (see style.css) means no wheel, drag or
+         click ever reaches them, so they can't fight the strip they're
+         sitting in, and `tabindex="-1"` stops each one claiming a tab stop
+         of its own inside the card's link (every effect here sets tabindex
+         on its root only if the markup hasn't). They also deliberately
+         carry no `id`: the per-tab position memory is keyed off one, so
+         without it these previews start fresh each visit instead of
+         restoring wherever the timer happened to leave them. Options are in
+         home.js. -->
     <a class="variation-card sweep-card liftoff-host" href="/carousel/sweep/index.html" data-type="hover">
       <div class="liftoff-card">
         <div class="type">Wheel + Drag + Hover</div>
         <div class="title-wrap"><h2>Sweep</h2></div>
+        <div class="carousel-preview" aria-hidden="true">
+          <div class="sweep cp-strip" tabindex="-1">
+            <div class="sweep-track">
+              <div class="sweep-card cp-chip">01</div>
+              <div class="sweep-card cp-chip">02</div>
+              <div class="sweep-card cp-chip">03</div>
+              <div class="sweep-card cp-chip">04</div>
+              <div class="sweep-card cp-chip">05</div>
+              <div class="sweep-card cp-chip">06</div>
+              <div class="sweep-card cp-chip">07</div>
+            </div>
+          </div>
+        </div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -219,6 +246,20 @@
       <div class="liftoff-card">
         <div class="type">Spin + Click + Keys</div>
         <div class="title-wrap"><h2>Reel</h2></div>
+        <div class="carousel-preview" aria-hidden="true">
+          <div class="reel cp-ring" tabindex="-1">
+            <div class="reel-track">
+              <div class="reel-card cp-chip">01</div>
+              <div class="reel-card cp-chip">02</div>
+              <div class="reel-card cp-chip">03</div>
+              <div class="reel-card cp-chip">04</div>
+              <div class="reel-card cp-chip">05</div>
+              <div class="reel-card cp-chip">06</div>
+              <div class="reel-card cp-chip">07</div>
+              <div class="reel-card cp-chip">08</div>
+            </div>
+          </div>
+        </div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -226,6 +267,16 @@
       <div class="liftoff-card">
         <div class="type">Six Transitions, One Engine</div>
         <div class="title-wrap"><h2>Deck</h2></div>
+        <div class="carousel-preview" aria-hidden="true">
+          <div class="deck cp-deck" tabindex="-1">
+            <div class="deck-port">
+              <div class="deck-frame cp-frame">01</div>
+              <div class="deck-frame cp-frame">02</div>
+              <div class="deck-frame cp-frame">03</div>
+              <div class="deck-frame cp-frame">04</div>
+            </div>
+          </div>
+        </div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -233,6 +284,22 @@
       <div class="liftoff-card">
         <div class="type">Turn + Scroll + Click</div>
         <div class="title-wrap"><h2>Dial</h2></div>
+        <div class="carousel-preview" aria-hidden="true">
+          <div class="dial cp-disc" tabindex="-1">
+            <div class="dial-face">
+              <div class="dial-card cp-slot">01</div>
+              <div class="dial-card cp-slot">02</div>
+              <div class="dial-card cp-slot">03</div>
+              <div class="dial-card cp-slot">04</div>
+              <div class="dial-card cp-slot">05</div>
+              <div class="dial-card cp-slot">06</div>
+              <div class="dial-card cp-slot">07</div>
+              <div class="dial-card cp-slot">08</div>
+              <div class="dial-card cp-slot">09</div>
+              <div class="dial-card cp-slot">10</div>
+            </div>
+          </div>
+        </div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -278,6 +345,16 @@
        (bindHoverDelegate must exist before home.js runs, and this is the
        only script tag that loads it). -->
   <script src="/carousel/sweep/sweep.js"></script>
+  <!-- The other three carousels are here only for the Carousel Lab cards'
+       own live previews (see that section's markup above); the page's six
+       strips are all Sweep. Each of these URLs serves shared/carousel-kit.js
+       concatenated ahead of the effect (routes.go), so the kit arrives four
+       times over - a few kB of duplication in exchange for every effect URL
+       staying one self-contained file anyone can drop into a page of their
+       own, which is the trade the whole bundling scheme makes. -->
+  <script src="/carousel/reel/reel.js"></script>
+  <script src="/carousel/deck/deck.js"></script>
+  <script src="/carousel/dial/dial.js"></script>
   <!-- Must load synchronously (no async/defer) — see the header comment
        in home.js for why. -->
   <script src="home.js"></script>

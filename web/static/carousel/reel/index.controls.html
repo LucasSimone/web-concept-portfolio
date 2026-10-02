@@ -60,8 +60,20 @@
     </div>
 
     <div class="control-row">
-      <label><span class="label-text">Auto spin <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoAdvance">?<span class="hint" role="tooltip" id="hint-autoAdvance">Milliseconds between automatic steps; Off leaves the ring still until something touches it. It pauses while the pointer is over the ring, while you drag or scroll it, while it's off screen, in a background tab, or under a reduced-motion setting — and with the loop off it walks back the other way at the ends instead of pressing against them.</span></span></span><span id="autoAdvanceVal" class="value"></span></label>
-      <input id="autoAdvanceRange" type="range" min="0" max="4000" step="100" value="0" />
+      <label><span class="label-text">Auto spin <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplay">?<span class="hint" role="tooltip" id="hint-autoplay">Milliseconds between automatic steps; Off leaves the ring still until something touches it. It pauses while the pointer is over the ring, while you drag or scroll it, while it's off screen, in a background tab, or under a reduced-motion setting.</span></span></span><span id="autoplayVal" class="value"></span></label>
+      <input id="autoplayRange" type="range" min="0" max="4000" step="100" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>At the last card
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplayEnd">?<span class="hint" role="tooltip" id="hint-autoplayEnd">What Auto spin does when it reaches the end of a ring with Continuous loop switched off — spool back round through every card to the first, ping-pong back a card per beat, cut straight back to the first after one beat, or stop there. A looping ring has no last card, so this does nothing until you turn the loop off.</span></span>
+      </label>
+      <select id="autoplayEndSelect">
+        <option value="rewind" selected>Spool back to the first</option>
+        <option value="bounce">Ping-pong</option>
+        <option value="jump">Cut back to the first</option>
+        <option value="stop">Stop there</option>
+      </select>
     </div>
 
     <div class="control-row">

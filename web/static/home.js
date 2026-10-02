@@ -32,7 +32,9 @@ Sweep.initAll('#transitionCarousel');
 Sweep.initAll('#backgroundCarousel');
 // #carouselLabCarousel needs no custom options, so it's left for
 // sweep.js's own blanket auto-init (on DOMContentLoaded) to pick up -
-// the same as any other page just dropping the effect in.
+// the same as any other page just dropping the effect in. Its cards'
+// own miniature previews are a different matter, and are set up further
+// down with the rest of the per-card effect wiring.
 
 // The plain element, not the Sweep instance's own internal `.root` - kept
 // separate so every card-effect wiring below reaches Sweep only through
@@ -265,6 +267,108 @@ Fireflies.initAll('.liftoff-card.bg-fireflies', {
 // title has to stay readable on top of it.
 OuterWorlds.initAll('.liftoff-card.bg-outer-worlds', {
   dotSpacing: 7, autoSpin: 1.6, seaLevel: 0.2,
+});
+
+// --- Carousel Lab card previews --------------------------------------
+// Every other lab's cards show the effect they link to actually running,
+// and these four now do the same with their own mechanism: a real Sweep,
+// Reel, Deck and Dial, in the 86px band each card reserves for one (see
+// .carousel-preview in style.css and the markup in index.body.html).
+//
+// Three options are shared by all four, and they are what make a carousel
+// safe to nest inside another one:
+//
+//   - every input mode that has an option to turn it off, turned off. A
+//     preview is a showcase, not a control, and a wheel or a drag over it
+//     belongs to the homepage strip it is sitting in. The band is
+//     `pointer-events: none`, which is what actually settles that - but an
+//     option set honestly beats leaving one CSS line to keep two carousels
+//     off the same gesture, so wheel, hover-follow and click-to-select are
+//     all switched off at the source too. Dragging is the exception, and
+//     the reason the CSS isn't belt and braces: only Deck has an option
+//     for it (`drag: false`, set below), so on the other three
+//     `pointer-events: none` is the only thing stopping a drag. Worth
+//     knowing before removing that line.
+//   - `autoplay` as the only thing that moves them, each at a different
+//     interval so the four drift out of step with each other rather than
+//     marching in lockstep the way one shared number would have them.
+//     Each one pauses itself while the pointer rests on its card, off
+//     screen, in a background tab, and under reduced motion - all of that
+//     is in the shared timer (shared/carousel-kit.js), not here.
+//   - tuned-down geometry. These boxes are a fraction of a demo page's, so
+//     the cards have to come down with them: a tighter ring, a shallower
+//     fade, no grown "selected" card on a disc whose cards are 20px tall.
+//
+// Claiming these elements here also keeps each effect's own blanket
+// auto-init off them - it runs on DOMContentLoaded, after this file, and
+// skips anything already initialized.
+Sweep.initAll('.cp-strip', {
+  // The one preview with two real ends, since a strip has nothing else on
+  // offer: it walks to the last chip and reverses, which reads as the
+  // mechanism being alive rather than as a reset.
+  autoplay: 1900,
+  autoplayEnd: 'bounce',
+  cardStep: 90,
+  minScale: 0.38,
+  scaleDecay: 0.85,
+  hoverFollow: false,
+  wheelEnabled: false,
+});
+Reel.initAll('.cp-ring', {
+  autoplay: 1500,
+  loop: true,
+  // A band this wide and short fits only a very flat ellipse of a ring,
+  // and a flat ring is where Reel's one trick reads worst: the focused
+  // card is pulled in to the center of the box while its neighbors sit out
+  // on the ring below it, which on a full-size reel is the card being held
+  // up to the eye, but with a handful of well-separated cards just looks
+  // like the front one has been pushed back.
+  //
+  // What fixes it is density rather than geometry. Drawn in tight
+  // (`ringSize`) with a small `cardAngle` and nothing faded out
+  // (`maxDepth`), all eight cards stay on screen and overlap, each tucked
+  // behind the one in front of it - so the focused card reads as the front
+  // of a fan, which is what it is, and the small lift reads as depth
+  // rather than as misalignment. A low `minScale` is the other half of it:
+  // neighbors have to be visibly smaller, or nothing marks which card is
+  // the one in focus.
+  ringSize: 0.62,
+  cardAngle: 30,
+  minScale: 0.22,
+  maxDepth: 0.95,
+  clickToSelect: false,
+  wheelEnabled: false,
+});
+Deck.initAll('.cp-deck', {
+  // The View-Master arc: frames mounted on a disc whose pivot is off
+  // screen below the band, swinging one out as the next swings in. It is
+  // the transition that reads as a mechanism rather than as a cut at this
+  // size - and the one that can't be scrubbed, which costs nothing on a
+  // preview that takes no input anyway.
+  transition: 'stereoscope',
+  autoplay: 2300,
+  duration: 560,
+  arrows: false,
+  dots: false,
+  click: false,
+  drag: false,
+  wheel: false,
+});
+Dial.initAll('.cp-disc', {
+  autoplay: 2100,
+  loop: true,
+  cardAngle: 30,
+  // A fraction of the radius rather than pixels, so the cards stay seated
+  // against the rim as the card (and so the disc) narrows - see the Dial
+  // docs on why a fixed pixel margin doesn't scale down.
+  rimInset: 0.12,
+  // Nothing grows at the gate: at 20px tall the swell reads as a wobble,
+  // and the rotation already marks which card is selected.
+  selectedScale: 1,
+  horizon: 80,
+  fadeRange: 30,
+  clickToSelect: false,
+  wheelEnabled: false,
 });
 
 // Whether the OS has "reduce motion" set - shared by the Liftoff wiring

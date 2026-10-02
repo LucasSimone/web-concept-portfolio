@@ -9,6 +9,7 @@
         <option value="floaty">Floaty</option>
         <option value="wide">Wide Reach</option>
         <option value="stacked">Tight Stack</option>
+        <option value="marquee">Marquee</option>
       </select>
     </div>
 
@@ -31,6 +32,23 @@
         Wheel scroll
         <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wheelEnabled">?<span class="hint" role="tooltip" id="hint-wheelEnabled">Whether scrolling over the strip moves it. Off leaves wheel events alone entirely, so the page scrolls straight through instead of the strip capturing it - drag and hover still work.</span></span>
       </label>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Autoplay <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplay">?<span class="hint" role="tooltip" id="hint-autoplay">Milliseconds between automatic steps; Off leaves the strip still until something touches it. It pauses while the pointer is over the strip, while you drag or scroll it, while it's off screen, in a background tab, or under a reduced-motion setting.</span></span></span><span id="autoplayVal" class="value"></span></label>
+      <input id="autoplayRange" type="range" min="0" max="4000" step="100" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>At the last card
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplayEnd">?<span class="hint" role="tooltip" id="hint-autoplayEnd">What Autoplay does on reaching the end of the strip — travel back through every card to the first, ping-pong back a card per beat, cut straight back to the first after one beat, or stop there. A strip always has two ends (the focus point itself sweeps between them), so unlike the ring, the disc and the deck there is no looping mode in which this wouldn't apply.</span></span>
+      </label>
+      <select id="autoplayEndSelect">
+        <option value="rewind" selected>Travel back to the first</option>
+        <option value="bounce">Ping-pong</option>
+        <option value="jump">Cut back to the first</option>
+        <option value="stop">Stop there</option>
+      </select>
     </div>
 
     <div class="control-row">

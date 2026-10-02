@@ -154,6 +154,60 @@ document.getElementById('typeFilter').addEventListener('change', (e) =&gt; {
       </div>
 
       <div class="recipe">
+        <h3>Moving it from your own code</h3>
+        <p>
+          Everything the wheel, a drag or the hover can do is on the
+          instance as well, in two flavours: <code>.step()</code>,
+          <code>.next()</code>, <code>.prev()</code>, <code>.to()</code>,
+          <code>.first()</code> and <code>.last()</code> all travel there
+          with the same spring the input modes use, while
+          <code>.jump()</code> cuts straight to a card with no travel at
+          all. <code>.index</code> and <code>.length</code> read back where
+          it is. So a row of buttons, a keyboard shortcut of your own, or a
+          strip driven entirely by something else on the page is wiring, not
+          a fork.
+        </p>
+        <pre><code>const strip = Sweep.get('#mySweep');
+
+document.querySelector('.next').onclick = () =&gt; strip.next();
+document.querySelector('.prev').onclick = () =&gt; strip.prev();
+document.querySelector('.home').onclick = () =&gt; strip.first();
+
+// No travel - straight there, as if it had always been on that card.
+strip.jump(4);</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Running itself</h3>
+        <p>
+          <code>autoplay</code> is milliseconds between automatic steps. It
+          pauses itself while the pointer is over the strip, while it's off
+          screen, in a background tab, and under
+          <code>prefers-reduced-motion</code> - so a strip that runs itself
+          still holds still for anyone actually reading it, with nothing to
+          wire up.
+        </p>
+        <p>
+          A strip is the one carousel here with two real ends (the focus
+          point itself sweeps from flush-left at the first card to
+          flush-right at the last, which is a statement about ends), so it
+          always reaches a last card eventually. <code>autoplayEnd</code> is
+          what happens then: <code>'rewind'</code> travels back through
+          every card to the first, <code>'bounce'</code> reverses and walks
+          back a card per beat, <code>'jump'</code> waits one beat and cuts
+          back to the first, and <code>'stop'</code> parks there - though
+          even then the timer keeps running, so moving the strip off the end
+          by hand has it pick up again.
+        </p>
+        <pre><code>Sweep.initAll('.sweep', { autoplay: 2400, autoplayEnd: 'bounce' });
+
+// Or drive the timer directly - the option stays as it was.
+const strip = Sweep.get('#mySweep');
+strip.pause();
+strip.play();</code></pre>
+      </div>
+
+      <div class="recipe">
         <h3>Reacting to the focused card</h3>
         <p>
           Listen for the bubbling <code>sweep-settle</code> event instead
@@ -214,6 +268,8 @@ document.getElementById('typeFilter').addEventListener('change', (e) =&gt; {
           <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer movement before a press counts as a drag rather than a click straight through to the card</td></tr>
           <tr><td><code>hoverFollow</code></td><td><code>true</code></td><td>Whether moving the pointer across the strip pulls the nearest card to focus. <code>false</code> leaves wheel and drag as the only ways to move it, regardless of card count</td></tr>
           <tr><td><code>wheelEnabled</code></td><td><code>true</code></td><td>Whether scrolling over the strip moves it. <code>false</code> leaves wheel events alone entirely - the page scrolls straight through instead of the strip capturing it. Drag and hover still work</td></tr>
+          <tr><td><code>autoplay</code></td><td><code>0</code></td><td>Milliseconds between automatic steps; 0 is off. Paused while the pointer is over the strip, while it's dragged or scrolled, off screen, in a hidden tab, or under <code>prefers-reduced-motion</code></td></tr>
+          <tr><td><code>autoplayEnd</code></td><td><code>'rewind'</code></td><td>What <code>autoplay</code> does on reaching the last card: <code>'rewind'</code> travels back through the strip to the first, <code>'bounce'</code> ping-pongs a card per beat, <code>'jump'</code> cuts back to the first after one beat, <code>'stop'</code> parks there. A strip always has two ends, so unlike Reel, Deck and Dial there is no looping mode in which this doesn't apply</td></tr>
         </tbody>
       </table>
 
@@ -224,9 +280,18 @@ document.getElementById('typeFilter').addEventListener('change', (e) =&gt; {
         </thead>
         <tbody>
           <tr><td><code>new Sweep(root, options)</code></td><td>Constructs directly against a root element carrying <code>.sweep-track</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
+          <tr><td><code>.index</code></td><td>The focused card's index, or <code>-1</code> on an empty strip. A getter, not a setter - use <code>.to()</code> or <code>.jump()</code> to move.</td></tr>
+          <tr><td><code>.length</code></td><td>How many cards are in the strip (the visible ones, as of the last <code>refresh()</code>).</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>Moves <code>count</code> cards (default 1) in <code>direction</code> (1 forward, -1 back). A nudge to the settle spring rather than a queued move, so several in quick succession blend into one slide. Clamped at both ends.</td></tr>
+          <tr><td><code>.next(count)</code> / <code>.prev(count)</code></td><td><code>.step(1, count)</code> and <code>.step(-1, count)</code>.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> into focus, travelling there through the cards in between. An index past either end stops at that end - a strip has no loop for it to wrap round.</td></tr>
+          <tr><td><code>.first()</code> / <code>.last()</code></td><td>The two ends, by the same travelling move <code>.to()</code> makes.</td></tr>
+          <tr><td><code>.jump(index)</code></td><td>Puts <code>index</code> in focus at once, with no travel - the cut to <code>.to()</code>'s tracking shot. Still lands exactly on the card, so <code>sweep-settle</code> fires and the position is persisted just as it would be after a slide.</td></tr>
+          <tr><td><code>.play()</code> / <code>.pause()</code></td><td>Start and stop the <code>autoplay</code> timer without touching the option. <code>.pause()</code> survives a later <code>update()</code>; <code>.play()</code> is what undoes it.</td></tr>
+          <tr><td><code>.playing</code></td><td>Whether the timer is running - <code>false</code> after <code>.pause()</code>, for <code>autoplay: 0</code>, under reduced motion, and on a strip with fewer than two cards. It says nothing about whether a beat is currently being held back for a hovered or off-screen strip, which is a separate thing: that strip is still playing, just holding still.</td></tr>
           <tr><td><code>.refresh()</code></td><td>Re-reads which cards are currently visible (skips anything <code>hidden</code>), remeasures the guide lines, and jumps back to card 0 - call after changing which cards are shown.</td></tr>
-          <tr><td><code>.update(options)</code></td><td>Merges new option values in - every option is read fresh each frame or event, so nothing else needs rewiring on a live change.</td></tr>
-          <tr><td><code>.destroy()</code></td><td>Stops the animation loop and removes every bound listener, including the hover delegate. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new option values in - every positional option is read fresh each frame or event, and the autoplay timer is rebuilt.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, clears the autoplay timer and removes every bound listener, including the hover delegate. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
           <tr><td><code>Sweep.initAll(selector, options)</code></td><td>Default selector <code>'.sweep:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
           <tr><td><code>Sweep.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
           <tr><td><code>Sweep.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>

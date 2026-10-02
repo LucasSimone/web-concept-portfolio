@@ -9,6 +9,7 @@
         <option value="dense">Fanned Deck</option>
         <option value="shallow">Shallow</option>
         <option value="threeQuarter">Three Quarters</option>
+        <option value="fan">Fan With Ends</option>
         <option value="bare">Bare Disc</option>
       </select>
     </div>
@@ -87,6 +88,31 @@
     <div class="control-row">
       <label><span class="label-text">Drag threshold <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-dragThreshold">?<span class="hint" role="tooltip" id="hint-dragThreshold">Pixels of pointer travel before a press counts as turning the disc rather than clicking the card under it.</span></span></span><span id="dragThresholdVal" class="value"></span></label>
       <input id="dragThresholdRange" type="range" min="0" max="24" step="1" value="6" />
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="loopCheckbox" checked />
+        Continuous loop
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-loop">?<span class="hint" role="tooltip" id="hint-loop">On, the disc is closed — turn it as many laps as you like in either direction and there's no first or last card, which is what a real reel is. Off gives it two ends to stop against: card distances stop wrapping, so the wheel becomes a fan with a beginning and an end, and a scroll that can't turn it any further is handed back to the page.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Auto turn <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplay">?<span class="hint" role="tooltip" id="hint-autoplay">Milliseconds between automatic steps; Off leaves the disc still until something touches it. It pauses while the pointer is over the disc, while you turn or scroll it, while it's off screen, in a background tab, or under a reduced-motion setting.</span></span></span><span id="autoplayVal" class="value"></span></label>
+      <input id="autoplayRange" type="range" min="0" max="4000" step="100" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>At the last card
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplayEnd">?<span class="hint" role="tooltip" id="hint-autoplayEnd">What Auto turn does when it reaches the end of a disc with Continuous loop switched off — spool back round through every card to the first, ping-pong back a card per beat, cut straight back to the first after one beat, or stop there. A looping disc has no last card, so this does nothing until you turn the loop off.</span></span>
+      </label>
+      <select id="autoplayEndSelect">
+        <option value="rewind" selected>Spool back to the first</option>
+        <option value="bounce">Ping-pong</option>
+        <option value="jump">Cut back to the first</option>
+        <option value="stop">Stop there</option>
+      </select>
     </div>
 
     <div class="control-row">

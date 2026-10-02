@@ -72,7 +72,23 @@
  * arrows and dots drive it too: `data-deck-next`, `data-deck-prev` and
  * `data-deck-to="N"` are handled by one delegated listener, scoped to the
  * enclosing `.deck` or to whatever `data-deck-for="#id"` points at.
- * `data-deck-lever` turns an element of your own into a pull lever.
+ * `data-deck-lever` turns an element of your own into a pull lever. From a
+ * script it's step/next/prev, to/first/last for a transition, jump for an
+ * instant change, index/length to read where it is, and play/pause/playing
+ * over the autoplay timer.
+ *
+ * A deck is a closed loop by default - the last frame advances to the first.
+ * `loop: false` gives it two ends instead: the position clamps, frames stop
+ * wrapping round to the other side, the arrows go `disabled` where there is
+ * nothing left to show (and the root carries `.is-at-start` / `.is-at-end` for
+ * styling of your own), and a wheel that can't move it any further is handed
+ * back to the page rather than captured.
+ *
+ * `autoplay` is milliseconds between automatic advances, 0 for off, and with
+ * the loop off `autoplayEnd` decides what reaching the last frame means -
+ * spool back through the deck, ping-pong, cut back to the first, or park
+ * there. Both live in shared/carousel-kit.js, identically for all four
+ * carousels in this category.
  */
 (function (global) {
   // See shared/carousel-kit.js - the arithmetic, the per-tab memory of
@@ -80,7 +96,8 @@
   // four carousels here share. Already bundled into the file this URL
   // serves, so there is nothing extra to load.
   const {
-    clamp, mod, wrapDelta, ownsArrowKeys, createIndexMemory, registerEffect,
+    clamp, mod, wrapDelta, resolveIndex, ownsArrowKeys, createIndexMemory,
+    createAutoplay, addCommonApi, registerEffect,
   } = global.CarouselKit;
 
   const STYLE_ID = 'deck-styles';
@@ -220,6 +237,16 @@
 .deck-arrow:focus-visible {
   outline: 2px solid var(--dk-control-fg, #fff);
   outline-offset: 2px;
+}
+/* A non-looping deck sitting on one of its two ends - see _syncEnds. Left
+   in place rather than hidden, so the control row doesn't reflow at the
+   ends of the deck, and ignoring hover since there's nothing to press. */
+.deck-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.deck-arrow:disabled:hover {
+  background: var(--dk-control, rgba(14, 14, 14, 0.5));
 }
 .deck-arrow svg {
   width: 52%;
@@ -446,10 +473,20 @@
     wheel: 'x',
 
     // --- Behavior ---
+    // Whether the last frame advances to the first. false gives the deck two
+    // ends: the position clamps, the arrows disable where there's nothing
+    // left, and a wheel that can't move it further goes back to the page.
+    loop: true,
     // Milliseconds between automatic advances; 0 is off. Pauses while off
     // screen, on a hidden tab, while hovered or focused, and under
     // prefers-reduced-motion.
     autoplay: 0,
+    // What autoplay does on reaching the last frame with `loop` off:
+    // 'rewind' (sweep back through the deck to the first), 'bounce'
+    // (ping-pong a frame per beat), 'jump' (cut back to the first after one
+    // beat) or 'stop' (park there). Ignored entirely while looping, which has
+    // no last frame. See createAutoplay in shared/carousel-kit.js.
+    autoplayEnd: 'rewind',
 
     // --- Appearance ---
     // Whether the box clips its frames. false lets a transition's frames spill
@@ -691,24 +728,34 @@
       this._pullStartY = 0;
       this._pullFired = false;
       this._hovering = false;
-      this._autoTimer = null;
       this._activeDot = -1;
+      // Last values pushed onto the arrows/root by _syncEnds, so a render
+      // only touches the DOM when one of them has actually changed.
+      this._atStart = null;
+      this._atEnd = null;
       // -1 so the very first settle (including frame 0) always fires.
       this._settledIndex = -1;
       // Remembers the parked frame across page loads within the same tab.
       this._memory = createIndexMemory(root, 'deck');
       this._restored = false;
 
+      // A move re-reads this every frame, so a timed step tracks a live
+      // change to the query on its own. (The autoplay timer can't - it was
+      // either created or not - so the shared controller below keeps a
+      // listener of its own for that half.)
       this._reduced = global.matchMedia
         ? global.matchMedia('(prefers-reduced-motion: reduce)')
         : null;
-      // A move re-reads the query every frame so it tracks a live change on its
-      // own. autoplay can't - it's a timer that was either created or not -
-      // hence this listener, so the setting takes effect without a reload.
-      this._onReducedChange = () => this._syncAuto();
-      if (this._reduced && this._reduced.addEventListener) {
-        this._reduced.addEventListener('change', this._onReducedChange);
-      }
+
+      // Every reason a self-advancing deck should hold still, handed to the
+      // shared timer: a move already in flight, a hand on it, a focus
+      // inside it, and the two "nobody is looking" cases.
+      this._auto = createAutoplay(this, {
+        blocked: () => !this._onScreen || this._hovering || document.hidden
+          || this.root.contains(document.activeElement)
+          || this._stepTo !== null || this._dragging,
+        looping: () => !!this.options.loop,
+      });
 
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
@@ -750,7 +797,7 @@
         this._onScreen = on;
         if (!on) this._stop();
         else if (this._needsLoop()) this._start();
-        this._syncAuto();
+        this._auto.sync();
       }, { rootMargin: '200px' });
       this._intersectionObserver.observe(this.root);
 
@@ -791,7 +838,7 @@
       this._measure();
       if (this._frames.length > 0) this._setSettledIndex(startIndex);
       this._render();
-      this._syncAuto();
+      this._auto.reset();
     }
 
     // Merges new option values in, then rebuilds whatever they touched. Passing
@@ -802,11 +849,18 @@
       Object.assign(this._userOptions, rest);
       if (transition !== undefined) this._setTransition(transition);
       else this._resolveOptions();
+      // Turning `loop` off can leave the deck parked past its new last
+      // frame, or mid-move toward one.
+      if (!this.options.loop && this._frames.length > 0) {
+        const last = this._frames.length - 1;
+        this._pos = clamp(this._pos, 0, last);
+        if (this._stepTo !== null) this._stepTo = clamp(this._stepTo, 0, last);
+      }
       this._buildChrome();
       this._syncDots();
       this._measure();
       this._render();
-      this._syncAuto();
+      this._auto.sync();
     }
 
     // The frame currently in view, or -1 when there are none.
@@ -827,31 +881,54 @@
 
     // Advances `count` frames in `direction`. Accumulates onto a move already
     // in flight, so three quick clicks advance three frames rather than
-    // restarting the same one.
+    // restarting the same one. With the loop off it stops at the two ends
+    // instead of carrying on into another lap.
     step(direction = 1, count = 1) {
-      if (this._frames.length < 2 || !count) return;
+      const n = this._frames.length;
+      if (n < 2 || !count) return;
       const delta = Math.sign(direction) * Math.abs(count);
       const from = this._stepTo === null ? Math.round(this._pos) : this._stepTo;
-      this._beginStep(from + delta);
+      const target = this.options.loop ? from + delta : clamp(from + delta, 0, n - 1);
+      // Already pressed against that end - nothing to animate, and starting a
+      // zero-length move would read as a stutter on every beat of an autoplay
+      // parked at the end.
+      if (target === from && Math.abs(this._pos - from) < 0.001) return;
+      this._beginStep(target);
     }
 
-    next(count = 1) {
-      this.step(1, count);
-    }
-
-    prev(count = 1) {
-      this.step(-1, count);
-    }
-
-    // Goes to `index` by the shortest way around, in a single move rather than
-    // one step at a time - a dot five frames away should sweep, not play five
-    // separate steps.
+    // Goes to `index` in a single move rather than one step at a time - a dot
+    // five frames away should sweep, not play five separate steps. While
+    // looping that's by the shortest way around; with the loop off there is
+    // only one way, straight through the frames in between, and an index
+    // past either end stops at that end rather than wrapping to the far one
+    // (see resolveIndex in shared/carousel-kit.js).
     to(index) {
       const n = this._frames.length;
       if (n < 2) return;
-      const delta = wrapDelta(mod(index, n) - this._pos, n);
+      const target = resolveIndex(index, n, this.options.loop);
+      const delta = this.options.loop
+        ? wrapDelta(target - this._pos, n)
+        : target - this._pos;
       if (Math.abs(delta) < 0.001) return;
       this._beginStep(this._pos + delta);
+    }
+
+    // Shows `index` at once, with no transition at all - the cut to to()'s
+    // dissolve. The deck lands exactly on the frame, so the settle event and
+    // the persisted position both fire from here just as they would at the end
+    // of a move.
+    jump(index) {
+      const n = this._frames.length;
+      if (n === 0) return;
+      const target = resolveIndex(index, n, this.options.loop);
+      this._pos = target;
+      this._nudge = 0;
+      this._stepTo = null;
+      this._stepStart = null;
+      this._dir = 0;
+      this._stop();
+      this._render();
+      this._setSettledIndex(target);
     }
 
     _beginStep(target) {
@@ -941,6 +1018,11 @@
     // again.
     _buildChrome() {
       const o = this.options;
+      // An arrow created below starts out enabled, so the end-marking cache
+      // has to forget what it last pushed or the next render would skip
+      // re-disabling a brand new arrow at an end the deck is already on.
+      this._atStart = null;
+      this._atEnd = null;
 
       const maskName = MASKS.includes(o.mask) ? o.mask : 'none';
       MASKS.forEach((name) => {
@@ -1037,7 +1119,8 @@
         this._glare = null;
       }
       MASKS.forEach((name) => this.root.classList.remove(`is-mask-${name}`));
-      ['is-masked', 'is-clickable', 'is-unclipped', 'is-single', 'is-dragging']
+      ['is-masked', 'is-clickable', 'is-unclipped', 'is-single', 'is-dragging',
+        'is-at-start', 'is-at-end']
         .forEach((name) => this.root.classList.remove(name));
       this.root.style.removeProperty('--dk-pull');
     }
@@ -1102,15 +1185,38 @@
       // visitor scrolling straight down past it must never find their scroll
       // trapped. 'any' is the deliberate opt-in to that trade.
       if (!horizontal && mode !== 'any') return;
-      event.preventDefault();
 
       const delta = horizontal ? event.deltaX : event.deltaY;
+      // With the loop off the deck has two ends, so wheel capture is handed
+      // back at either of them the way Reel and Sweep do: a scroll that can't
+      // move the deck any further is left completely alone and the page
+      // carries on past it. This is also the only case in which the 'any'
+      // mode's trapped-scroll trade-off has an escape hatch at all.
+      if (!this.options.loop && this._atEndFor(Math.sign(delta))) {
+        this._wheelAccum = 0;
+        return;
+      }
+      event.preventDefault();
+
       this._wheelAccum += delta;
       const steps = Math.trunc(this._wheelAccum / WHEEL_STEP);
       if (steps !== 0) {
         this._wheelAccum -= steps * WHEEL_STEP;
         this.step(Math.sign(steps), Math.abs(steps));
       }
+    }
+
+    // Whether a non-looping deck has run out of frames in `direction` -
+    // measured against where it's heading rather than where it is, so a
+    // flick that has already committed the last step doesn't also capture
+    // the scroll that follows it.
+    _atEndFor(direction) {
+      const n = this._frames.length;
+      if (n < 2) return true;
+      const heading = this._stepTo === null ? this._pos : this._stepTo;
+      if (direction > 0) return heading >= n - 1 - 0.0005;
+      if (direction < 0) return heading <= 0.0005;
+      return false;
     }
 
     _onPointerDown(event) {
@@ -1156,6 +1262,9 @@
       if (this._scrubbing) {
         const before = this._pos;
         this._pos = this._dragStartPos + travelled;
+        // With the loop off the frames stop at the ends rather than dragging
+        // past the first or last one into empty space.
+        if (!this.options.loop) this._pos = clamp(this._pos, 0, this._frames.length - 1);
         if (this._pos !== before) this._dir = Math.sign(this._pos - before);
         this._samples.push({ t: event.timeStamp, pos: this._pos });
         while (this._samples.length > 2
@@ -1211,7 +1320,7 @@
       // moves delivered in the same millisecond would otherwise read as an
       // enormous velocity and throw the deck across several frames.
       const velocity = elapsed >= VELOCITY_FLOOR ? (last.pos - first.pos) / elapsed : 0;
-      if (Math.abs(velocity) < FLICK_VELOCITY) return Math.round(this._pos);
+      if (Math.abs(velocity) < FLICK_VELOCITY) return this._settleable(Math.round(this._pos));
       const direction = Math.sign(velocity);
       const edge = direction > 0 ? Math.ceil(this._pos) : Math.floor(this._pos);
       // A hard flick may carry past the next frame, but only so far - a deck
@@ -1219,7 +1328,15 @@
       const extra = clamp(
         Math.trunc(Math.abs(velocity) / (FLICK_VELOCITY * 6)), 0, FLICK_MAX - 1,
       );
-      return edge + direction * extra;
+      return this._settleable(edge + direction * extra);
+    }
+
+    // A settle target a non-looping deck is actually allowed to reach. A
+    // closed one takes any number - the position is reduced mod the frame
+    // count when the move lands.
+    _settleable(target) {
+      if (this.options.loop || this._frames.length === 0) return target;
+      return clamp(target, 0, this._frames.length - 1);
     }
 
     // ----- the lever -----
@@ -1376,23 +1493,14 @@
       this._hovering = false;
     }
 
+    // Beats are already blocked while the tab is hidden, so this isn't what
+    // stops the deck advancing out of sight. It's the interval that needs the
+    // attention: a hidden tab throttles it to roughly once a minute, so
+    // rebuilding it here is what gives the first beat after the tab comes
+    // back a full interval rather than whatever the throttle left. See
+    // sync() in shared/carousel-kit.js.
     _onVisibility() {
-      this._syncAuto();
-    }
-
-    _syncAuto() {
-      clearInterval(this._autoTimer);
-      this._autoTimer = null;
-      const every = this.options.autoplay;
-      if (!every || every <= 0 || this._frames.length < 2 || this._prefersReduced()) return;
-      this._autoTimer = setInterval(() => {
-        // Skipping a beat rather than tearing the timer down keeps the cadence
-        // steady across a hover that starts and ends mid-interval.
-        if (!this._onScreen || this._hovering || document.hidden) return;
-        if (this.root.contains(document.activeElement)) return;
-        if (this._stepTo !== null || this._dragging) return;
-        this.step(1);
-      }, Math.max(200, every));
+      this._auto.sync();
     }
 
     // ----- loop -----
@@ -1449,13 +1557,19 @@
       return base * Math.min(JUMP_CAP, 1 + JUMP_GROWTH * (frames - 1));
     }
 
+    // Reduces the position back into 0..n-1 now the move has landed, so a
+    // deck that has been advanced a hundred times doesn't carry a position of
+    // 100 around. A non-looping one is already in range (step/to/_settleable
+    // all clamp), and must not be reduced mod anything - that would wrap
+    // exactly the end this mode exists to stop at.
     _endStep() {
       const n = this._frames.length;
-      this._pos = n > 0 ? mod(this._stepTo, n) : 0;
+      if (n === 0) this._pos = 0;
+      else this._pos = this.options.loop ? mod(this._stepTo, n) : clamp(this._stepTo, 0, n - 1);
       this._stepTo = null;
       this._stepStart = null;
       this._dir = 0;
-      if (n > 0) this._setSettledIndex(mod(Math.round(this._pos), n));
+      if (n > 0) this._setSettledIndex(this.index);
     }
 
     _render() {
@@ -1474,11 +1588,20 @@
       const atRest = this._stepTo === null
         && !this._dragging
         && Math.abs(this._nudge) < 0.02;
-      const rounded = mod(Math.round(pos), n);
+      // `pos` includes the ratchet nudge, which can push a hair past either
+      // end - so this clamps rather than wrapping when the loop is off, where
+      // mod would answer "the last frame" for a position of -0.1.
+      const loop = this.options.loop;
+      const rounded = loop ? mod(Math.round(pos), n) : clamp(Math.round(pos), 0, n - 1);
       const activeIndex = atRest ? rounded : -1;
 
       this._frames.forEach((frame, i) => {
-        const delta = wrapDelta(i - pos, n);
+        // Signed distance from the position, the one number every transition
+        // paints from. Wrapped at the frame count while looping, so the frame
+        // after the last is the first; plain and unwrapped when it isn't, so
+        // the far end of a non-looping deck stays culled out of sight instead
+        // of queueing up on the near side.
+        const delta = loop ? wrapDelta(i - pos, n) : i - pos;
         const hidden = Math.abs(delta) > cull;
         frame.style.visibility = hidden ? 'hidden' : '';
         if (!hidden) {
@@ -1497,6 +1620,43 @@
       });
 
       this._syncActiveDot(rounded);
+      this._syncEnds(rounded);
+    }
+
+    // Marks the two ends of a non-looping deck, so there is some visible
+    // answer to "that arrow does nothing" - the arrow goes `disabled`
+    // (keeping it out of the tab order and ignoring clicks, with no extra
+    // code in the delegated hook that drives it) and the root carries
+    // `.is-at-start` / `.is-at-end` for styling of your own. A looping deck
+    // has no ends, so everything here resolves to false and nothing is
+    // marked.
+    _syncEnds(rounded) {
+      const ended = !this.options.loop && this._frames.length > 1;
+      const atStart = ended && rounded <= 0;
+      const atEnd = ended && rounded >= this._frames.length - 1;
+      if (atStart === this._atStart && atEnd === this._atEnd) return;
+      this._atStart = atStart;
+      this._atEnd = atEnd;
+      this.root.classList.toggle('is-at-start', atStart);
+      this.root.classList.toggle('is-at-end', atEnd);
+      if (this._arrows) {
+        // Clicking or keying an arrow is the only way to reach an end with
+        // the focus still on one (autoplay stands down while anything
+        // inside the deck has focus), which means this fires precisely when
+        // someone is navigating by hand - and disabling the element under
+        // their focus would drop it to <body> and strand them mid-deck,
+        // with Tab resuming from the top of the page. Handing it to the
+        // deck itself first keeps them where they were: the root is
+        // focusable and carries the arrow-key handling, so Left/Right go on
+        // working from there. preventScroll because the deck they are
+        // looking at is by definition already in view.
+        const losing = atStart ? this._arrows.prev : (atEnd ? this._arrows.next : null);
+        if (losing && document.activeElement === losing) {
+          this.root.focus({ preventScroll: true });
+        }
+        if (this._arrows.prev) this._arrows.prev.disabled = atStart;
+        if (this._arrows.next) this._arrows.next.disabled = atEnd;
+      }
     }
 
     // ----- settle / persistence -----
@@ -1514,11 +1674,8 @@
       if (this._transition && this._transition.teardown) this._transition.teardown(this._ctx);
       this._intersectionObserver.disconnect();
       this._resizeObserver.disconnect();
-      clearInterval(this._autoTimer);
+      this._auto.destroy();
       clearTimeout(this._pullReturnTimer);
-      if (this._reduced && this._reduced.removeEventListener) {
-        this._reduced.removeEventListener('change', this._onReducedChange);
-      }
       this.port.removeEventListener('wheel', this._onWheel);
       this.port.removeEventListener('pointerdown', this._onPointerDown);
       this.root.removeEventListener('keydown', this._onKeyDown);
@@ -1602,6 +1759,11 @@
       instance._flickLever(event.shiftKey);
     });
   }
+
+  // next/prev/first/last/play/pause/playing - the derivations of step, to
+  // and the autoplay controller above, written once in the kit for all four
+  // carousels.
+  addCommonApi(Deck.prototype);
 
   Deck.transitions = TRANSITIONS;
   Deck.DEFAULTS = CORE_DEFAULTS;

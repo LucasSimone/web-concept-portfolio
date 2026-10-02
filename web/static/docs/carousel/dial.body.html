@@ -291,6 +291,72 @@ myImage.addEventListener('load', () =&gt; Dial.get('#myDial').refresh());</code>
       </div>
 
       <div class="recipe">
+        <h3>A closed disc, or a fan with two ends</h3>
+        <p>
+          <code>loop</code> is on by default, and it's what a real reel is:
+          position is never clamped, so the disc turns as many laps as you
+          like in either direction. Off, card distances stop wrapping and
+          the position is clamped to the first and last card - the wheel
+          becomes a fan with a beginning and an end. Turning it off also
+          hands wheel capture back at either end, the way Reel's ring and
+          Sweep's strip do, so a scroll that can't turn the disc any further
+          carries on down the page.
+        </p>
+        <pre><code>// A fan that runs out rather than coming round again
+Dial.initAll('.dial', { loop: false });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Turning by itself</h3>
+        <p>
+          <code>autoplay</code> is milliseconds between automatic steps, 0
+          for off. It pauses while the pointer is over the disc, while it's
+          being turned or actively scrolled, while it's off screen, in a
+          hidden tab, or under <code>prefers-reduced-motion</code> - so a
+          disc that turns itself still holds still for anyone actually
+          reading it, with nothing to wire up.
+        </p>
+        <p>
+          A closed disc simply turns forever. With <code>loop</code> off
+          there is a last card to reach, and <code>autoplayEnd</code> is
+          what happens there: <code>'rewind'</code> (the default) spools
+          back round through every card to the first,
+          <code>'bounce'</code> reverses and walks back a card per beat,
+          <code>'jump'</code> waits one beat and cuts back to the first,
+          and <code>'stop'</code> parks there - though even then the timer
+          keeps running, so turning the disc off the end by hand has it
+          pick up again.
+        </p>
+        <pre><code>Dial.initAll('.dial', { autoplay: 2600 });
+
+// A fan that runs to the end, spools back, and does it again
+Dial.initAll('.dial', { loop: false, autoplay: 2600, autoplayEnd: 'rewind' });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Turning it from your own code</h3>
+        <p>
+          Everything a drag, the wheel, a click or the arrow keys can do is
+          on the instance too, in two flavours: <code>.step()</code>,
+          <code>.next()</code>, <code>.prev()</code>, <code>.to()</code>,
+          <code>.first()</code> and <code>.last()</code> all turn there with
+          the same settle spring the input modes use, while
+          <code>.jump()</code> cuts straight to a card with no turn at all.
+          <code>.index</code> and <code>.length</code> read back where it
+          is, and <code>.play()</code>/<code>.pause()</code> drive the timer
+          without touching the option.
+        </p>
+        <pre><code>const disc = Dial.get('#myDial');
+
+document.querySelector('.next').onclick = () =&gt; disc.next();
+document.querySelector('.prev').onclick = () =&gt; disc.prev();
+document.querySelector('.home').onclick = () =&gt; disc.first();
+
+// No turn - straight there, as if it had always been at the gate.
+disc.jump(4);</code></pre>
+      </div>
+
+      <div class="recipe">
         <h3>Reacting to the selected card</h3>
         <p>
           Listen for the bubbling <code>dial-settle</code> event when you
@@ -326,6 +392,9 @@ myImage.addEventListener('load', () =&gt; Dial.get('#myDial').refresh());</code>
           <tr><td><code>snapStrength</code></td><td><code>0.055</code></td><td>How hard the settle spring pulls toward the target card each frame, folded in on top of friction</td></tr>
           <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer travel before a press counts as turning the disc rather than clicking the card under it</td></tr>
           <tr><td><code>clickToSelect</code></td><td><code>true</code></td><td>Whether clicking a card that isn't at the gate spins it there and swallows the click. The card at the gate always passes clicks through either way</td></tr>
+          <tr><td><code>loop</code></td><td><code>true</code></td><td>Whether the disc is a closed loop - what a real reel is. <code>false</code> gives it a first and last card to stop against: distances stop wrapping, position is clamped to the two ends, and wheel capture is handed back there so page scroll continues past it</td></tr>
+          <tr><td><code>autoplay</code></td><td><code>0</code></td><td>Milliseconds between automatic steps; 0 is off. Paused while the pointer is over the disc, while it's turned or scrolled, off screen, in a hidden tab, or under <code>prefers-reduced-motion</code></td></tr>
+          <tr><td><code>autoplayEnd</code></td><td><code>'rewind'</code></td><td>What <code>autoplay</code> does on reaching the last card with <code>loop</code> off: <code>'rewind'</code> spools back through the disc to the first, <code>'bounce'</code> ping-pongs a card per beat, <code>'jump'</code> cuts back to the first after one beat, <code>'stop'</code> parks there. Ignored while looping, which has no last card</td></tr>
           <tr><td><code>rim</code></td><td><code>true</code></td><td>Draw the disc's outer edge. Purely visual - the rim is what the ring radius is measured against whether it's drawn or not</td></tr>
           <tr><td><code>hub</code></td><td><code>true</code></td><td>Draw the reel's center and spindle hole at the point everything rotates around</td></tr>
           <tr><td><code>gate</code></td><td><code>true</code></td><td>Draw the index mark at twelve o'clock. It lives in the rim margin, so a <code>rimInset</code> too small to hold it hides it</td></tr>
@@ -339,13 +408,19 @@ myImage.addEventListener('load', () =&gt; Dial.get('#myDial').refresh());</code>
         </thead>
         <tbody>
           <tr><td><code>new Dial(root, options)</code></td><td>Constructs directly against a root element containing <code>.dial-face</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
-          <tr><td><code>.step(direction, count)</code></td><td>Turns the disc by <code>count</code> cards (default 1) in <code>direction</code> (default forward). A nudge to the settle spring rather than a queued step, so several in a row blend into one turn.</td></tr>
-          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> to the gate by the shortest way round, resolved against the current unbounded position.</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>Turns the disc by <code>count</code> cards (default 1) in <code>direction</code> (default forward). A nudge to the settle spring rather than a queued step, so several in a row blend into one turn. Clamped at the two ends with <code>loop</code> off.</td></tr>
+          <tr><td><code>.next(count)</code> / <code>.prev(count)</code></td><td><code>.step(1, count)</code> and <code>.step(-1, count)</code>.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> to the gate by the shortest way round, resolved against the current unbounded position. With <code>loop</code> off there is only one way round, so it turns through the cards in between. An index outside the disc wraps round it while looping (so <code>.to(-1)</code> is the last card) and stops at the nearer end when not.</td></tr>
+          <tr><td><code>.first()</code> / <code>.last()</code></td><td>The two ends, by the same turn <code>.to()</code> makes - so on a closed disc <code>.first()</code> from the last card is one step forward, not a lap back.</td></tr>
+          <tr><td><code>.jump(index)</code></td><td>Stands <code>index</code> at the gate at once, with no turn - the cut to <code>.to()</code>'s travelling shot. Still lands dead on the card, so <code>dial-settle</code> fires and the position is persisted just as after a turn.</td></tr>
+          <tr><td><code>.play()</code> / <code>.pause()</code></td><td>Start and stop the <code>autoplay</code> timer without touching the option. <code>.pause()</code> survives a later <code>update()</code>; <code>.play()</code> is what undoes it.</td></tr>
+          <tr><td><code>.playing</code></td><td>Whether the timer is running - <code>false</code> after <code>.pause()</code>, for <code>autoplay: 0</code>, under reduced motion, and on a disc with fewer than two cards. It says nothing about whether a beat is currently being held back for a hovered or off-screen disc: that disc is still playing, just holding still.</td></tr>
           <tr><td><code>.radius</code></td><td>Getter for the disc's actual radius in pixels, after fitting or clamping - what's really being drawn, rather than what was asked for.</td></tr>
           <tr><td><code>.index</code></td><td>Getter for the selected card's index among the visible cards, or <code>-1</code> on an empty disc.</td></tr>
+          <tr><td><code>.length</code></td><td>How many cards are on the disc (the visible ones, as of the last <code>refresh()</code>).</td></tr>
           <tr><td><code>.refresh()</code></td><td>Re-reads which cards are on the disc (skips anything <code>hidden</code>), remeasures, and brings card 0 to the gate - call after changing which cards are shown.</td></tr>
           <tr><td><code>.update(options)</code></td><td>Merges new option values in, then rebuilds the drawn reel parts and re-derives the geometry. Safe to call on every slider tick.</td></tr>
-          <tr><td><code>.destroy()</code></td><td>Stops the loop, removes every bound listener, and takes back the rim, hub and gate it added to your markup. The element stays marked as claimed, so a later <code>initAll()</code> skips it.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the loop, clears the autoplay timer, removes every bound listener, and takes back the rim, hub and gate it added to your markup. The element stays marked as claimed, so a later <code>initAll()</code> skips it.</td></tr>
           <tr><td><code>Dial.initAll(selector, options)</code></td><td>Default selector <code>'.dial:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
           <tr><td><code>Dial.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
           <tr><td><code>Dial.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>

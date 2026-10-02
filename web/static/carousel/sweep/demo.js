@@ -68,34 +68,48 @@ document.addEventListener('DOMContentLoaded', () => {
   // combination, but each stays freely editable afterward.
   const PROFILES = {
     default: {
+      autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 200, minScale: 0.42, scaleDecay: 0.75, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // Light and fast: a short card step and a hard, quick-settling spring.
     snappy: {
+      autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 120, minScale: 0.5, scaleDecay: 0.85, wheelSensitivity: 1.4,
       maxVelocity: 0.6, friction: 0.7, snapStrength: 0.09, wheelIdleDelay: 100, dragThreshold: 4,
     },
     // Heavier, coasts a long way before catching - a lazier browse.
     floaty: {
+      autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 220, minScale: 0.42, scaleDecay: 0.65, wheelSensitivity: 0.8,
       maxVelocity: 0.3, friction: 0.9, snapStrength: 0.02, wheelIdleDelay: 220, dragThreshold: 8,
     },
     // Takes much more input to travel the same distance - a long throw.
     wide: {
+      autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 360, minScale: 0.5, scaleDecay: 0.6, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.82, snapStrength: 0.04, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // Neighbors drop away fast and small - the focused card reads as
     // standing apart from a tightly packed stack behind it.
     stacked: {
+      autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 200, minScale: 0.18, scaleDecay: 1.3, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
+    },
+    // Walks itself along, pausing wherever the pointer rests, and
+    // ping-pongs rather than spooling back - a display piece.
+    marquee: {
+      autoplay: 2400, autoplayEnd: 'bounce',
+      cardStep: 200, minScale: 0.42, scaleDecay: 0.7, wheelSensitivity: 1,
+      maxVelocity: 0.3, friction: 0.88, snapStrength: 0.035, wheelIdleDelay: 180, dragThreshold: 6,
     },
   };
 
   const controls = {
     profile: document.getElementById('profileSelect'),
+    autoplay: document.getElementById('autoplayRange'),
+    autoplayEnd: document.getElementById('autoplayEndSelect'),
     cardStep: document.getElementById('cardStepRange'),
     minScale: document.getElementById('minScaleRange'),
     scaleDecay: document.getElementById('scaleDecayRange'),
@@ -108,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function syncLabels() {
+    const auto = Number(controls.autoplay.value);
+    document.getElementById('autoplayVal').textContent = auto > 0 ? `${auto}ms` : 'Off';
     document.getElementById('cardStepVal').textContent = `${controls.cardStep.value}px`;
     document.getElementById('minScaleVal').textContent = controls.minScale.value;
     document.getElementById('scaleDecayVal').textContent = controls.scaleDecay.value;
@@ -122,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Every control maps one range input straight onto one option - worth a
   // table rather than nine near-identical listener bodies.
   const numeric = [
+    ['autoplay', 'autoplay'],
     ['cardStep', 'cardStep'],
     ['minScale', 'minScale'],
     ['scaleDecay', 'scaleDecay'],
@@ -143,10 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // See shared/demo-shared.js: one pass over the same table the individual
   // listeners use, so a profile can only ever set what a control could
   // have set by hand.
+  controls.autoplayEnd.addEventListener('change', () => {
+    apply({ autoplayEnd: controls.autoplayEnd.value });
+  });
+
   function applyProfile(name) {
     const profile = PROFILES[name];
     if (!profile) return;
-    const options = applyProfileFromTable({ profile, controls, numeric });
+    const options = applyProfileFromTable({
+      profile, controls, numeric, directs: ['autoplayEnd'],
+    });
     apply(options);
     syncLabels();
   }

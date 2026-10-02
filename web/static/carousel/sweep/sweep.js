@@ -44,6 +44,18 @@
  * so mousing across the strip pulls the focused card along with it the
  * same way scrolling to it would.
  *
+ * A strip is the one carousel here with no looping mode to offer: the
+ * focused card's anchor sweeps between "flush left at the first card" and
+ * "flush right at the last", which is a statement about two ends and means
+ * nothing on a closed ring. So `autoplayEnd` always applies when
+ * `autoplay` is on - the strip spools back to the first card, ping-pongs,
+ * cuts back, or parks at the last one. See createAutoplay in
+ * shared/carousel-kit.js, which is the same timer all four carousels run.
+ *
+ * Driving a strip from a script: step/next/prev, to/first/last for a
+ * settled move, jump for an instant one, index/length to read where it is,
+ * and play/pause/playing over the timer.
+ *
  * Usage: wrap cards in `<div class="sweep"><div class="sweep-track">
  * <div class="sweep-card">...</div>...</div></div>`, then load this
  * file - it injects the structural/positioning CSS (`.sweep`,
@@ -61,7 +73,10 @@
   // which card was focused, and the initAll/get/getAll surface that all
   // four carousels here share. Already bundled into the file this URL
   // serves, so there is nothing extra to load.
-  const { clamp, createIndexMemory, registerEffect } = global.CarouselKit;
+  const {
+    clamp, resolveIndex, createIndexMemory, createAutoplay, addCommonApi,
+    registerEffect,
+  } = global.CarouselKit;
 
   const STYLE_ID = 'sweep-styles';
 
@@ -157,6 +172,17 @@
     dragThreshold: 6,
     hoverFollow: true,
     wheelEnabled: true,
+    // Milliseconds between automatic steps; 0 is off. Paused while
+    // hovered, dragged, scrolled, off screen, in a hidden tab, or under
+    // prefers-reduced-motion.
+    autoplay: 0,
+    // What autoplay does on reaching the last card - 'rewind' (travel back
+    // through the strip to the first), 'bounce' (ping-pong a card per
+    // beat), 'jump' (cut back to the first after one beat) or 'stop' (park
+    // there). Unlike the other three carousels here a strip always has two
+    // ends, so this always applies. See createAutoplay in
+    // shared/carousel-kit.js.
+    autoplayEnd: 'rewind',
   };
 
   class Sweep {
@@ -189,6 +215,16 @@
       // position along with it exactly like scrolling/dragging there
       // would.
       this._hoverIndex = null;
+      // A sticky settle target set by to()/step(), in the same units as
+      // _pos; null means "the nearest card". Any live input - wheel, drag,
+      // a hover target - clears it, on the principle that the visitor's
+      // hands beat a script's last instruction.
+      this._target = null;
+      // Whether the pointer is over the strip at all. Distinct from
+      // _hoverIndex, which hover-follow only sets over a resolved card and
+      // only above MIN_HOVER_FOLLOW_CARDS: this is the plain "someone is
+      // here", and all it does is hold autoplay still while they read.
+      this._hovering = false;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
       // Remembers the focused card across page loads within the same tab, so
@@ -201,16 +237,30 @@
       this._memory = createIndexMemory(root, 'sweep', 'carousel');
       this._restored = false;
 
+      // A strip has two ends and no looping mode, so `looping` is simply
+      // false here and autoplayEnd always has the last word.
+      this._auto = createAutoplay(this, {
+        blocked: () => !this._onScreen || this._hovering || document.hidden
+          || this._dragging || this._wheelActive,
+        looping: () => false,
+      });
+
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
       this._onPointerMove = this._onPointerMove.bind(this);
       this._onPointerUp = this._onPointerUp.bind(this);
       this._onClickCapture = this._onClickCapture.bind(this);
+      this._onEnter = this._onEnter.bind(this);
+      this._onLeave = this._onLeave.bind(this);
+      this._onVisibility = this._onVisibility.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
 
       this.root.addEventListener('wheel', this._onWheel, { passive: false });
       this.root.addEventListener('pointerdown', this._onPointerDown);
+      this.root.addEventListener('pointerenter', this._onEnter);
+      this.root.addEventListener('pointerleave', this._onLeave);
+      document.addEventListener('visibilitychange', this._onVisibility);
       this.track.addEventListener('click', this._onClickCapture, true);
       // See shared/hover-delegate.js for why this needs mousemove-based
       // delegation rather than the track's own mouseenter/mouseleave.
@@ -224,7 +274,11 @@
           return;
         }
         const index = this._cards.indexOf(card);
-        if (index !== -1) this._hoverIndex = index;
+        if (index === -1) return;
+        this._hoverIndex = index;
+        // Reaching for a card with the pointer overrides whatever
+        // to()/step() was aiming at, same as a wheel or a drag does.
+        this._target = null;
       });
       // The delegate above only resolves a target while the pointer is
       // directly over a rendered card, which breaks down at either end of
@@ -301,16 +355,74 @@
       this._pos = startIndex;
       this._velocity = 0;
       this._hoverIndex = null;
+      this._target = null;
       this._settledIndex = -1;
       this._setSettledIndex(startIndex);
       this._render();
+      this._auto.reset();
     }
 
-    // Merges new option values in - all of them are read fresh every
-    // frame/event, so there's nothing else to rewire on a live change
-    // (unlike an effect whose trigger listeners depend on its options).
+    // Merges new option values in. Everything positional is read fresh
+    // every frame/event, so there's nothing to rewire there on a live
+    // change - but the autoplay timer was either created or not at its
+    // current interval, so that one has to be rebuilt.
     update(options = {}) {
       Object.assign(this.options, options);
+      this._auto.sync();
+    }
+
+    // The focused card's index - the one at rest in the focus position -
+    // or -1 on an empty strip.
+    get index() {
+      if (this._cards.length === 0) return -1;
+      return clamp(Math.round(this._pos), 0, this._maxIndex);
+    }
+
+    // How many cards are in the strip.
+    get length() {
+      return this._cards.length;
+    }
+
+    // Moves `count` cards in `direction`. A nudge to the settle spring
+    // rather than a queued step, same as Reel and Dial: several in a row
+    // blend into one slide instead of playing out one by one. Clamped at
+    // both ends - a strip has no lap to carry on into.
+    step(direction = 1, count = 1) {
+      if (this._cards.length < 2 || !count) return;
+      const delta = Math.sign(direction) * Math.abs(count);
+      const base = this._target === null ? Math.round(this._pos) : this._target;
+      this._target = clamp(base + delta, 0, this._maxIndex);
+      this._hoverIndex = null;
+      this._start();
+    }
+
+    // Brings `index` into focus, travelling there through the cards in
+    // between. An index past either end stops at that end - a strip has no
+    // loop for it to wrap round (see resolveIndex in
+    // shared/carousel-kit.js, which is where the other three make that same
+    // choice on `loop: false`).
+    to(index) {
+      const n = this._cards.length;
+      if (n < 2) return;
+      this._target = resolveIndex(index, n, false);
+      this._hoverIndex = null;
+      this._start();
+    }
+
+    // Puts `index` in focus at once, with no travel - the cut to to()'s
+    // tracking shot. The strip lands exactly on the card, so the settle
+    // event and the persisted position fire from here just as they would
+    // at the end of a slide.
+    jump(index) {
+      const n = this._cards.length;
+      if (n === 0) return;
+      const target = resolveIndex(index, n, false);
+      this._pos = target;
+      this._velocity = 0;
+      this._target = null;
+      this._hoverIndex = null;
+      this._render();
+      this._setSettledIndex(target);
     }
 
     // Live rather than cached: reads options.hoverFollow (an explicit
@@ -377,6 +489,7 @@
       // leave a stale _hoverIndex fighting the scroll for the settle
       // target once it goes idle - see the _hoverDelegate binding above.
       this._hoverIndex = null;
+      this._target = null;
       this._wheelActive = true;
       clearTimeout(this._wheelIdleTimer);
       this._wheelIdleTimer = setTimeout(() => {
@@ -393,6 +506,7 @@
       // pointer that isn't itself generating mousemove hover updates, so
       // any pre-drag hover target must not survive to fight the release.
       this._hoverIndex = null;
+      this._target = null;
       this._dragStartX = event.clientX;
       this._dragStartPos = this._pos;
       this._dragPrevPos = this._pos;
@@ -427,6 +541,28 @@
       this._dragMoved = 0;
     }
 
+    // The pointer being over the strip moves nothing by itself - this pair
+    // exists only so autoplay holds still while someone is reading it.
+    // (Hover-*follow*, which does move things, is the separate
+    // _hoverDelegate above.)
+    _onEnter() {
+      this._hovering = true;
+    }
+
+    _onLeave() {
+      this._hovering = false;
+    }
+
+    // Beats are already blocked while the tab is hidden, so this isn't what
+    // stops the strip moving out of sight. It's the interval that needs the
+    // attention: a hidden tab throttles it to roughly once a minute, so
+    // rebuilding it here is what gives the first beat after the tab comes
+    // back a full interval rather than whatever the throttle left. See
+    // sync() in shared/carousel-kit.js.
+    _onVisibility() {
+      this._auto.sync();
+    }
+
     // Safe to call when already running; does nothing while off screen.
     _start() {
       if (this._raf || !this._onScreen) return;
@@ -442,14 +578,26 @@
     _tick() {
       const settling = !this._dragging && !this._wheelActive;
       if (settling) {
+        // Three sources for where the spring is pulling, in order: a card
+        // under the pointer, a sticky target from step()/to(), or just the
+        // nearest card. The order is a real precedence rule, not a
+        // formality: step()/to() clear any hover target, and the hover
+        // delegate clears any step target, but the edge-hover fallback
+        // bound alongside it (see the constructor) only assigns
+        // _hoverIndex - so a to() still in flight when the pointer
+        // overshoots an end is outranked here rather than fought with.
+        // Whichever wins, the settle below drops _target on arrival.
         const snapTarget = this._hoverIndex !== null
           ? this._hoverIndex
-          : clamp(Math.round(this._pos), 0, this._maxIndex);
+          : (this._target !== null
+            ? this._target
+            : clamp(Math.round(this._pos), 0, this._maxIndex));
         this._velocity += (snapTarget - this._pos) * this.options.snapStrength;
         this._velocity *= this.options.friction;
         if (Math.abs(this._velocity) < 0.0004 && Math.abs(snapTarget - this._pos) < 0.0004) {
           this._velocity = 0;
           this._pos = snapTarget;
+          this._target = null;
           this._setSettledIndex(snapTarget);
         } else {
           this._pos = clamp(this._pos + this._velocity, 0, this._maxIndex);
@@ -509,8 +657,12 @@
       this._stop();
       this._intersectionObserver.disconnect();
       clearTimeout(this._wheelIdleTimer);
+      this._auto.destroy();
       this.root.removeEventListener('wheel', this._onWheel);
       this.root.removeEventListener('pointerdown', this._onPointerDown);
+      this.root.removeEventListener('pointerenter', this._onEnter);
+      this.root.removeEventListener('pointerleave', this._onLeave);
+      document.removeEventListener('visibilitychange', this._onVisibility);
       this.track.removeEventListener('click', this._onClickCapture, true);
       this._hoverDelegate.destroy();
       this.track.removeEventListener('mousemove', this._onTrackEdgeHover);
@@ -520,6 +672,11 @@
       global.removeEventListener('pointerup', this._onPointerUp);
     }
   }
+
+  // next/prev/first/last/play/pause/playing - the derivations of step, to
+  // and the autoplay controller above, written once in the kit for all
+  // four carousels.
+  addCommonApi(Sweep.prototype);
 
   Sweep.DEFAULTS = DEFAULTS;
 

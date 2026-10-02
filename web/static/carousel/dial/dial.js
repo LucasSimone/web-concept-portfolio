@@ -50,6 +50,24 @@
  * "bring it to the front, then use it" rather than needing a separate
  * control.
  *
+ * A real reel is a closed disc, and that's the default - `_pos` is never
+ * clamped, so it turns as many laps as you like in either direction.
+ * `loop: false` instead gives the disc a first and last card: distances
+ * stop wrapping, the position is clamped to the two ends, and what's left
+ * reads as a fan with a beginning and an end rather than a wheel. Turning
+ * it off also hands wheel capture back at either end, exactly as Reel and
+ * Sweep do, so a scroll that can't turn the disc any further carries on
+ * down the page.
+ *
+ * `autoplay` turns the disc by itself, in milliseconds between steps (0 is
+ * off), holding still while the pointer rests on it, while it's being
+ * turned, off screen, in a hidden tab, or under prefers-reduced-motion.
+ * With `loop` off, `autoplayEnd` decides what reaching the last card means
+ * - spool back through the disc, ping-pong, cut back to the first, or park
+ * there. Both come from shared/carousel-kit.js, identically for all four
+ * carousels here. From a script: step/next/prev, to/first/last for a
+ * turn, jump for an instant one, and play/pause/playing over the timer.
+ *
  * The wheel takes whichever axis dominates an event, governed by
  * `wheelAxis`, and defaults to accepting both - the same control, the
  * same default and the same trade-off as Reel's. A mouse wheel reports
@@ -77,7 +95,8 @@
   // four carousels here share. Already bundled into the file this URL
   // serves, so there is nothing extra to load.
   const {
-    clamp, mod, wrapDelta, wrapAngle, ownsArrowKeys, createIndexMemory, registerEffect,
+    clamp, mod, wrapDelta, wrapAngle, resolveIndex, ownsArrowKeys,
+    createIndexMemory, createAutoplay, addCommonApi, registerEffect,
   } = global.CarouselKit;
 
   const STYLE_ID = 'dial-styles';
@@ -277,6 +296,20 @@
     // (and swallows that click). The card already at the gate always
     // passes its clicks through regardless.
     clickToSelect: true,
+    // Whether the disc is a closed loop. false gives it a first and last
+    // card to stop against, which also hands wheel capture back at either
+    // end so page scroll continues past it (see _onWheel).
+    loop: true,
+    // Milliseconds between automatic steps; 0 is off. Paused while
+    // hovered, turned, off screen, in a hidden tab, or under
+    // prefers-reduced-motion.
+    autoplay: 0,
+    // What autoplay does on reaching the last card with `loop` off:
+    // 'rewind' (spool back through the disc to the first), 'bounce'
+    // (ping-pong a card per beat), 'jump' (cut back to the first after one
+    // beat) or 'stop' (park there). Ignored entirely while looping, which
+    // has no last card. See createAutoplay in shared/carousel-kit.js.
+    autoplayEnd: 'rewind',
     rim: true,
     hub: true,
     gate: true,
@@ -299,6 +332,10 @@
       // unbounded units as _pos; null means "the nearest card".
       this._target = null;
       this._cards = [];
+      this._maxIndex = 0;
+      // Whether the pointer is over the disc at all. Nothing moves on it -
+      // it only holds autoplay still while someone is reading.
+      this._hovering = false;
       // Derived geometry, all of it re-read in _measure. Seeded to zero
       // rather than left undefined because _measure bails on a box that
       // measures 0x0 - a dial built inside a `display: none` container -
@@ -323,18 +360,33 @@
       this._memory = createIndexMemory(root, 'dial');
       this._restored = false;
 
+      // Every reason a self-turning disc should hold still, handed to the
+      // shared timer: the pointer resting on it, a turn already in
+      // progress, and the two "nobody is looking" cases.
+      this._auto = createAutoplay(this, {
+        blocked: () => !this._onScreen || this._hovering || document.hidden
+          || this._dragging || this._wheelActive,
+        looping: () => !!this.options.loop,
+      });
+
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
       this._onPointerMove = this._onPointerMove.bind(this);
       this._onPointerUp = this._onPointerUp.bind(this);
       this._onClickCapture = this._onClickCapture.bind(this);
       this._onKeyDown = this._onKeyDown.bind(this);
+      this._onEnter = this._onEnter.bind(this);
+      this._onLeave = this._onLeave.bind(this);
+      this._onVisibility = this._onVisibility.bind(this);
       this._onResize = this._onResize.bind(this);
       this._tick = this._tick.bind(this);
 
       this.root.addEventListener('wheel', this._onWheel, { passive: false });
       this.root.addEventListener('pointerdown', this._onPointerDown);
       this.root.addEventListener('keydown', this._onKeyDown);
+      this.root.addEventListener('pointerenter', this._onEnter);
+      this.root.addEventListener('pointerleave', this._onLeave);
+      document.addEventListener('visibilitychange', this._onVisibility);
       this.face.addEventListener('click', this._onClickCapture, true);
       // A ResizeObserver on the root rather than a window resize listener.
       // The element's size doesn't only change when the viewport does - a
@@ -372,6 +424,7 @@
     refresh() {
       this._cards = Array.from(this.face.children)
         .filter((el) => el.classList.contains('dial-card') && !el.hidden);
+      this._maxIndex = Math.max(0, this._cards.length - 1);
 
       let startIndex = 0;
       if (!this._restored) {
@@ -390,16 +443,26 @@
       this._measure();
       if (this._cards.length > 0) this._setSettledIndex(startIndex);
       this._render();
+      this._auto.reset();
     }
 
     // Merges new option values in. cardAngle/pivot/rimInset/selectedScale
     // all feed the derived geometry and rim/hub/gate decide which parts
-    // exist, so both get redone here.
+    // exist, so both get redone here - as does the autoplay timer, which
+    // was either created or not at its current interval. Turning `loop`
+    // off can leave the disc parked past its new last card, so the
+    // position is pulled back into range and the spring restarted.
     update(options = {}) {
       Object.assign(this.options, options);
+      if (!this.options.loop) {
+        this._pos = clamp(this._pos, 0, this._maxIndex);
+        if (this._target !== null) this._target = clamp(this._target, 0, this._maxIndex);
+      }
       this._buildChrome();
       this._measure();
       this._render();
+      this._auto.sync();
+      this._start();
     }
 
     // The disc's actual radius in pixels, after fitting or clamping - so
@@ -421,8 +484,16 @@
     // The selected card's index - the one standing at the gate - or -1 on
     // an empty disc.
     get index() {
-      if (this._cards.length === 0) return -1;
-      return mod(Math.round(this._pos), this._cards.length);
+      const n = this._cards.length;
+      if (n === 0) return -1;
+      return this.options.loop
+        ? mod(Math.round(this._pos), n)
+        : clamp(Math.round(this._pos), 0, this._maxIndex);
+    }
+
+    // How many cards are on the disc.
+    get length() {
+      return this._cards.length;
     }
 
     // Turns the disc by `count` cards. A nudge to the settle spring rather
@@ -433,18 +504,44 @@
       const n = this._cards.length;
       if (n < 2 || !count) return;
       const delta = Math.sign(direction) * Math.abs(count);
-      this._target = (this._target === null ? Math.round(this._pos) : this._target) + delta;
+      const base = this._target === null ? Math.round(this._pos) : this._target;
+      this._target = this.options.loop
+        ? base + delta
+        : clamp(base + delta, 0, this._maxIndex);
       this._start();
     }
 
-    // Brings `index` to the gate by the shortest way round - resolved
-    // against the current unbounded position so a disc that has been spun
-    // several turns doesn't unwind them all to "arrive from the front".
+    // Brings `index` to the gate - by the shortest way round while
+    // looping, resolved against the current unbounded position so a disc
+    // that has been spun several turns doesn't unwind them all to "arrive
+    // from the front". With the loop off there's only one way round, so it
+    // travels through the cards in between - and an index past either end
+    // stops at that end rather than wrapping to the far one (see
+    // resolveIndex in shared/carousel-kit.js).
     to(index) {
       const n = this._cards.length;
       if (n < 2) return;
-      this._target = this._pos + wrapDelta(mod(index, n) - this._pos, n);
+      const target = resolveIndex(index, n, this.options.loop);
+      this._target = this.options.loop
+        ? this._pos + wrapDelta(target - this._pos, n)
+        : target;
       this._start();
+    }
+
+    // Stands `index` at the gate at once, with no turn at all - the cut to
+    // to()'s travelling shot. The disc lands dead on the card, so the
+    // settle event and the persisted position both fire from here just as
+    // they would at the end of a turn.
+    jump(index) {
+      const n = this._cards.length;
+      if (n === 0) return;
+      const target = resolveIndex(index, n, this.options.loop);
+      this._pos = target;
+      this._velocity = 0;
+      this._target = null;
+      this._stop();
+      this._render();
+      this._setSettledIndex(target);
     }
 
     // ----- the reel body -----
@@ -569,10 +666,26 @@
       // which way the disc turns.
       const delta = isVertical ? event.deltaY : event.deltaX;
       if (delta === 0) return;
-      event.preventDefault();
 
       const deltaIndex = (delta * this.options.wheelSensitivity) / this.options.cardStep;
+
+      // With the loop off the disc has two ends, so wheel capture is
+      // handed back at either of them the way Reel's ring and Sweep's
+      // strip do: a scroll that can't turn it any further is left
+      // completely alone and the page carries on scrolling past it. A
+      // closed disc never runs out of disc, so there's no boundary to
+      // release at and wheelAxis is the only thing deciding what passes
+      // through.
+      if (!this.options.loop) {
+        const atStart = this._pos <= 0.0005 && deltaIndex < 0;
+        const atEnd = this._pos >= this._maxIndex - 0.0005 && deltaIndex > 0;
+        if (atStart || atEnd) return;
+      }
+
+      event.preventDefault();
+
       this._pos += deltaIndex;
+      if (!this.options.loop) this._pos = clamp(this._pos, 0, this._maxIndex);
       this._velocity = clamp(deltaIndex, -this.options.maxVelocity, this.options.maxVelocity);
       this._target = null;
 
@@ -625,6 +738,9 @@
       // the position of whichever card is standing at the gate.
       const deltaIndex = -swept / Math.max(1, this.options.cardAngle);
       this._pos += deltaIndex;
+      // Unclamped on a closed disc - it just keeps turning; stopped at the
+      // first and last card when the loop is off.
+      if (!this.options.loop) this._pos = clamp(this._pos, 0, this._maxIndex);
       this._velocity = clamp(deltaIndex, -this.options.maxVelocity, this.options.maxVelocity);
     }
 
@@ -683,10 +799,32 @@
       }
     }
 
+    // The pointer being over the disc moves nothing by itself - this pair
+    // exists only so autoplay holds still while someone is reading it.
+    _onEnter() {
+      this._hovering = true;
+    }
+
+    _onLeave() {
+      this._hovering = false;
+    }
+
+    // Beats are already blocked while the tab is hidden, so this isn't what
+    // stops the disc turning out of sight. It's the interval that needs the
+    // attention: a hidden tab throttles it to roughly once a minute, so
+    // rebuilding it here is what gives the first beat after the tab comes
+    // back a full interval rather than whatever the throttle left. See
+    // sync() in shared/carousel-kit.js.
+    _onVisibility() {
+      this._auto.sync();
+    }
+
     // ----- loop -----
 
     _settleTarget() {
-      return this._target === null ? Math.round(this._pos) : this._target;
+      if (this._target !== null) return this._target;
+      const nearest = Math.round(this._pos);
+      return this.options.loop ? nearest : clamp(nearest, 0, this._maxIndex);
     }
 
     // Whether the settle spring has arrived. One predicate, used both to
@@ -729,6 +867,7 @@
         this._velocity += (target - this._pos) * this.options.snapStrength;
         this._velocity *= this.options.friction;
         this._pos += this._velocity;
+        if (!this.options.loop) this._pos = clamp(this._pos, 0, this._maxIndex);
         // Arrived: land exactly on the card rather than a hair off it, and
         // report it. Tested after integrating, so this sees the same state
         // _needsLoop is about to see when it decides whether to schedule
@@ -752,7 +891,7 @@
       const o = this.options;
       const fadeStart = Math.max(0, o.horizon - Math.max(0.001, o.fadeRange));
       const fadeSpan = Math.max(0.001, o.horizon - fadeStart);
-      const selected = mod(Math.round(this._pos), n);
+      const selected = this.index;
 
       this._cards.forEach((card, i) => {
         // Shortest signed distance in cards, wrapping at the card count,
@@ -760,7 +899,12 @@
         // so a dense disc - many cards, or a big cardAngle - piles up at
         // the point opposite the gate instead of doubling back round the
         // wrong side, exactly as Reel does.
-        const delta = wrapDelta(i - this._pos, n);
+        //
+        // With the loop off distances stop wrapping, so cards far ahead of
+        // or behind the gate stay far away (and past the horizon, faded
+        // out) rather than reappearing on the other side of the disc -
+        // which is what turns the closed wheel into a fan with two ends.
+        const delta = o.loop ? wrapDelta(i - this._pos, n) : i - this._pos;
         const deg = clamp(delta * o.cardAngle, -180, 180);
         const theta = deg * (Math.PI / 180);
         const away = Math.abs(deg);
@@ -811,9 +955,13 @@
       this._stop();
       this._intersectionObserver.disconnect();
       clearTimeout(this._wheelIdleTimer);
+      this._auto.destroy();
       this.root.removeEventListener('wheel', this._onWheel);
       this.root.removeEventListener('pointerdown', this._onPointerDown);
       this.root.removeEventListener('keydown', this._onKeyDown);
+      this.root.removeEventListener('pointerenter', this._onEnter);
+      this.root.removeEventListener('pointerleave', this._onLeave);
+      document.removeEventListener('visibilitychange', this._onVisibility);
       this.face.removeEventListener('click', this._onClickCapture, true);
       this._resizeObserver.disconnect();
       global.removeEventListener('pointermove', this._onPointerMove);
@@ -834,6 +982,11 @@
     el.style.width = `${width.toFixed(1)}px`;
     el.style.height = `${height.toFixed(1)}px`;
   }
+
+  // next/prev/first/last/play/pause/playing - the derivations of step, to
+  // and the autoplay controller above, written once in the kit for all
+  // four carousels.
+  addCommonApi(Dial.prototype);
 
   Dial.DEFAULTS = DEFAULTS;
 

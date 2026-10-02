@@ -70,8 +70,16 @@
  * it gets a bubbling 'reel-settle' event, exactly like Sweep's
  * 'sweep-settle'. `.is-focused` is the live counterpart: it tracks
  * whichever card is nearest the focus even mid-spin. The pointer merely
- * being over the ring does only one thing - it pauses `autoAdvance`, so
+ * being over the ring does only one thing - it pauses `autoplay`, so
  * a self-turning ring holds still while someone is reading it.
+ *
+ * `autoplay` is milliseconds between automatic steps, 0 for off, and with
+ * `loop` off `autoplayEnd` decides what happens on reaching the last card
+ * - spool back through the ring, ping-pong, cut back to the first, or park
+ * there. Both live in shared/carousel-kit.js, identically for all four
+ * carousels here. Driving the ring from a script instead: step/next/prev,
+ * to/first/last for an animated move, jump for an instant one, and
+ * play/pause/playing over the timer.
  *
  * Usage: wrap cards in `<div class="reel"><div class="reel-track">
  * <div class="reel-card">...</div>...</div></div>`, then load this file -
@@ -89,7 +97,8 @@
   // four carousels here share. Already bundled into the file this URL
   // serves, so there is nothing extra to load.
   const {
-    clamp, mod, wrapDelta, ownsArrowKeys, createIndexMemory, registerEffect,
+    clamp, mod, wrapDelta, resolveIndex, ownsArrowKeys, createIndexMemory,
+    createAutoplay, addCommonApi, registerEffect,
   } = global.CarouselKit;
 
   const STYLE_ID = 'reel-styles';
@@ -209,7 +218,13 @@
     // Milliseconds between automatic steps; 0 is off. Paused while
     // hovered, dragged, off screen, in a hidden tab, or under
     // prefers-reduced-motion.
-    autoAdvance: 0,
+    autoplay: 0,
+    // What autoplay does on reaching the last card with `loop` off:
+    // 'rewind' (spool back through the ring to the first), 'bounce'
+    // (ping-pong a card per beat), 'jump' (cut back to the first after one
+    // beat) or 'stop' (park there). Ignored entirely while looping, which
+    // has no last card. See createAutoplay in shared/carousel-kit.js.
+    autoplayEnd: 'rewind',
   };
 
   class Reel {
@@ -241,10 +256,8 @@
       this._wheelActive = false;
       this._wheelIdleTimer = null;
       // Whether the pointer is over the ring at all. Nothing moves on it -
-      // it only holds autoAdvance still while someone is reading.
+      // it only holds autoplay still while someone is reading.
       this._hovering = false;
-      this._autoTimer = null;
-      this._autoDir = 1;
       // -1 so the very first settle (including index 0) always fires.
       this._settledIndex = -1;
       this._focusedIndex = -1;
@@ -252,16 +265,14 @@
       this._memory = createIndexMemory(root, 'reel');
       this._restored = false;
 
-      this._reduced = global.matchMedia
-        ? global.matchMedia('(prefers-reduced-motion: reduce)')
-        : null;
-      // autoAdvance is a timer that was either created or not, so unlike
-      // every other option it can't track a live change to the query on
-      // its own - hence this listener.
-      this._onReducedChange = () => this._syncAuto();
-      if (this._reduced && this._reduced.addEventListener) {
-        this._reduced.addEventListener('change', this._onReducedChange);
-      }
+      // Every reason a self-turning ring should hold still, handed to the
+      // shared timer: the pointer resting on it, a spin already in
+      // progress, and the two "nobody is looking" cases.
+      this._auto = createAutoplay(this, {
+        blocked: () => !this._onScreen || this._hovering || document.hidden
+          || this._dragging || this._wheelActive,
+        looping: () => !!this.options.loop,
+      });
 
       this._onWheel = this._onWheel.bind(this);
       this._onPointerDown = this._onPointerDown.bind(this);
@@ -333,7 +344,7 @@
       this._focusedIndex = -1;
       if (this._cards.length > 0) this._setSettledIndex(startIndex);
       this._render();
-      this._syncAuto();
+      this._auto.reset();
     }
 
     // Merges new option values in. Everything positional is derived from
@@ -344,7 +355,7 @@
       Object.assign(this.options, options);
       this._measure();
       this._render();
-      this._syncAuto();
+      this._auto.sync();
       this._start();
     }
 
@@ -353,6 +364,11 @@
     get index() {
       if (this._cards.length === 0) return -1;
       return mod(Math.round(this._pos), this._cards.length);
+    }
+
+    // How many cards are on the ring.
+    get length() {
+      return this._cards.length;
     }
 
     // The ring's actual radii in pixels, after fitting and scaling, so a
@@ -383,15 +399,33 @@
     // Brings `index` into focus - by the shortest way round while looping,
     // resolved against the current unbounded position so a ring that has
     // been spun several laps doesn't unwind them all to "arrive from the
-    // front".
+    // front". An index outside the ring wraps round it while looping and
+    // stops at the nearer end when not - see resolveIndex in
+    // shared/carousel-kit.js.
     to(index) {
       const n = this._cards.length;
       if (n < 2) return;
-      const target = mod(index, n);
+      const target = resolveIndex(index, n, this.options.loop);
       this._target = this.options.loop
         ? this._pos + wrapDelta(target - this._pos, n)
         : target;
       this._start();
+    }
+
+    // Puts `index` in focus at once, with no spin at all - the cut to
+    // to()'s travelling shot. The ring lands dead on the card, so the
+    // settle event and the persisted position both fire from here just as
+    // they would at the end of a spin.
+    jump(index) {
+      const n = this._cards.length;
+      if (n === 0) return;
+      const target = resolveIndex(index, n, this.options.loop);
+      this._pos = target;
+      this._velocity = 0;
+      this._target = null;
+      this._stop();
+      this._render();
+      this._setSettledIndex(target);
     }
 
     // ----- geometry -----
@@ -537,7 +571,7 @@
     }
 
     // The pointer being over the ring moves nothing by itself - this pair
-    // exists only so autoAdvance holds still while someone is reading it.
+    // exists only so autoplay holds still while someone is reading it.
     _onEnter() {
       this._hovering = true;
     }
@@ -546,8 +580,14 @@
       this._hovering = false;
     }
 
+    // Beats are already blocked while the tab is hidden, so this isn't what
+    // stops the ring turning out of sight. It's the interval that needs the
+    // attention: a hidden tab throttles it to roughly once a minute, so
+    // rebuilding it here is what gives the first beat after the tab comes
+    // back a full interval rather than whatever the throttle left. See
+    // sync() in shared/carousel-kit.js.
     _onVisibility() {
-      this._syncAuto();
+      this._auto.sync();
     }
 
     // ----- loop -----
@@ -589,30 +629,6 @@
       if (!this._raf) return;
       cancelAnimationFrame(this._raf);
       this._raf = null;
-    }
-
-    _syncAuto() {
-      clearInterval(this._autoTimer);
-      this._autoTimer = null;
-      const every = this.options.autoAdvance;
-      if (!every || every <= 0 || this._cards.length < 2 || this._prefersReduced()) return;
-      this._autoTimer = setInterval(() => {
-        // Skipping a beat rather than tearing the timer down keeps the
-        // cadence steady across a hover that starts and ends mid-interval.
-        if (!this._onScreen || this._hovering || document.hidden) return;
-        if (this._dragging || this._wheelActive) return;
-        // With the loop off, walk back the other way at the ends rather
-        // than pressing silently against them forever.
-        if (!this.options.loop) {
-          if (this._autoDir > 0 && this._pos >= this._maxIndex - 0.0005) this._autoDir = -1;
-          else if (this._autoDir < 0 && this._pos <= 0.0005) this._autoDir = 1;
-        }
-        this.step(this._autoDir);
-      }, Math.max(200, every));
-    }
-
-    _prefersReduced() {
-      return !!(this._reduced && this._reduced.matches);
     }
 
     _tick() {
@@ -728,7 +744,7 @@
       this._stop();
       this._intersectionObserver.disconnect();
       clearTimeout(this._wheelIdleTimer);
-      clearInterval(this._autoTimer);
+      this._auto.destroy();
       this.root.removeEventListener('wheel', this._onWheel);
       this.root.removeEventListener('pointerdown', this._onPointerDown);
       this.root.removeEventListener('keydown', this._onKeyDown);
@@ -736,15 +752,17 @@
       this.root.removeEventListener('pointerleave', this._onLeave);
       this.track.removeEventListener('click', this._onClickCapture, true);
       document.removeEventListener('visibilitychange', this._onVisibility);
-      if (this._reduced && this._reduced.removeEventListener) {
-        this._reduced.removeEventListener('change', this._onReducedChange);
-      }
       this._resizeObserver.disconnect();
       global.removeEventListener('pointermove', this._onPointerMove);
       global.removeEventListener('pointerup', this._onPointerUp);
       global.removeEventListener('pointercancel', this._onPointerUp);
     }
   }
+
+  // next/prev/first/last/play/pause/playing - the derivations of step, to
+  // and the autoplay controller above, written once in the kit for all
+  // four carousels.
+  addCommonApi(Reel.prototype);
 
   Reel.DEFAULTS = DEFAULTS;
 

@@ -103,6 +103,18 @@
     </div>
 
     <div class="control-row">
+      <label>At the last frame
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoplayEnd">?<span class="hint" role="tooltip" id="hint-autoplayEnd">What Autoplay does when it reaches the end of a deck with Loop switched off — sweep back through every frame to the first, ping-pong back a frame per beat, cut straight back to the first after one beat, or stop there. A looping deck has no last frame, so this does nothing until you turn Loop off.</span></span>
+      </label>
+      <select id="autoplayEndSelect">
+        <option value="rewind" selected>Sweep back to the first</option>
+        <option value="bounce">Ping-pong</option>
+        <option value="jump">Cut back to the first</option>
+        <option value="stop">Stop there</option>
+      </select>
+    </div>
+
+    <div class="control-row">
       <label>Mask
         <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-mask">?<span class="hint" role="tooltip" id="hint-mask">Off by default. Vignette softens all four edges, porthole is a single oval, and binocular is two overlapping ellipses — the shape a pair of eyepieces makes, which only reads right on a roughly 2:1 deck. A mask fades into <code>--dk-body</code>.</span></span>
       </label>
@@ -123,6 +135,14 @@
         <option value="any">Any direction</option>
         <option value="off">Off</option>
       </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="loopCheckbox" checked />
+        Loop
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-loop">?<span class="hint" role="tooltip" id="hint-loop">On, the last frame advances to the first and there is no beginning or end. Off gives the deck two ends: frames stop wrapping round to the other side, the arrows go dim and unclickable where there's nothing left to show, and a wheel that can't move it any further is handed back to the page instead of captured.</span></span>
+      </label>
     </div>
 
     <div class="control-row">

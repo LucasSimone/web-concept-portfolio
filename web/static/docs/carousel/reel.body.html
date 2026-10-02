@@ -153,15 +153,57 @@ Reel.initAll('.reel', { wheelAxis: 'vertical' });</code></pre>
       <div class="recipe">
         <h3>Turning by itself</h3>
         <p>
-          <code>autoAdvance</code> is milliseconds between automatic
-          steps, 0 for off. It pauses while the pointer is over the ring,
-          while it's being dragged or actively scrolled, while it's off
-          screen, in a hidden tab, or under
-          <code>prefers-reduced-motion</code> - and with
-          <code>loop</code> off it walks back the other way at the ends
-          rather than pressing silently against them.
+          <code>autoplay</code> is milliseconds between automatic steps, 0
+          for off. It pauses while the pointer is over the ring, while it's
+          being dragged or actively scrolled, while it's off screen, in a
+          hidden tab, or under <code>prefers-reduced-motion</code> - so a
+          ring that turns itself still holds still for anyone actually
+          reading it, with nothing to wire up.
         </p>
-        <pre><code>Reel.initAll('.reel', { autoAdvance: 2200 });</code></pre>
+        <p>
+          A looping ring simply turns forever. With <code>loop</code> off
+          there is a last card to reach, and <code>autoplayEnd</code> is
+          what happens there: <code>'rewind'</code> (the default) spools
+          back round through every card to the first,
+          <code>'bounce'</code> reverses and walks back a card per beat,
+          <code>'jump'</code> waits one beat and cuts back to the first,
+          and <code>'stop'</code> parks there - though even then the timer
+          keeps running, so spinning the ring off the end by hand has it
+          pick up again.
+        </p>
+        <pre><code>Reel.initAll('.reel', { autoplay: 2200 });
+
+// An arc that runs to the end, then spools back and does it again
+Reel.initAll('.reel', { loop: false, autoplay: 2200, autoplayEnd: 'rewind' });
+
+// Or drive the timer directly - the option stays as it was.
+const ring = Reel.get('#myReel');
+ring.pause();
+ring.play();</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Spinning it from your own code</h3>
+        <p>
+          Everything the wheel, a drag, a click or the arrow keys can do is
+          on the instance too, in two flavours: <code>.step()</code>,
+          <code>.next()</code>, <code>.prev()</code>, <code>.to()</code>,
+          <code>.first()</code> and <code>.last()</code> all spin there with
+          the same settle spring the input modes use, while
+          <code>.jump()</code> cuts straight to a card with no spin at all.
+          <code>.index</code> and <code>.length</code> read back where it
+          is. A row of buttons, a keyboard shortcut of your own, or a ring
+          driven entirely by something else on the page is wiring, not a
+          fork.
+        </p>
+        <pre><code>const ring = Reel.get('#myReel');
+
+document.querySelector('.next').onclick = () =&gt; ring.next();
+document.querySelector('.prev').onclick = () =&gt; ring.prev();
+document.querySelector('.home').onclick = () =&gt; ring.first();
+
+// No spin - straight there, as if it had always been on that card.
+ring.jump(4);</code></pre>
       </div>
 
       <div class="recipe">
@@ -265,7 +307,8 @@ Reel.initAll('.reel', { clickToSelect: false });</code></pre>
           <tr><td><code>dragThreshold</code></td><td><code>6</code></td><td>Pixels of pointer movement before a press counts as a drag rather than a click straight through to the card</td></tr>
           <tr><td><code>clickToSelect</code></td><td><code>true</code></td><td>Whether clicking a card that isn't in focus brings it there, swallowing that click. The focused card always passes its clicks through regardless</td></tr>
           <tr><td><code>wheelEnabled</code></td><td><code>true</code></td><td>The master switch for scrolling over the ring, whatever <code>wheelAxis</code> says</td></tr>
-          <tr><td><code>autoAdvance</code></td><td><code>0</code></td><td>Milliseconds between automatic steps; 0 is off. Paused while the pointer is over the ring, while it's dragged or scrolled, off screen, in a hidden tab, or under <code>prefers-reduced-motion</code></td></tr>
+          <tr><td><code>autoplay</code></td><td><code>0</code></td><td>Milliseconds between automatic steps; 0 is off. Paused while the pointer is over the ring, while it's dragged or scrolled, off screen, in a hidden tab, or under <code>prefers-reduced-motion</code></td></tr>
+          <tr><td><code>autoplayEnd</code></td><td><code>'rewind'</code></td><td>What <code>autoplay</code> does on reaching the last card with <code>loop</code> off: <code>'rewind'</code> spools back through the ring to the first, <code>'bounce'</code> ping-pongs a card per beat, <code>'jump'</code> cuts back to the first after one beat, <code>'stop'</code> parks there. Ignored while looping, which has no last card</td></tr>
         </tbody>
       </table>
 
@@ -278,11 +321,17 @@ Reel.initAll('.reel', { clickToSelect: false });</code></pre>
           <tr><td><code>new Reel(root, options)</code></td><td>Constructs directly against a root element carrying <code>.reel-track</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
           <tr><td><code>.refresh()</code></td><td>Re-reads which cards are currently visible (skips anything <code>hidden</code>), remeasures the ring's radii, and jumps back to card 0 - call after changing which cards are shown.</td></tr>
           <tr><td><code>.update(options)</code></td><td>Merges new option values in, then remeasures and redraws - the animation loop parks itself whenever the ring is still, so a live change can't wait for the next frame that happens to run.</td></tr>
-          <tr><td><code>.step(direction, count)</code></td><td>Spins the ring by <code>count</code> cards (default 1) in <code>direction</code>. A nudge to the settle spring, not a queued step: several in a row blend into one spin.</td></tr>
-          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> into focus - by the shortest way round while looping, resolved against the current position so a ring spun several laps doesn't unwind them all.</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>Spins the ring by <code>count</code> cards (default 1) in <code>direction</code>. A nudge to the settle spring, not a queued step: several in a row blend into one spin. Clamped at the two ends with <code>loop</code> off.</td></tr>
+          <tr><td><code>.next(count)</code> / <code>.prev(count)</code></td><td><code>.step(1, count)</code> and <code>.step(-1, count)</code>.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Brings <code>index</code> into focus - by the shortest way round while looping, resolved against the current position so a ring spun several laps doesn't unwind them all. An index outside the ring wraps round it while looping (so <code>.to(-1)</code> is the last card) and stops at the nearer end when not.</td></tr>
+          <tr><td><code>.first()</code> / <code>.last()</code></td><td>The two ends, by the same spin <code>.to()</code> makes - so on a looping ring <code>.first()</code> from the last card is one step forward, not a lap back.</td></tr>
+          <tr><td><code>.jump(index)</code></td><td>Puts <code>index</code> in focus at once, with no spin - the cut to <code>.to()</code>'s travelling shot. Still lands dead on the card, so <code>reel-settle</code> fires and the position is persisted just as after a spin.</td></tr>
+          <tr><td><code>.play()</code> / <code>.pause()</code></td><td>Start and stop the <code>autoplay</code> timer without touching the option. <code>.pause()</code> survives a later <code>update()</code>; <code>.play()</code> is what undoes it.</td></tr>
+          <tr><td><code>.playing</code></td><td>Whether the timer is running - <code>false</code> after <code>.pause()</code>, for <code>autoplay: 0</code>, under reduced motion, and on a ring with fewer than two cards. It says nothing about whether a beat is currently being held back for a hovered or off-screen ring: that ring is still playing, just holding still.</td></tr>
           <tr><td><code>.index</code></td><td>The focused card's index, or -1 on an empty ring.</td></tr>
+          <tr><td><code>.length</code></td><td>How many cards are on the ring (the visible ones, as of the last <code>refresh()</code>).</td></tr>
           <tr><td><code>.radiusX</code> / <code>.radiusY</code></td><td>The ring's effective radii in pixels, after fitting to the box and scaling by <code>ringSize</code> - what's actually being drawn, rather than what was asked for.</td></tr>
-          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, clears the auto-advance timer and removes every bound listener. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, clears the autoplay timer and removes every bound listener. The element stays marked as claimed, so a later <code>initAll()</code> skips it rather than re-initializing it.</td></tr>
           <tr><td><code>Reel.initAll(selector, options)</code></td><td>Default selector <code>'.reel:not(.is-empty)'</code>. Constructs an instance for each matching element not already claimed.</td></tr>
           <tr><td><code>Reel.get(elOrSelector)</code></td><td>Static lookup for an already-initialized instance, by element or selector.</td></tr>
           <tr><td><code>Reel.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code>.</td></tr>
@@ -384,7 +433,7 @@ Reel.initAll('.reel', { clickToSelect: false });</code></pre>
         doesn't belong on this one. Spinning a reel is a deliberate act:
         wheel, drag, click a card, or the arrow keys. The pointer merely
         being over the ring does exactly one thing - it pauses
-        <code>autoAdvance</code>, so a self-turning ring holds still while
+        <code>autoplay</code>, so a self-turning ring holds still while
         someone is reading it.
       </p>
       <p>

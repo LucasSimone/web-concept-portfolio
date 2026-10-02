@@ -138,10 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Controls --------------------------------------------------------
-  const toggles = ['clickToSelect', 'wheelEnabled', 'rim', 'hub', 'gate'];
+  const toggles = ['loop', 'clickToSelect', 'wheelEnabled', 'rim', 'hub', 'gate'];
   const controls = {
     profile: document.getElementById('profileSelect'),
     cardAngle: document.getElementById('cardAngleRange'),
+    autoplay: document.getElementById('autoplayRange'),
+    autoplayEnd: document.getElementById('autoplayEndSelect'),
     pivot: document.getElementById('pivotRange'),
     radius: document.getElementById('radiusRange'),
     wheelAxis: document.getElementById('wheelAxisSelect'),
@@ -154,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     friction: document.getElementById('frictionRange'),
     snapStrength: document.getElementById('snapStrengthRange'),
     dragThreshold: document.getElementById('dragThresholdRange'),
+    loop: document.getElementById('loopCheckbox'),
     clickToSelect: document.getElementById('clickToSelectCheckbox'),
     wheelEnabled: document.getElementById('wheelEnabledCheckbox'),
     rim: document.getElementById('rimCheckbox'),
@@ -169,6 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   controls.wheelAxis.addEventListener('change', () => {
     apply({ wheelAxis: controls.wheelAxis.value });
+  });
+
+  controls.autoplayEnd.addEventListener('change', () => {
+    apply({ autoplayEnd: controls.autoplayEnd.value });
   });
 
   // The largest radius that keeps the gate on screen is however far the
@@ -193,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     default: {
       cardAngle: 26, pivot: 1, radius: 0, wheelAxis: 'both', rimInset: 20, selectedScale: 1.14, horizon: 84, fadeRange: 36,
       cardStep: 120, wheelSensitivity: 1, friction: 0.86, snapStrength: 0.055, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
     },
     // 360/14: set the card count to 14 and the disc closes exactly, with
@@ -200,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     reel: {
       cardAngle: 25.7, pivot: 1, radius: 0, wheelAxis: 'both', rimInset: 22, selectedScale: 1.18, horizon: 90, fadeRange: 16,
       cardStep: 120, wheelSensitivity: 1, friction: 0.88, snapStrength: 0.05, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
     },
     // A card angle tighter than the cards are wide, so they shingle into
@@ -208,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dense: {
       cardAngle: 11, pivot: 1, radius: 0, wheelAxis: 'both', rimInset: 16, selectedScale: 1.22, horizon: 80, fadeRange: 34,
       cardStep: 80, wheelSensitivity: 1.2, friction: 0.9, snapStrength: 0.06, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
     },
     // Hub dropped below the box: a shallow slice of a much bigger disc,
@@ -215,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     shallow: {
       cardAngle: 15, pivot: 1.55, radius: 0, wheelAxis: 'both', rimInset: 20, selectedScale: 1.12, horizon: 60, fadeRange: 26,
       cardStep: 120, wheelSensitivity: 1, friction: 0.86, snapStrength: 0.055, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
     },
     // Hub lifted part way up and the horizon pushed out, for about three
@@ -227,18 +238,32 @@ document.addEventListener('DOMContentLoaded', () => {
     threeQuarter: {
       cardAngle: 34, pivot: 0.75, radius: 0, wheelAxis: 'both', rimInset: 18, selectedScale: 1.18, horizon: 150, fadeRange: 44,
       cardStep: 120, wheelSensitivity: 1, friction: 0.88, snapStrength: 0.05, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
+      clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
+    },
+    // Loop off, so the wheel becomes a fan with a first and last card: the
+    // disc runs out rather than coming round again. Turning itself as well,
+    // because the thing worth watching here is what it does on reaching the
+    // end - spooling back round through every card to the first.
+    fan: {
+      cardAngle: 20, pivot: 1, radius: 0, wheelAxis: 'both', rimInset: 20, selectedScale: 1.16, horizon: 84, fadeRange: 30,
+      cardStep: 120, wheelSensitivity: 1, friction: 0.88, snapStrength: 0.05, dragThreshold: 6,
+      loop: false, autoplay: 2600, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: true, hub: true, gate: true,
     },
     // Nothing drawn but the cards - the mechanism with the object removed.
     bare: {
       cardAngle: 26, pivot: 1, radius: 0, wheelAxis: 'both', rimInset: 20, selectedScale: 1, horizon: 84, fadeRange: 44,
       cardStep: 120, wheelSensitivity: 1, friction: 0.86, snapStrength: 0.055, dragThreshold: 6,
+      loop: true, autoplay: 0, autoplayEnd: 'rewind',
       clickToSelect: true, wheelEnabled: true, rim: false, hub: false, gate: false,
     },
   };
 
   function syncLabels() {
     document.getElementById('cardAngleVal').textContent = `${Number(controls.cardAngle.value).toFixed(1)}°`;
+    const auto = Number(controls.autoplay.value);
+    document.getElementById('autoplayVal').textContent = auto > 0 ? `${auto}ms` : 'Off';
     document.getElementById('pivotVal').textContent = Number(controls.pivot.value).toFixed(2);
     // Reads the effective radius back off the instance rather than
     // echoing the slider, so the vertical clamp (see _measure) shows up
@@ -264,6 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // table rather than eleven near-identical listener bodies.
   const numeric = [
     ['cardAngle', 'cardAngle'],
+    ['autoplay', 'autoplay'],
     ['pivot', 'pivot'],
     ['radius', 'radius', (v) => (v > 0 ? v : null)],
     ['rimInset', 'rimInset'],
@@ -293,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const profile = PROFILES[name];
     if (!profile) return;
     const options = applyProfileFromTable({
-      profile, controls, numeric, toggles, directs: ['wheelAxis'],
+      profile, controls, numeric, toggles, directs: ['wheelAxis', 'autoplayEnd'],
     });
     apply(options);
     syncRadiusBounds();

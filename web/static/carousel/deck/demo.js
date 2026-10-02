@@ -113,8 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     duration: document.getElementById('durationRange'),
     bounce: document.getElementById('bounceRange'),
     autoplay: document.getElementById('autoplayRange'),
+    autoplayEnd: document.getElementById('autoplayEndSelect'),
     mask: document.getElementById('maskSelect'),
     wheel: document.getElementById('wheelSelect'),
+    loop: document.getElementById('loopCheckbox'),
     arrows: document.getElementById('arrowsCheckbox'),
     dots: document.getElementById('dotsCheckbox'),
     click: document.getElementById('clickCheckbox'),
@@ -135,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ['bounce', 'bounce', (v) => v.toFixed(2)],
     ['autoplay', 'autoplay', (v) => (v === 0 ? 'Off' : `${v}ms`)],
   ];
-  const toggles = ['arrows', 'dots', 'click', 'drag', 'clip', 'lever', 'glare'];
+  const toggles = ['loop', 'arrows', 'dots', 'click', 'drag', 'clip', 'lever', 'glare'];
 
   // Options a *transition* owns. Only the rows belonging to the running
   // transition are shown, and their values are re-read from the deck whenever
@@ -197,6 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   controls.mask.addEventListener('change', () => deck.update({ mask: controls.mask.value }));
+  controls.autoplayEnd.addEventListener('change', () => deck.update({
+    autoplayEnd: controls.autoplayEnd.value,
+  }));
   controls.wheel.addEventListener('change', () => deck.update({
     wheel: controls.wheel.value === 'off' ? false : controls.wheel.value,
   }));

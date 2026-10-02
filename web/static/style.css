@@ -299,6 +299,105 @@
   display: block;
 }
 
+/* --- Carousel Lab card previews ---------------------------------------
+   Each Carousel Lab card runs a live, miniature instance of the mechanism
+   it links to, in a band between the title and the "View" line - the same
+   idea as the Background cards' canvases, just boxed rather than
+   full-bleed, since a strip of cards sliding under a 30px headline would
+   fight it for the middle of the card.
+
+   The whole band is `pointer-events: none`: these are showcases driven by
+   their own autoplay timer, and a nested carousel that took wheel or drag
+   input would be competing with the homepage strip it is sitting inside
+   for the same gesture. It also keeps the outer strip's hover-follow
+   working normally over this area, since the pointer still resolves to the
+   .sweep-card the band sits in rather than to anything in here.
+
+   Nothing below styles motion or position - that is each effect's own
+   injected CSS, exactly as on any other page consuming them. This is only
+   the band's box and the chips' chrome. */
+.carousel-preview {
+  position: relative;
+  z-index: 1;
+  height: 86px;
+  flex: none;
+  pointer-events: none;
+}
+/* Two different reasons for the same declaration. Sweep's own injected CSS
+   sets no height at all, leaving it to the host - and this host is the
+   homepage, which sets `.sweep { height: 240px }` further down for its own
+   strips, so a nested one would take that straight into an 86px band. Deck
+   does size itself, but by filling the width at `--dk-aspect` rather than
+   its box, and per its own sizing rules an explicit height is how you
+   override that. Reel and Dial need neither: both carry `height: 100%` in
+   their injected CSS and fit the band on their own. */
+.carousel-preview .sweep,
+.carousel-preview .deck {
+  height: 100%;
+}
+/* One chip style for the three outline mechanisms: a card reduced to its
+   outline and its number, which is as much as reads at this size. Each
+   effect scales and positions these itself; the sizes here are only what
+   it measures. */
+.cp-chip,
+.cp-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid #000;
+  background: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.cp-strip .cp-chip {
+  width: 56px;
+  height: 46px;
+}
+/* Wide enough that the ring's near cards overlap each other rather than
+   sitting apart - see the Reel options in home.js for why that overlap is
+   what makes the focused card read as the front of the fan. */
+.cp-ring .cp-chip {
+  width: 46px;
+  height: 38px;
+}
+/* Small enough that the disc's ring radius - its own radius less the rim
+   margin and half a card's height at selected size - still leaves the
+   cards out near the rim rather than piled over the hub. See the Dial
+   docs' note that card size has to come down with the disc. */
+.cp-disc .cp-slot {
+  width: 30px;
+  height: 20px;
+  font-size: 9px;
+}
+/* The one solid preview, and deliberately: the other three are sets of
+   loose cards, while a deck is one window with frames changing inside it,
+   so it reads as a filled box rather than an outline. The frames are the
+   black half and the body behind them is the card's own white, which is
+   what makes the cube's turn legible - the faces swing apart and the gap
+   between them opens as white. (The other way round - black body, white
+   frames - a frame at rest covers the body exactly and the preview is a
+   blank white rectangle.) --dk-body is Deck's own hook for that color. */
+.cp-deck {
+  --dk-body: #fff;
+}
+.cp-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #fff;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+/* Under reduced motion every autoplay timer stays off (see createAutoplay
+   in shared/carousel-kit.js), so these previews hold still on whichever
+   item they started on - a static diagram of the mechanism rather than a
+   blank band, which is the intended fallback and needs no CSS of its own.
+   Noted here so it doesn't read as an omission. */
+
 /* Spotlight (concepts/spotlight/spotlight.js). The concept grid's
    Spotlight card deliberately runs no Liftoff instance (see home.js), but
    it still needs the .liftoff-card class - that's the structural wrapper

@@ -323,7 +323,47 @@ Deck.initAll('.inline-deck', { wheel: false });</code></pre>
           mid-interval. It stays off entirely under
           <code>prefers-reduced-motion: reduce</code>.
         </p>
-        <pre><code>Deck.initAll('.deck', { transition: 'zoom', autoplay: 3200 });</code></pre>
+        <pre><code>Deck.initAll('.deck', { transition: 'zoom', autoplay: 3200 });
+
+// Drive the timer directly - the option stays as it was.
+const deck = Deck.get('#myDeck');
+deck.pause();
+deck.play();</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A deck with two ends</h3>
+        <p>
+          A deck loops by default — the last frame advances to the first and
+          there is no beginning or end. <code>loop: false</code> gives it
+          two: the position clamps, frames stop wrapping round to the other
+          side (so the far end stays culled out of sight instead of queueing
+          up on the near one), the arrows go <code>disabled</code> where
+          there is nothing left to show, and a wheel that can't move the
+          deck any further is handed back to the page rather than captured —
+          which is the one escape hatch <code>wheel: 'any'</code> otherwise
+          doesn't have.
+        </p>
+        <p>
+          The root also carries <code>.is-at-start</code> and
+          <code>.is-at-end</code> at those two points, for styling of your
+          own — a counter, a hint, a different treatment for the dead arrow
+          than the built-in dimming.
+        </p>
+        <p>
+          Reaching the end matters most to <code>autoplay</code>, which
+          would otherwise press silently against it forever, so
+          <code>autoplayEnd</code> says what happens there:
+          <code>'rewind'</code> (the default) sweeps back through every
+          frame to the first, <code>'bounce'</code> reverses and walks back
+          a frame per beat, <code>'jump'</code> waits one beat and cuts back
+          to the first, and <code>'stop'</code> parks there — though even
+          then the timer keeps running, so advancing the deck off the end by
+          hand has it pick up again.
+        </p>
+        <pre><code>// Runs through once, then cuts back and does it again
+Deck.initAll('.deck', { loop: false, autoplay: 3200, autoplayEnd: 'jump' });</code></pre>
+        <pre><code>.deck.is-at-end .my-hint { opacity: 1; }</code></pre>
       </div>
 
       <div class="recipe">
@@ -384,7 +424,9 @@ Deck.initAll('.inline-deck', { wheel: false });</code></pre>
           <tr><td><code>click</code></td><td><code>true</code></td><td>Whether a click or tap on the frame advances (shift-click goes back). A press that lands on a link or button inside a frame stays a press on that</td></tr>
           <tr><td><code>drag</code></td><td><code>true</code></td><td>Whether the frames can be dragged at all. Scrub or ratchet is the transition's call, not this one's</td></tr>
           <tr><td><code>wheel</code></td><td><code>'x'</code></td><td><code>'x'</code> takes horizontal deltas only, so page scroll always passes through; <code>'any'</code> also takes vertical ones; <code>false</code> takes neither</td></tr>
+          <tr><td><code>loop</code></td><td><code>true</code></td><td>Whether the last frame advances to the first. <code>false</code> gives the deck two ends: the position clamps, frames stop wrapping round to the other side, the arrows go <code>disabled</code> where there's nothing left to show, and a wheel that can't move it any further is handed back to the page</td></tr>
           <tr><td><code>autoplay</code></td><td><code>0</code></td><td>Milliseconds between automatic advances; 0 is off. Paused off screen, on a hidden tab, while hovered or focused, and under reduced-motion</td></tr>
+          <tr><td><code>autoplayEnd</code></td><td><code>'rewind'</code></td><td>What <code>autoplay</code> does on reaching the last frame with <code>loop</code> off: <code>'rewind'</code> sweeps back through the deck to the first, <code>'bounce'</code> ping-pongs a frame per beat, <code>'jump'</code> cuts back to the first after one beat, <code>'stop'</code> parks there. Ignored while looping, which has no last frame</td></tr>
           <tr><td><code>clip</code></td><td><code>true</code></td><td>Whether the box clips its frames. <code>false</code> lets them spill onto the page — with <code>--dk-body: transparent</code>, what turns a stack into loose cards. Only sensible for a transition that fades its frames out before they leave the box</td></tr>
           <tr><td><code>mask</code></td><td><code>'none'</code></td><td><code>'none'</code>, <code>'vignette'</code> (soft-edged all round), <code>'porthole'</code> (one oval) or <code>'binocular'</code> (two eyepieces; wants a roughly 2:1 deck)</td></tr>
           <tr><td><code>glare</code></td><td><code>false</code></td><td>Lens sheen and vignette laid over the frames</td></tr>
@@ -418,8 +460,12 @@ Deck.initAll('.inline-deck', { wheel: false });</code></pre>
         <tbody>
           <tr><td><code>new Deck(root, options)</code></td><td>Constructs directly against a root element containing <code>.deck-port</code> (used internally by <code>initAll</code>, and just as valid to call yourself).</td></tr>
           <tr><td><code>.next(count)</code> / <code>.prev(count)</code></td><td>Advances or retreats <code>count</code> frames (default 1), accumulating onto a move already in flight.</td></tr>
-          <tr><td><code>.step(direction, count)</code></td><td>The same thing with an explicit sign. A no-op on a deck with fewer than two frames.</td></tr>
-          <tr><td><code>.to(index)</code></td><td>Goes to <code>index</code> by the shortest way around, in one sweep rather than one step at a time.</td></tr>
+          <tr><td><code>.step(direction, count)</code></td><td>The same thing with an explicit sign. A no-op on a deck with fewer than two frames, and clamped at the two ends with <code>loop</code> off.</td></tr>
+          <tr><td><code>.to(index)</code></td><td>Goes to <code>index</code> in one sweep rather than one step at a time — by the shortest way around while looping, and straight through the frames in between when it isn't. An index outside the deck wraps round it while looping (so <code>.to(-1)</code> is the last frame) and stops at the nearer end when not.</td></tr>
+          <tr><td><code>.first()</code> / <code>.last()</code></td><td>The two ends, by the same single move <code>.to()</code> makes.</td></tr>
+          <tr><td><code>.jump(index)</code></td><td>Shows <code>index</code> at once, with no transition — the cut to <code>.to()</code>'s dissolve. Still lands exactly on the frame, so <code>deck-settle</code> fires and the position is persisted just as after a move.</td></tr>
+          <tr><td><code>.play()</code> / <code>.pause()</code></td><td>Start and stop the <code>autoplay</code> timer without touching the option. <code>.pause()</code> survives a later <code>update()</code>; <code>.play()</code> is what undoes it.</td></tr>
+          <tr><td><code>.playing</code></td><td>Whether the timer is running — <code>false</code> after <code>.pause()</code>, for <code>autoplay: 0</code>, under reduced motion, and on a deck with fewer than two frames. It says nothing about whether a beat is currently being held back for a hovered or off-screen deck: that deck is still playing, just holding still.</td></tr>
           <tr><td><code>.index</code></td><td>Getter for the current frame's index among the visible frames, or <code>-1</code> when there are none.</td></tr>
           <tr><td><code>.length</code></td><td>Getter for how many frames are in the deck.</td></tr>
           <tr><td><code>.transition</code></td><td>Getter for the running transition's name, or <code>'custom'</code> for one passed inline as an object.</td></tr>

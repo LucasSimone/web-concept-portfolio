@@ -84,32 +84,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // known-good combination, but each stays freely editable afterward.
   const PROFILES = {
     default: {
-      ringSize: 1, loop: true, autoAdvance: 0,
+      ringSize: 1, loop: true, autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 140, cardAngle: 34, minScale: 0.32, maxDepth: 0.92, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // Low cardAngle: many cards crowd into the visible ring at once.
     dense: {
-      ringSize: 1, loop: true, autoAdvance: 0,
+      ringSize: 1, loop: true, autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 140, cardAngle: 20, minScale: 0.4, maxDepth: 0.95, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // High cardAngle: a wide, open fan, fewer neighbors visible at once.
     open: {
-      ringSize: 1, loop: true, autoAdvance: 0,
+      ringSize: 1, loop: true, autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 160, cardAngle: 52, minScale: 0.3, maxDepth: 0.85, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // Background cards shrink almost to nothing, but a high maxDepth keeps
     // the whole ring populated regardless - a faint, distant halo.
     tiny: {
-      ringSize: 1, loop: true, autoAdvance: 0,
+      ringSize: 1, loop: true, autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 140, cardAngle: 34, minScale: 0.12, maxDepth: 0.98, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.8, snapStrength: 0.045, wheelIdleDelay: 140, dragThreshold: 6,
     },
     // Light and fast: a short card step and a hard, quick-settling spring.
     snappy: {
-      ringSize: 1, loop: true, autoAdvance: 0,
+      ringSize: 1, loop: true, autoplay: 0, autoplayEnd: 'rewind',
       cardStep: 90, cardAngle: 34, minScale: 0.32, maxDepth: 0.92, wheelSensitivity: 1.4,
       maxVelocity: 0.6, friction: 0.7, snapStrength: 0.09, wheelIdleDelay: 100, dragThreshold: 4,
     },
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Distances no longer wrap, so a tight cardAngle and a shallow visible
     // depth leave a readable arc rather than a crowd piled up at the back.
     arc: {
-      ringSize: 0.9, loop: false, autoAdvance: 0,
+      ringSize: 0.9, loop: false, autoplay: 0, autoplayEnd: 'bounce',
       cardStep: 150, cardAngle: 26, minScale: 0.34, maxDepth: 0.7, wheelSensitivity: 1,
       maxVelocity: 0.4, friction: 0.84, snapStrength: 0.05, wheelIdleDelay: 140, dragThreshold: 6,
     },
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // and a lazy spring - a display piece rather than a control. Resting
     // the pointer on it holds it still to be read.
     turntable: {
-      ringSize: 1.2, loop: true, autoAdvance: 2200,
+      ringSize: 1.2, loop: true, autoplay: 2200, autoplayEnd: 'rewind',
       cardStep: 170, cardAngle: 30, minScale: 0.26, maxDepth: 0.96, wheelSensitivity: 1,
       maxVelocity: 0.3, friction: 0.9, snapStrength: 0.035, wheelIdleDelay: 180, dragThreshold: 6,
     },
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const controls = {
     profile: document.getElementById('profileSelect'),
     ringSize: document.getElementById('ringSizeRange'),
-    autoAdvance: document.getElementById('autoAdvanceRange'),
+    autoplay: document.getElementById('autoplayRange'),
     cardStep: document.getElementById('cardStepRange'),
     cardAngle: document.getElementById('cardAngleRange'),
     minScale: document.getElementById('minScaleRange'),
@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wheelIdleDelay: document.getElementById('wheelIdleDelayRange'),
     dragThreshold: document.getElementById('dragThresholdRange'),
     loop: document.getElementById('loopCheckbox'),
+    autoplayEnd: document.getElementById('autoplayEndSelect'),
   };
 
   function syncLabels() {
@@ -156,8 +157,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ring = Number(controls.ringSize.value);
     document.getElementById('ringSizeVal').textContent = `${ring.toFixed(2)}× · `
       + `${Math.round(demo.radiusX)}×${Math.round(demo.radiusY)}px`;
-    const auto = Number(controls.autoAdvance.value);
-    document.getElementById('autoAdvanceVal').textContent = auto > 0 ? `${auto}ms` : 'Off';
+    const auto = Number(controls.autoplay.value);
+    document.getElementById('autoplayVal').textContent = auto > 0 ? `${auto}ms` : 'Off';
     document.getElementById('cardStepVal').textContent = `${controls.cardStep.value}px`;
     document.getElementById('cardAngleVal').textContent = `${controls.cardAngle.value}°`;
     document.getElementById('minScaleVal').textContent = controls.minScale.value;
@@ -174,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // table rather than a dozen near-identical listener bodies.
   const numeric = [
     ['ringSize', 'ringSize'],
-    ['autoAdvance', 'autoAdvance'],
+    ['autoplay', 'autoplay'],
     ['cardStep', 'cardStep'],
     ['cardAngle', 'cardAngle'],
     ['minScale', 'minScale'],
@@ -198,6 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
     apply({ loop: controls.loop.checked });
   });
 
+  controls.autoplayEnd.addEventListener('change', () => {
+    apply({ autoplayEnd: controls.autoplayEnd.value });
+  });
+
   // See shared/demo-shared.js: one pass over the same tables the
   // individual listeners use, so a profile can only ever set what a
   // control could have set by hand.
@@ -205,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const profile = PROFILES[name];
     if (!profile) return;
     const options = applyProfileFromTable({
-      profile, controls, numeric, toggles: ['loop'],
+      profile, controls, numeric, toggles: ['loop'], directs: ['autoplayEnd'],
     });
     apply(options);
     syncLabels();
