@@ -45,6 +45,14 @@
         element on load. The host supplies the box; the component measures
         it and lays a grid out inside.
       </p>
+      <p>
+        That auto-init uses the defaults, so options of your own go in one
+        of two places: <code>initAll()</code> early enough to claim the
+        element first, or <code>update()</code> on the instance afterward.
+        What doesn't work is <code>initAll()</code> late - an element that
+        is already claimed is skipped, and the options handed to that call
+        go nowhere.
+      </p>
 
       <h2 id="quick-start">Quick Start</h2>
       <pre><code>&lt;style&gt;
@@ -54,9 +62,17 @@
 &lt;div class="flip-dots my-board" id="board"&gt;&lt;/div&gt;
 &lt;script src="flip-dots.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  const board = FlipDots.get('#board');
+  // Claims the element now, ahead of auto-init
+  const [board] = FlipDots.initAll('#board');
   board.text('HELLO', { transition: 'ripple' });
 &lt;/script&gt;</code></pre>
+      <p>
+        An inline script runs while the document is still parsing, which is
+        before auto-init - so <code>FlipDots.get()</code> there would hand
+        back <code>null</code>. Claim the element with
+        <code>initAll()</code> as above, or wait for
+        <code>DOMContentLoaded</code> and use <code>get()</code> then.
+      </p>
       <p>
         Give the element a width and a height - everything else is derived
         from that box. With no <code>cols</code> the grid is measured
@@ -100,6 +116,21 @@ board.setGrid(grid, { transition: 'wipe' });</code></pre>
   '######',
 ], { charMap: { '.': 0, '#': 1 } });</code></pre>
         <p>
+          With no <code>charMap</code> a digit is its own state index and
+          anything else is state 0, which covers the common two- and
+          three-color pattern without making you write a map for it.
+        </p>
+        <p>
+          A state outside the palette is clamped into it, both when written
+          and again when painted, so shrinking the palette with
+          <code>update()</code> can't leave a dot asking for a color that
+          no longer exists - the orphans repaint at the nearest entry. What
+          it doesn't do is rewrite them: <code>get()</code> still reports
+          the old index until something asks that dot to change. Writing
+          the board again is the tidy way to switch, and has the new
+          palette arrive on a transition rather than a repaint.
+        </p>
+        <p>
           Only dots whose state actually differs will flip. Writing the
           same frame twice is free, and changing one word to another on a
           message board costs the handful of discs that disagree rather
@@ -110,15 +141,16 @@ board.setGrid(grid, { transition: 'wipe' });</code></pre>
       <div class="recipe">
         <h3>Driving one dot yourself</h3>
         <p>
-          <code>set()</code> takes the same four questions a transition
-          answers for a whole board, so hand-rolled choreography is not a
-          lesser path - a transition is just a convenient way to generate
+          <code>set()</code> takes the same questions a transition answers
+          for a whole board, so hand-rolled choreography is not a lesser
+          path - a transition is just a convenient way to generate
           <code>delay</code> for every dot at once.
         </p>
         <pre><code>board.set(4, 2, 1, {
   delay: 120,          // ms before this dot starts
   flipDuration: 300,   // this dot's own half turn
   bounce: 0.9,         // how hard this one rings
+  stiffness: 900,      // flipDuration in spring units, if you prefer
   direction: -1,       // force the turn direction
   silent: true,        // no click from this one
 });</code></pre>
@@ -138,6 +170,14 @@ board.setGrid(grid, { transition: 'wipe' });</code></pre>
           nothing when it isn't (red, blue, yellow). Forcing it lets a whole
           wave turn the same way regardless of what colors are involved -
           as does <code>directional: false</code> on the board.
+        </p>
+        <p>
+          One limit on hand-rolling: a dot holds a single instruction, and a
+          second request replaces the first rather than queueing behind it.
+          Sending a dot out and bringing it back is therefore two calls at
+          two moments, not one call with a delayed second leg - the delay
+          on that second call would simply overwrite the first before it
+          ever went anywhere.
         </p>
       </div>
 
@@ -194,9 +234,28 @@ FlipDots.initAll('.flip-dots', { flipDuration: 130, bounce: 0.95 });</code></pre
           One honest limit at the quiet end: as bounce approaches 0 the
           spring barely crosses its target at all, so the constant needed to
           arrive by a deadline runs away faster than the integrator can
-          follow. Below about <code>bounce: 0.2</code> a short
-          <code>flipDuration</code> becomes a request rather than a
-          guarantee, and the dot may take a little longer than asked.
+          follow. It is capped, which means a short
+          <code>flipDuration</code> at a low bounce is a request rather than
+          a guarantee - the dot simply takes longer than asked. The floor
+          moves with bounce:
+        </p>
+        <table class="opts-table">
+          <thead>
+            <tr><th>Bounce</th><th>Shortest flip time still honored</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>0</code></td><td>~120ms</td></tr>
+            <tr><td><code>0.2</code></td><td>~70ms</td></tr>
+            <tr><td><code>0.55</code> (default)</td><td>~39ms</td></tr>
+            <tr><td><code>0.95</code></td><td>~28ms</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Worth reading the top row twice: at <code>bounce: 0</code> even
+          the default 130ms is close to the floor. Nothing warns you when
+          you cross it, but <code>springConstant</code> pegged at 5600 is
+          the tell, and <code>settleMs</code> stops moving with the
+          duration.
         </p>
       </div>
 
@@ -289,12 +348,20 @@ board.setGrid(grid, { transition: 'wipe', easing: 'decelerate' });
 // A slow start that finishes in a rush
 board.setGrid(grid, { transition: 'rows', easing: 'accelerate' });
 
-FlipDots.easings.register('bounce', (t) =&gt; t * t * (3 - 2 * t));</code></pre>
+// Four ranks instead of a sweep: the board updates in blocks
+FlipDots.easings.register('blocks', (t) =&gt; Math.round(t * 3) / 3);</code></pre>
         <p>
           The curve is easier to read backwards: where the output changes
           slowly, many dots start close together and the wave is moving
           fast; where it changes quickly, they're spread out and it's
-          moving slowly.
+          moving slowly. Flat stretches are the extreme case of that, which
+          is why the one above lands in four distinct clacks.
+        </p>
+        <p>
+          An unrecognized <code>easing</code> name falls back to
+          <code>even</code>, and an unrecognized <code>transition</code>
+          falls back to <code>instant</code>. Neither throws: a typo should
+          cost you the choreography, not the content.
         </p>
       </div>
 
@@ -319,6 +386,30 @@ board.text('14:05', { on: 2, spacing: 2 });</code></pre>
         </p>
         <pre><code>const perGlyph = FlipDots.font.width + 1;
 const fits = Math.floor((board.cols + 1) / perGlyph);</code></pre>
+        <p>
+          The font covers <code>A-Z</code>, <code>0-9</code>, space and
+          <code>. , : ' ! ? - / * +</code>. Lowercase maps onto the same glyphs
+          rather than existing separately - at seven rows there is no space
+          for descenders, so a lowercase set would only be a worse-looking
+          copy of this one - and anything unmapped comes out as a space. A
+          sign that can't render an accented character should lose the
+          character, not the message.
+        </p>
+        <p>
+          <code>text()</code> owns the whole board: every dot the glyphs
+          don't light is written to <code>off</code>, so two
+          <code>text()</code> calls are not two lines - the second erases
+          the first. For composing, <code>FlipDots.textGrid()</code> is the
+          same glyph rendering handed back as a plain
+          <code>(x, y) =&gt; state</code> accessor instead of being written,
+          which is what lets several of them (or text over a pattern) be
+          combined into the one grid <code>setGrid</code> takes.
+        </p>
+        <pre><code>// Two lines on one board, written once
+const top = FlipDots.textGrid('FLIP', board.cols, board.rows, { y: 2 });
+const bottom = FlipDots.textGrid('DOTS', board.cols, board.rows, { y: 10 });
+
+board.setGrid((x, y) =&gt; (top(x, y) || bottom(x, y) ? 1 : 0));</code></pre>
       </div>
 
       <div class="recipe">
@@ -348,6 +439,17 @@ FlipDots.initAll('.flip-dots', { hinge: 45 });  // diagonal</code></pre>
         <pre><code>FlipDots.initAll('.flip-dots', { sound: true, volume: 0.4 });
 
 soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre>
+        <p>
+          A pointer crossing the board is not one of the events browsers
+          accept as that gesture, so a board that should only be audible on
+          hover is better off armed from the start and held silent:
+          <code>volume</code> is read at the moment each click sounds, which
+          makes it a live mute rather than something to decide at init.
+        </p>
+        <pre><code>FlipDots.initAll('.flip-dots', { sound: true, volume: 0 });
+
+board.el.addEventListener('pointerenter', () =&gt; board.update({ volume: 0.5 }));
+board.el.addEventListener('pointerleave', () =&gt; board.update({ volume: 0 }));</code></pre>
         <p>
           A board-wide wave is thousands of flips, which as thousands of
           voices would be white noise and more than the audio thread will
@@ -388,8 +490,7 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><td><code>borderWidth</code></td><td><code>0.08</code></td><td>Rim width as a fraction of dot diameter</td></tr>
           <tr><td><code>flipDuration</code></td><td><code>130</code></td><td>How long one dot takes to reach its stop, in ms. Time to <em>arrive</em>, not to stop ringing - see <code>settleMs</code></td></tr>
           <tr><td><code>bounce</code></td><td><code>0.55</code></td><td>0 is critically damped - arrives and stops dead. Higher rings against the stop before settling. Changes the character of the flip without changing how long it takes</td></tr>
-          <tr><td><code>stiffness</code></td><td><code>null</code></td><td>The same control as <code>flipDuration</code>, in spring units. Set one or the other; this wins when it isn't null</td></tr>
-          <tr><td><code>onFlip</code></td><td><code>null</code></td><td><code>(x, y, state, board)</code> as each dot passes edge-on and shows its new face. Off by default - a board-wide wave is thousands of calls in one frame</td></tr>
+          <tr><td><code>stiffness</code></td><td><code>null</code></td><td>The same control as <code>flipDuration</code>, in spring units. Set one or the other; this wins when it isn't null. Capped at 5600, which is the floor on flip time above</td></tr>
           <tr><td><code>overshoot</code></td><td><code>0.055</code></td><td>How far past flat the disc may flex when it hits its stop, in half turns (0.055 is about 10&#176;)</td></tr>
           <tr><td><code>jitter</code></td><td><code>0.18</code></td><td>Random variation in each dot's spring rate, so a row doesn't flip in lockstep</td></tr>
           <tr><td><code>shade</code></td><td><code>0.45</code></td><td>How much a face darkens as it turns away from the light</td></tr>
@@ -402,8 +503,9 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><td><code>transition</code></td><td><code>'ripple'</code></td><td>Default for <code>setGrid</code>: a name from <code>FlipDots.transitions</code>, or a function</td></tr>
           <tr><td><code>duration</code></td><td><code>600</code></td><td>Milliseconds from the first dot starting to the last one starting</td></tr>
           <tr><td><code>easing</code></td><td><code>'even'</code></td><td>How the clock runs while a transition plays: a name from <code>FlipDots.easings</code>, or a function</td></tr>
-          <tr><td><code>sound</code></td><td><code>false</code></td><td>A synthesized click as each disc meets its stop</td></tr>
-          <tr><td><code>volume</code></td><td><code>0.5</code></td><td>0 to 1</td></tr>
+          <tr><td><code>sound</code></td><td><code>false</code></td><td>A synthesized click as each disc meets its stop. Switching it on is also what arms the audio for the page's next pointer or key event</td></tr>
+          <tr><td><code>volume</code></td><td><code>0.5</code></td><td>0 to 1, read at the moment each click sounds - so <code>volume: 0</code> is a live mute rather than a reason not to turn <code>sound</code> on</td></tr>
+          <tr><td><code>onFlip</code></td><td><code>null</code></td><td><code>(x, y, state, board)</code> as each dot passes edge-on and shows its new face. Off by default - a board-wide wave is thousands of calls in one frame</td></tr>
         </tbody>
       </table>
 
@@ -413,27 +515,37 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><th>Method</th><th>Description</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>set(x, y, state, opts)</code></td><td>One dot. <code>opts</code> takes <code>delay</code>, <code>flipDuration</code>, <code>bounce</code>, <code>direction</code>, <code>silent</code></td></tr>
+          <tr><td><code>set(x, y, state, opts)</code></td><td>One dot. <code>opts</code> takes <code>delay</code>, <code>flipDuration</code>, <code>bounce</code>, <code>stiffness</code>, <code>direction</code>, <code>silent</code>. A second request replaces the first rather than queueing behind it</td></tr>
           <tr><td><code>get(x, y)</code></td><td>That dot's state, or -1 if out of range</td></tr>
           <tr><td><code>settled</code></td><td>Whether everything has come to rest</td></tr>
           <tr><td><code>isAnimating(x, y)</code></td><td>Whether that dot is mid-flight or waiting out a delay</td></tr>
           <tr><td><code>settle()</code></td><td>Drops everything onto its target immediately, cutting an update short</td></tr>
-          <tr><td><code>springConstant</code> / <code>settleMs</code></td><td>The effective spring, and roughly how long a flip takes to stop ringing</td></tr>
-          <tr><td><code>setGrid(data, opts)</code></td><td>The whole board, choreographed. <code>opts</code> takes <code>transition</code>, <code>easing</code>, <code>duration</code>, <code>direction</code>, <code>origin</code>, <code>charMap</code></td></tr>
+          <tr><td><code>springConstant</code> / <code>settleMs</code></td><td>The effective spring, and how long a flip takes to stop ringing - the second an estimate off the decay envelope, running a little over what the integrator actually takes</td></tr>
+          <tr><td><code>setGrid(data, opts)</code></td><td>The whole board, choreographed. <code>opts</code> takes <code>transition</code>, <code>easing</code>, <code>duration</code>, <code>direction</code>, <code>origin</code>, <code>charMap</code>, plus any of <code>set()</code>'s per-dot keys to apply to every dot of the update</td></tr>
           <tr><td><code>text(str, opts)</code></td><td>A line of text in the 5&#215;7 font, centered by default. Same <code>opts</code> as <code>setGrid</code>, plus <code>x</code>, <code>y</code>, <code>on</code>, <code>off</code>, <code>spacing</code></td></tr>
           <tr><td><code>measureText(str, opts)</code></td><td>How wide that string would be, in dots</td></tr>
           <tr><td><code>fill(state, opts)</code> / <code>clear(opts)</code></td><td>Every dot to one state</td></tr>
           <tr><td><code>rect(x, y, w, h, state, opts)</code></td><td>A rectangular block</td></tr>
           <tr><td><code>row(y, states, opts)</code> / <code>col(x, states, opts)</code></td><td>One line of the grid</td></tr>
           <tr><td><code>randomize(opts)</code></td><td>Every dot to a random state</td></tr>
-          <tr><td><code>snapshot()</code></td><td>A copy of what's on the board, row-major</td></tr>
-          <tr><td><code>dotAt(clientX, clientY)</code></td><td><code>[x, y]</code> of the dot under a client-space point, or <code>null</code> if it missed</td></tr>
+          <tr><td><code>snapshot()</code></td><td>A copy of what's on the board as a flat row-major <code>Uint8Array</code>. Handy for saving a frame or diffing in a test - but note <code>setGrid</code>'s array forms are plain arrays, so putting one back takes <code>Array.from()</code></td></tr>
+          <tr><td><code>dotAt(clientX, clientY)</code></td><td><code>[x, y]</code> of the dot under a client-space point, or <code>null</code> if it missed - including the slack around a centered grid, which is background rather than a dot</td></tr>
           <tr><td><code>update(options)</code></td><td>New option values. Grid changes re-measure and resample; color changes just repaint</td></tr>
           <tr><td><code>enableSound()</code></td><td>Start audio now, for a gesture that has already happened</td></tr>
           <tr><td><code>destroy()</code></td><td>Tears down observers, audio and the canvas</td></tr>
           <tr><td><code>flip-dots:settle</code></td><td>DOM event on the root, once each time the board goes from moving to still</td></tr>
           <tr><td><code>cols</code> / <code>rows</code> / <code>length</code></td><td>The grid actually settled on - read these rather than echoing what you asked for</td></tr>
           <tr><td><code>dotPx</code> / <code>pitchPx</code></td><td>Effective dot diameter and cell pitch, in px</td></tr>
+          <tr><td><code>el</code></td><td>The host element - what <code>flip-dots:settle</code> is dispatched on, and what the canvas was inserted into</td></tr>
+          <tr><td><code>options</code></td><td>The live options, defaults merged with everything <code>update()</code> has been given. Read it; write through <code>update()</code></td></tr>
+          <tr><td><code>reduced</code></td><td>Whether <code>prefers-reduced-motion</code> is currently set, which is why nothing is animating</td></tr>
+          <tr><td><code>FlipDots.initAll(selector, options)</code></td><td>Default selector <code>'.flip-dots'</code>. Constructs an instance for each matching element not already claimed, and returns them</td></tr>
+          <tr><td><code>FlipDots.get(elOrSelector)</code></td><td>The instance on an element or the first match of a selector, or <code>null</code>. What page code should use rather than calling <code>initAll</code> again, which would find nothing left to claim</td></tr>
+          <tr><td><code>FlipDots.getAll(selector)</code></td><td>Every already-initialized instance matching a selector, default the same as <code>initAll</code></td></tr>
+          <tr><td><code>FlipDots.textGrid(str, cols, rows, opts)</code></td><td>A line of text as a bare <code>(x, y) =&gt; state</code> accessor, taking the same <code>x</code>, <code>y</code>, <code>on</code>, <code>off</code>, <code>spacing</code> as <code>text()</code>. Composable, where <code>text()</code> commits the whole board</td></tr>
+          <tr><td><code>FlipDots.font</code></td><td><code>{ width, height, glyphs }</code> for the 5&#215;7 bitmap - measure capacity off <code>width</code> rather than writing a character count down</td></tr>
+          <tr><td><code>FlipDots.transitions</code> / <code>FlipDots.easings</code></td><td>The two registries, each a plain object of named functions plus a <code>register(name, fn)</code> - so a built-in can be read, wrapped or replaced, not just added to</td></tr>
+          <tr><td><code>FlipDots.defaults</code></td><td>The defaults table above, live. Each instance copies it at construction, so editing it changes what later instances start from and leaves existing ones alone</td></tr>
         </tbody>
       </table>
 
@@ -451,7 +563,7 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
           <tr><td><code>ripple</code></td><td>Outward from the center, or from <code>origin</code></td></tr>
           <tr><td><code>rows</code></td><td>Line by line, every dot in a row together</td></tr>
           <tr><td><code>snake</code></td><td>One dot at a time, down each row and back along the next</td></tr>
-          <tr><td><code>shuffle</code></td><td>Picks a different one of the above for every update, wipe direction included</td></tr>
+          <tr><td><code>shuffle</code></td><td>Picks a different one for every update, wipe direction included. It draws from the seven ordered ones above it and nothing else - not <code>instant</code>, which is the absence of choreography, and not anything you registered yourself, since your own transition should be opt-in rather than turning up unannounced</td></tr>
         </tbody>
       </table>
       <table class="opts-table">
@@ -486,8 +598,15 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
         flexing against its stop rather than swinging past it. The spring
         is integrated at a fixed sub-step regardless of frame rate, so the
         feel is identical on a 60Hz and a 144Hz display and a dropped frame
-        can't fling a dot. At the defaults a disc reaches its stop in about
-        127ms and has finished ringing by about 430ms.
+        can't fling a dot. At the defaults a disc swaps its face about 65ms
+        in, reaches its stop at about 130ms - which is what
+        <code>flipDuration</code> asked for - and has finished ringing by
+        about 450ms. <code>settleMs</code> puts that last number at ~470ms:
+        it models the decay envelope and not the rebound off the magnet,
+        which bleeds off energy the envelope doesn't know about, so it reads
+        a little long. An estimate, in other words, and the right way round
+        to be wrong - a chained update waits out the ringing rather than
+        cutting into it.
       </p>
       <p>
         <strong>The disc has a rim, and it matters more than it sounds:</strong>
@@ -523,9 +642,10 @@ soundButton.addEventListener('click', () =&gt; board.enableSound());</code></pre
         <strong>The loop stops when the board is at rest:</strong>
         <code>requestAnimationFrame</code> runs only while something is
         mid-flight and tears itself down otherwise, so a settled board
-        costs nothing at all. It also pauses off screen, and snaps
-        everything to its target on the way out rather than replaying a
-        queue of stale delays on the way back.
+        costs nothing at all. It also pauses off screen - 150px past the
+        viewport, so a board is already running by the time it scrolls into
+        view - and snaps everything to its target on the way out rather
+        than replaying a queue of stale delays on the way back.
       </p>
       <p>
         <strong>Resizing resamples rather than clearing:</strong> a new

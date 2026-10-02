@@ -650,7 +650,17 @@
   // wrong face. 5600 keeps w0 under 75, which covers every flip time down
   // to about 38ms - comfortably past the point where a flip reads as
   // instant anyway.
+  //
+  // It applies to a `stiffness` the host set directly as much as to one
+  // mapped from `flipDuration` (see clampStiffness, and the two places that
+  // read `options.stiffness`): the number is a request for a spring, and
+  // past this one there is no spring to give - only an integrator coming
+  // apart. A flip that is already past instant is the honest answer.
   const MAX_STIFFNESS = 5600;
+
+  function clampStiffness(k) {
+    return Math.min(MAX_STIFFNESS, k);
+  }
 
   // Spring constant that puts a dot at its stop after `ms`. This is the
   // standard rise time of an underdamped second-order step response,
@@ -671,15 +681,17 @@
     const t = Math.max(0.001, ms / 1000);
     const z = Math.min(0.95, Math.max(0, zeta));
     const w0 = (Math.PI - Math.acos(z)) / (t * Math.sqrt(1 - z * z));
-    return Math.min(MAX_STIFFNESS, w0 * w0);
+    return clampStiffness(w0 * w0);
   }
 
   // Roughly when the ringing falls below the threshold _tick settles at:
   // the decay envelope is e^(-zeta*w0*t), so this is where that reaches the
   // settle tolerance. An estimate rather than a measurement - the magnet
-  // rebound isn't in it - but close enough to report (it calls ~455ms where
-  // the real integrator takes ~430ms) and the only honest way to show a
-  // number that nothing in the options sets directly.
+  // rebound isn't in it, and that rebound bleeds off energy the envelope
+  // doesn't know about, so the answer runs a little long: at the defaults
+  // it calls ~470ms where the real integrator takes ~450. The right way
+  // round to be wrong, and the only honest way to show a number that
+  // nothing in the options sets directly.
   function settleMsFor(k, zeta) {
     const decay = Math.max(0.0001, zeta * Math.sqrt(k));
     return (6.5 / decay) * 1000;
@@ -916,7 +928,7 @@
     _syncSpring() {
       this._springZeta = dampingRatio(this.options.bounce);
       this._springK = this.options.stiffness != null
-        ? this.options.stiffness
+        ? clampStiffness(this.options.stiffness)
         : stiffnessFor(this.options.flipDuration, this._springZeta);
     }
 
@@ -1012,7 +1024,7 @@
       // slop of one physical disc, not a property of the instruction.
       const zeta = opts.bounce != null ? dampingRatio(opts.bounce) : this._springZeta;
       let k;
-      if (opts.stiffness != null) k = opts.stiffness;
+      if (opts.stiffness != null) k = clampStiffness(opts.stiffness);
       else if (opts.flipDuration != null) k = stiffnessFor(opts.flipDuration, zeta);
       else if (opts.bounce != null) k = stiffnessFor(this.options.flipDuration, zeta);
       else k = this._springK;
@@ -1030,10 +1042,11 @@
     // Writes one dot. Bare, it lands now - an individual poke should.
     //
     // `opts` is the whole per-dot vocabulary, and it is deliberately the
-    // same four questions a transition answers for a board at once:
+    // same questions a transition answers for a board at once:
     //
     //   delay         ms before this dot starts
     //   flipDuration  ms for this dot's own half turn
+    //   stiffness     the same, in spring units, if you prefer
     //   bounce        how hard this dot rings against its stop
     //   direction     1 or -1, forcing which way it turns
     //   silent        no click from this one
