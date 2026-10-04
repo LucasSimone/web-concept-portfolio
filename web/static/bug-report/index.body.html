@@ -1,0 +1,93 @@
+
+  <section class="form-intro">
+    <h1>Report a bug</h1>
+    <p>
+      An effect misbehaving on a site of your own, or something broken
+      here? Either one — tell me what you saw. Only the description is
+      required.
+    </p>
+    <p>
+      Looking for web work instead?
+      <a href="/contact/index.html">Get in touch</a>.
+    </p>
+  </section>
+
+  <form class="site-form" data-contact-form="bug"
+        data-success="Thanks — report received." novalidate>
+    <div>
+      <label for="effect">Which effect</label>
+      <!-- Options come from the effects manifest (see the script below).
+           data-prefill fills this in from ?effect=<slug>, which the top
+           nav's "Bug" link carries on an effect's own demo or docs page.
+
+           The empty option is the unanswered state, and has to be here: a
+           <select> always has something selected, so without it every
+           report from someone who never touched the dropdown would come
+           in blaming whichever effect happened to be first. -->
+      <select id="effect" name="effect" data-prefill="effect">
+        <option value="" selected>Not sure / not an effect</option>
+      </select>
+    </div>
+    <div>
+      <label for="site">Where are you running it</label>
+      <select id="site" name="site">
+        <option value="this-site" selected>On this site</option>
+        <option value="own-site">On a site of my own</option>
+      </select>
+    </div>
+    <div>
+      <label for="message">What happened</label>
+      <textarea id="message" name="message" required></textarea>
+      <p class="field-note">
+        What you did, what you expected, and what happened instead.
+      </p>
+    </div>
+    <div>
+      <label for="link">Link</label>
+      <input id="link" name="link" type="url" inputmode="url" />
+      <p class="field-note">
+        Optional — a page where I can see it happening.
+      </p>
+    </div>
+    <div>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" />
+      <p class="field-note">Optional — only if you want a reply.</p>
+    </div>
+    <div>
+      <label for="browser">Browser</label>
+      <input id="browser" name="browser" type="text" readonly data-prefill="browser" />
+      <p class="field-note">
+        Filled in for you, and sent along — most display bugs come down to
+        this. Clear it if you'd rather not.
+      </p>
+    </div>
+    <div class="hp-field" aria-hidden="true">
+      <label for="hpField">Leave this field blank</label>
+      <input id="hpField" name="hp_field" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+    <button class="btn" type="submit">Send report</button>
+    <p class="form-status" role="status"></p>
+  </form>
+
+  <script>
+    // Fill the "which effect" dropdown from the effects manifest, so a
+    // new effect shows up here the same way it shows up in the docs
+    // sidebar: by adding its one manifest entry. Runs during parsing,
+    // before contact-form.js applies ?effect= on DOMContentLoaded.
+    (function () {
+      var select = document.getElementById('effect');
+      window.groupedEntries(function (label, entries) {
+        var group = document.createElement('optgroup');
+        group.label = label;
+        entries.forEach(function (entry) {
+          var option = document.createElement('option');
+          option.value = entry.slug;
+          option.textContent = entry.name;
+          group.appendChild(option);
+        });
+        select.appendChild(group);
+      });
+    })();
+  </script>
+  <script src="/shared/contact-form.js"></script>

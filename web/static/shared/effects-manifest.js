@@ -188,4 +188,29 @@
       docsPath: '/docs/components/flip-dots.html',
     },
   ];
+
+  // Every category used above, with its display name, in the order the
+  // site presents them. Grouping an effect list by category needs both,
+  // and more than one page does it - the docs sidebar (docs-nav.js) and
+  // the bug report form's "where did you see it" dropdown - so they live
+  // here alongside the entries they label rather than in either page.
+  global.EFFECT_CATEGORIES = [
+    { slug: 'text-effects', label: 'Text Effects' },
+    { slug: 'background', label: 'Background' },
+    { slug: 'transitions', label: 'Transitions' },
+    { slug: 'concepts', label: 'Concepts' },
+    { slug: 'carousel', label: 'Carousel' },
+    { slug: 'components', label: 'Components' },
+  ];
+
+  // groupedEntries calls visit(label, entries) once per category that has
+  // any entries, in EFFECT_CATEGORIES order.
+  global.groupedEntries = function (visit) {
+    global.EFFECT_CATEGORIES.forEach(function (category) {
+      var entries = global.EFFECTS_MANIFEST.filter(function (entry) {
+        return entry.category === category.slug;
+      });
+      if (entries.length) visit(category.label, entries);
+    });
+  };
 })(window);

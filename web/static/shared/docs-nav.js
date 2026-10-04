@@ -14,16 +14,6 @@
  * default, and never persisted across loads.
  */
 (function () {
-  var CATEGORY_LABELS = {
-    'text-effects': 'Text Effects',
-    background: 'Background',
-    transitions: 'Transitions',
-    concepts: 'Concepts',
-    carousel: 'Carousel',
-    components: 'Components',
-  };
-  var CATEGORY_ORDER = ['text-effects', 'background', 'transitions', 'concepts', 'carousel', 'components'];
-
   var HAMBURGER_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
     + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
     + '<line x1="3" y1="6" x2="21" y2="6"></line>'
@@ -73,20 +63,13 @@
     var mount = document.querySelector('[data-docs-sidebar]');
     if (!mount || !window.EFFECTS_MANIFEST) return;
 
-    var groups = {};
-    window.EFFECTS_MANIFEST.forEach(function (entry) {
-      (groups[entry.category] = groups[entry.category] || []).push(entry);
-    });
-
     var currentPath = window.location.pathname;
     var html = '<a href="/docs/index.html"' +
       (currentPath === '/docs/index.html' ? ' aria-current="page"' : '') +
       '>Overview</a>';
 
-    CATEGORY_ORDER.forEach(function (category) {
-      var entries = groups[category];
-      if (!entries || !entries.length) return;
-      html += '<div class="docs-sidebar-group"><h3>' + CATEGORY_LABELS[category] + '</h3>';
+    window.groupedEntries(function (label, entries) {
+      html += '<div class="docs-sidebar-group"><h3>' + label + '</h3>';
       entries.forEach(function (entry) {
         html += '<a href="' + entry.docsPath + '"' +
           (currentPath === entry.docsPath ? ' aria-current="page"' : '') +

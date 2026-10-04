@@ -51,6 +51,9 @@ a { color: inherit; }
 .site-nav .links a {
   text-decoration: none;
   border-bottom: 1px solid transparent;
+  /* Narrow screens squeeze this row rather than scroll it, so without
+     this a link breaks across two lines and the whole bar grows. */
+  white-space: nowrap;
 }
 
 .site-nav .links a:hover,
@@ -509,6 +512,116 @@ a { color: inherit; }
     opacity: 0.55;
   }
 }
+
+/* --- Forms ---
+   Shared by the two pages that have one: the contact form
+   (/contact/) and the bug report form (/bug-report/). Both are a
+   .form-intro heading block followed by a .site-form, so neither page
+   needs styles of its own. */
+
+.form-intro {
+  padding: 8vh 6vw 4vh;
+  max-width: 560px;
+}
+
+.form-intro h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  margin: 0 0 12px;
+}
+
+.form-intro p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+.form-intro p a {
+  text-decoration: underline;
+}
+
+.site-form {
+  padding: 0 6vw 8vh;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.site-form label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+/* A per-field note under the label, for the handful that need one
+   ("optional", "filled in for you"). */
+.site-form .field-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.6;
+}
+
+.site-form input,
+.site-form select,
+.site-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #000;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 14px;
+}
+
+.site-form input:focus,
+.site-form select:focus,
+.site-form textarea:focus {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+.site-form textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+/* Fields the page fills in rather than the visitor - shown so they can
+   see what's being sent, but not inviting a cursor. */
+.site-form input[readonly] {
+  background: #f2f2f2;
+  opacity: 0.8;
+}
+
+.site-form button {
+  align-self: flex-start;
+}
+
+.site-form button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Honeypot: hidden from sighted users and off the tab order, but still
+   present in the DOM for bots that fill every field indiscriminately. */
+.site-form .hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-status {
+  font-size: 13px;
+  min-height: 1.4em;
+}
+
+.form-status[data-state="ok"] { opacity: 0.75; }
+.form-status[data-state="error"] { color: #b00000; }
 
 /* --- Slide-out controls panel ---
    Each demo page defines its own `.controls` sidebar (position, width,

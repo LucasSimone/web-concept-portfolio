@@ -3,9 +3,9 @@
  * -------------------
  * Every page includes the same static `.site-nav` markup (brand + Home
  * link) and then this script, which adds the parts that depend on where
- * you are: site-wide Docs and Contact links, and — only on a page whose
- * URL matches an entry in EFFECTS_MANIFEST — "Download JS" / "View Docs"
- * buttons on the right. Matching is by URL rather than per-page data
+ * you are: site-wide Docs, Contact and Bug links, and — only on a page
+ * whose URL matches an entry in EFFECTS_MANIFEST — "Download JS" /
+ * "View Docs" buttons on the right. Matching is by URL rather than per-page data
  * attributes so adding a new effect only ever means adding one manifest
  * entry.
  */
@@ -50,6 +50,19 @@
     }) || null;
   }
 
+  // The effect this page is about as far as the Bug link is concerned,
+  // which is a wider question than currentEntry's: the action buttons
+  // belong on an effect's demo page only, but someone integrating an
+  // effect on a site of their own is as likely to hit a bug with its
+  // docs open as its demo.
+  function bugEntry() {
+    if (!window.EFFECTS_MANIFEST) return null;
+    var path = window.location.pathname;
+    return currentEntry() || window.EFFECTS_MANIFEST.find(function (entry) {
+      return path === entry.docsPath;
+    }) || null;
+  }
+
   function addNavLink(links, href, label, dataAttr, activePrefix) {
     if (links.querySelector('[' + dataAttr + ']')) return;
     var link = document.createElement('a');
@@ -66,13 +79,23 @@
     var nav = document.querySelector('.site-nav');
     if (!nav) return;
 
+    var entry = currentEntry();
+
     var links = nav.querySelector('.links');
     if (links) {
       addNavLink(links, '/docs/index.html', 'Docs', 'data-docs-link', '/docs/');
       addNavLink(links, '/contact/index.html', 'Contact', 'data-contact-link', '/contact/');
+      // One word, like its two neighbours: on an effect page at phone
+      // width this link shares the bar with the two action buttons
+      // below, and anything longer wraps onto a second line.
+      //
+      // On an effect's demo or docs page the link names that effect, so
+      // the report form arrives with "which effect" already answered (see
+      // shared/contact-form.js and the bug page's own script).
+      var bug = bugEntry();
+      addNavLink(links, '/bug-report/index.html' + (bug ? '?effect=' + bug.slug : ''),
+        'Bug', 'data-bug-link', '/bug-report/');
     }
-
-    var entry = currentEntry();
     if (entry && !nav.querySelector('.actions')) {
       var actions = document.createElement('div');
       actions.className = 'actions';

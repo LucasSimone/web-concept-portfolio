@@ -1,13 +1,30 @@
 
-  <section class="contact-hero">
+  <section class="form-intro">
     <h1>Get in touch</h1>
     <p>
-      Questions about any of these effects, or about custom work — send a
-      note.
+      Need a site built, hosted, or kept up to date? Say what you're after
+      and I'll reply. Questions about the effects on this site are welcome
+      too.
+    </p>
+    <p>
+      Found a bug in one of these effects — here or on your own site?
+      <a href="/bug-report/index.html">Report it</a> instead.
     </p>
   </section>
 
-  <form class="contact-form" id="contactForm" novalidate>
+  <form class="site-form" data-contact-form="inquiry"
+        data-success="Thanks — I'll get back to you soon." novalidate>
+    <div>
+      <label for="topic">What do you need</label>
+      <select id="topic" name="topic">
+        <option value="website">A website built</option>
+        <option value="hosting">Hosting or deployment</option>
+        <option value="content">Content management</option>
+        <option value="changes">Changes to a site I already have</option>
+        <option value="effects">Something from this lab</option>
+        <option value="other" selected>Something else</option>
+      </select>
+    </div>
     <div>
       <label for="name">Name</label>
       <input id="name" name="name" type="text" autocomplete="name" required />
@@ -22,53 +39,10 @@
     </div>
     <div class="hp-field" aria-hidden="true">
       <label for="hpField">Leave this field blank</label>
-      <input id="hpField" name="hpField" type="text" tabindex="-1" autocomplete="off" />
+      <input id="hpField" name="hp_field" type="text" tabindex="-1" autocomplete="off" />
     </div>
     <button class="btn" type="submit">Send</button>
-    <p class="contact-status" id="contactStatus" role="status"></p>
+    <p class="form-status" role="status"></p>
   </form>
 
-  <script>
-    (function () {
-      var form = document.getElementById('contactForm');
-      var status = document.getElementById('contactStatus');
-
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        status.textContent = 'Sending…';
-        status.removeAttribute('data-state');
-
-        var payload = {
-          name: form.name.value,
-          email: form.email.value,
-          message: form.message.value,
-          hp_field: form.hpField.value,
-        };
-
-        fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
-          .then(function (res) {
-            return res.json().then(function (body) {
-              return { ok: res.ok, body: body };
-            });
-          })
-          .then(function (result) {
-            if (result.ok) {
-              status.textContent = "Thanks — I'll get back to you soon.";
-              status.setAttribute('data-state', 'ok');
-              form.reset();
-            } else {
-              status.textContent = result.body.error || 'Something went wrong.';
-              status.setAttribute('data-state', 'error');
-            }
-          })
-          .catch(function () {
-            status.textContent = 'Something went wrong. Please try again.';
-            status.setAttribute('data-state', 'error');
-          });
-      });
-    })();
-  </script>
+  <script src="/shared/contact-form.js"></script>
