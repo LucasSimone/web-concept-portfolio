@@ -1,0 +1,225 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Continuous</p>
+      <h1>Falling Leaves</h1>
+      <p>
+        A canvas of leaves falling through an open field. Each one swings
+        side to side on its own pendulum: it drops fastest through the
+        middle of a swing, slows to about a third of that speed at either
+        end, and tilts into the direction it is swinging. It also turns
+        over about its midrib, showing a darker underside when it is past
+        edge-on. Leaves sit at different depths, and farther ones are drawn
+        smaller, slower and fainter. A steady <code>wind</code> leans the
+        whole fall to one side. Every few seconds a gust builds, rolls
+        across from the upwind edge, makes the leaves it reaches tumble
+        faster and lifts them slightly, then dies away. Nothing responds to
+        the cursor. Purely decorative — it sits behind the element's content
+        and never touches real page elements.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/falling-leaves/index.html">View Demo</a>
+        <a class="btn" href="/background/falling-leaves/falling-leaves.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#shapes">Custom Shapes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="falling-leaves.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required
+        to render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-falling-leaves" aria-label="Falling leaves background"&gt;
+  &lt;span class="label"&gt;Drift and turn&lt;/span&gt;
+&lt;/section&gt;
+&lt;script src="falling-leaves.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No data attribute needed — just apply the class to a container with
+        a size of its own. A <code>ResizeObserver</code> on the host element
+        keeps the canvas sized to fit, clamping any leaves that would
+        otherwise fall outside the new bounds rather than restarting the
+        whole fall. Auto-initializes against every
+        <code>.bg-falling-leaves</code> element. To configure options:
+      </p>
+      <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  count: 60,
+  size: 18,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Windy day</h3>
+        <p>
+          A strong steady wind, harder gusts and faster tumbling. Lower
+          <code>sway</code> keeps the wind in charge instead of each leaf's
+          own swing.
+        </p>
+        <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  count: 70,
+  fallSpeed: 70,
+  sway: 25,
+  tumble: 1.8,
+  wind: 60,
+  gusts: 2,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Still afternoon</h3>
+        <p>
+          No wind and no gusts, a slow fall and wide swings, so a few leaves
+          rock their way down instead of being blown.
+        </p>
+        <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  count: 15,
+  fallSpeed: 20,
+  sway: 55,
+  tumble: 0.5,
+  wind: 0,
+  gusts: 0,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A range of colors</h3>
+        <p>
+          With <code>blend</code> on, <code>colors</code> is read as a
+          gradient through the colors in the order given, instead of a list
+          to pick from. Each leaf lands somewhere along it, so two colors
+          give every shade from one to the other, and a third becomes a stop
+          in the middle.
+        </p>
+        <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  colors: ['#f2c14e', '#d3622a', '#7a1f12'],
+  blend: true,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Blossom petals</h3>
+        <p>
+          The built-in <code>'petal'</code> shape over a pale-to-deep pink
+          range, small and plentiful. Petals get no midrib line, unlike the
+          leaf shapes.
+        </p>
+        <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  shapes: ['petal'],
+  colors: ['#fbe1e6', '#e98aa2'],
+  blend: true,
+  count: 90,
+  size: 7,
+  fallSpeed: 25,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Over an existing backdrop</h3>
+        <p>
+          Set <code>background</code> to <code>'transparent'</code> (or
+          <code>null</code>) and the canvas is cleared each frame instead of
+          filled, so leaves fall over whatever the host element already
+          shows: a photo, a gradient, a dark theme. The injected styles give
+          the host a white <code>background</code> and are added at the end
+          of <code>&lt;head&gt;</code>, so override it with a more specific
+          selector, such as <code>.hero.bg-falling-leaves</code>.
+        </p>
+        <pre><code>FallingLeaves.initAll('.bg-falling-leaves', {
+  background: 'transparent',
+});</code></pre>
+      </div>
+
+      <h2 id="shapes">Custom Shapes</h2>
+      <p>
+        <code>shapes</code> is a list, and each leaf picks one entry from it
+        at random. An entry can be the name of a built-in shape
+        (<code>FallingLeaves.SHAPES</code> lists them: <code>'maple'</code>,
+        <code>'oak'</code>, <code>'birch'</code>, <code>'oval'</code>,
+        <code>'petal'</code>), raw SVG path data, or a ready-made
+        <code>Path2D</code>. Draw your own in a box from <code>-1</code> to
+        <code>1</code> on both axes, centered on <code>0, 0</code>: that is
+        the point the leaf spins and flips around, and <code>size</code> is
+        how far 1 unit reaches, in px. Custom shapes are drawn without the
+        midrib line the built-in leaves get.
+      </p>
+      <pre><code>// Confetti: a mix of squares and thin strips, in bright colors.
+FallingLeaves.initAll('.bg-falling-leaves', {
+  shapes: [
+    'M-0.6 -0.6 H0.6 V0.6 H-0.6 Z',
+    'M-0.25 -1 H0.25 V1 H-0.25 Z',
+  ],
+  colors: ['#e63946', '#f4a261', '#2a9d8f', '#457b9d', '#ffd166'],
+  tumble: 2.5,
+  sway: 20,
+});</code></pre>
+      <p>
+        Mixing built-in names and your own paths in one list works too, as
+        does repeating an entry to make it more common.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>count</code></td><td><code>40</code></td><td>How many leaves are falling at once. A leaf that leaves through the bottom comes back in at the top</td></tr>
+          <tr><td><code>fallSpeed</code></td><td><code>45</code></td><td>Fall speed of the nearest leaves through the middle of a swing, in px/sec. Each leaf varies it by ±20%, it drops to about a third at either end of a swing, and farther leaves fall more slowly</td></tr>
+          <tr><td><code>sway</code></td><td><code>40</code></td><td>How far the nearest leaves swing either side of their path, in px. Farther leaves swing less. <code>0</code> falls straight down</td></tr>
+          <tr><td><code>tumble</code></td><td><code>1</code></td><td>Multiplier on every leaf's own flip and spin rate. <code>0</code> holds every leaf at its starting orientation, apart from the tilt of its swing, so some stay underside-up and a few edge-on</td></tr>
+          <tr><td><code>wind</code></td><td><code>10</code></td><td>Steady sideways drift in px/sec; negative blows left. Also sets which way gusts blow (random when <code>0</code>). The farthest leaves feel about 80% of it</td></tr>
+          <tr><td><code>gusts</code></td><td><code>1</code></td><td>Strength multiplier for the occasional gusts, each peaking at 35–70 px/sec before this is applied. <code>0</code> turns them off</td></tr>
+          <tr><td><code>size</code></td><td><code>14</code></td><td>Half a near leaf's length, in px (1 unit of the shape's -1..1 box). Each leaf varies it by ±25%, and farther leaves are drawn smaller</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>Canvas fill drawn behind the leaves each frame. <code>'transparent'</code> or <code>null</code> skips the fill</td></tr>
+          <tr><td><code>colors</code></td><td>five autumn hexes</td><td>Array of CSS colors (hex, <code>rgb()</code>, named, anything the canvas accepts; transparency is ignored). Each leaf picks one (or a point between them, with <code>blend</code>) and shifts its lightness slightly. The underside and midrib are darker shades of the same color</td></tr>
+          <tr><td><code>blend</code></td><td><code>false</code></td><td>When <code>true</code>, <code>colors</code> is a gradient through its colors in order, spaced evenly, and each leaf lands anywhere along it. When <code>false</code>, each leaf is exactly one of the listed colors</td></tr>
+          <tr><td><code>shapes</code></td><td><code>['maple', 'oak', 'birch', 'oval']</code></td><td>Array of built-in shape names, SVG path data strings, or <code>Path2D</code> objects; each leaf picks one. See <a href="#shapes">Custom Shapes</a></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. Changing <code>count</code> adds or removes leaves immediately; changing <code>colors</code>, <code>blend</code> or <code>shapes</code> repaints or reshapes every leaf already falling (each leaf keeps its own place in the palette, so editing a color changes the leaves drawn from it rather than reshuffling the whole field); anything else applies on the next frame, including to a gust already blowing.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize and visibility observers, and removes the canvas.</td></tr>
+          <tr><td><code>FallingLeaves.get(elOrSelector)</code> / <code>FallingLeaves.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+          <tr><td><code>FallingLeaves.SHAPES</code></td><td>The names of the built-in shapes.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Gust timing is fixed rather than configurable: one builds over about
+        1.2 seconds, takes about 0.9 seconds to roll from one edge to the
+        other, dies away over 3 seconds, and the next arrives 3 to 9 seconds
+        after that. Leaves drift off one side and back in from the other
+        rather than piling up against the edge. The loop pauses when the
+        element is scrolled well out of view. Respects
+        <code>prefers-reduced-motion</code> by skipping the animation loop
+        entirely and drawing one still frame of leaves where they were
+        spawned, so the field is still visible but doesn't move. The demo
+        page edits <code>colors</code> and <code>blend</code> directly, up
+        to six colors; <code>shapes</code> only changes with its Profile
+        dropdown, so reach for that option in code for your own shapes.
+      </p>
+    </div>
+  </div>

@@ -315,6 +315,19 @@
   display: block;
 }
 
+/* Falling Leaves: same override pattern as Fireflies above. */
+.liftoff-card.bg-falling-leaves {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.falling-leaves__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+}
+
 /* --- Carousel Lab card previews ---------------------------------------
    Each Carousel Lab card runs a live, miniature instance of the mechanism
    it links to, in a band between the title and the "View" line - the same

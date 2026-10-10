@@ -277,6 +277,9 @@ Fireflies.initAll('.liftoff-card.bg-fireflies', {
 OuterWorlds.initAll('.liftoff-card.bg-outer-worlds', {
   dotSpacing: 7, autoSpin: 1.6, seaLevel: 0.2,
 });
+FallingLeaves.initAll('.liftoff-card.bg-falling-leaves', {
+  count: 18, size: 9,
+});
 
 // --- Components Lab card preview -------------------------------------
 // Same idea as the background cards above: the card is a live board rather

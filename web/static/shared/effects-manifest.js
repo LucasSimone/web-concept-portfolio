@@ -108,6 +108,14 @@
       docsPath: '/docs/background/outer-worlds.html',
     },
     {
+      slug: 'falling-leaves',
+      name: 'Falling Leaves',
+      category: 'background',
+      demoPath: '/background/falling-leaves/index.html',
+      jsPath: '/background/falling-leaves/falling-leaves.js',
+      docsPath: '/docs/background/falling-leaves.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

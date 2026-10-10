@@ -1,0 +1,62 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the sliders below. Each one also sets which leaf shapes fall and which colors they come in. Adjusting any slider afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Autumn Mix</option>
+        <option value="maple">Maple</option>
+        <option value="still">Still Afternoon</option>
+        <option value="windy">Windy</option>
+        <option value="blossom">Blossom Petals</option>
+        <option value="mono">Monochrome</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Leaves <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-count">?<span class="hint" role="tooltip" id="hint-count">How many leaves are falling at once. A leaf that falls out the bottom comes back in at the top, so this number never changes on its own.</span></span></span><span id="countVal" class="value"></span></label>
+      <input type="range" id="countRange" min="5" max="150" step="5" value="40" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Fall speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fallSpeed">?<span class="hint" role="tooltip" id="hint-fallSpeed">How fast the nearest leaves drop at the middle of a swing, in px/sec. They slow to about a third of it at either end of a swing, and farther leaves fall more slowly still, so the average is well below this.</span></span></span><span id="fallSpeedVal" class="value"></span></label>
+      <input type="range" id="fallSpeedRange" min="5" max="150" step="5" value="45" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Sway <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-sway">?<span class="hint" role="tooltip" id="hint-sway">How far the nearest leaves swing either side of their path as they fall, in px. Farther leaves swing less. 0 drops them straight down like stones.</span></span></span><span id="swayVal" class="value"></span></label>
+      <input type="range" id="swayRange" min="0" max="100" step="5" value="40" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Tumble <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-tumble">?<span class="hint" role="tooltip" id="hint-tumble">How quickly leaves flip over and spin. Each leaf already has its own rate; this multiplies all of them. 0 stops it, freezing each leaf at whatever angle it had, so some stay showing their darker underside and a few stay edge-on.</span></span></span><span id="tumbleVal" class="value"></span></label>
+      <input type="range" id="tumbleRange" min="0" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Wind <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-wind">?<span class="hint" role="tooltip" id="hint-wind">A steady sideways drift, in px/sec. Negative blows left, positive blows right. Gusts blow the same way as the wind, or either way at random when it is 0.</span></span></span><span id="windVal" class="value"></span></label>
+      <input type="range" id="windRange" min="-80" max="80" step="5" value="10" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Gusts <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gusts">?<span class="hint" role="tooltip" id="hint-gusts">How strong the occasional gusts are. A gust builds over about a second, rolls across from the upwind edge, speeds up the tumbling and lifts the leaves slightly, then dies away. 0 turns gusts off.</span></span></span><span id="gustsVal" class="value"></span></label>
+      <input type="range" id="gustsRange" min="0" max="3" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Leaf size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-size">?<span class="hint" role="tooltip" id="hint-size">Half the length of a typical near leaf, in px. Each leaf varies it by ±25%, and farther leaves are drawn smaller still.</span></span></span><span id="sizeVal" class="value"></span></label>
+      <input type="range" id="sizeRange" min="4" max="40" step="1" value="14" />
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="blendToggle" type="button" class="toggle-button" aria-pressed="false">Colors: Specific</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-blend">?<span class="hint" role="tooltip" id="hint-blend">Specific makes every leaf exactly one of the colors below. Range treats them as a gradient, left to right, and each leaf can land anywhere along it: two colors give a from-to range, and more give a range with stops along the way. Either way each leaf is shifted slightly lighter or darker so no two are identical.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Colors <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-colors">?<span class="hint" role="tooltip" id="hint-colors">The leaf colors, from one up to six. + adds a swatch on the end and − removes the last one. The strip underneath shows what you'll get: separate bands for Specific, a smooth blend for Range. A leaf's underside and midrib are darker shades of its own color.</span></span></span><span class="color-count-buttons"><button id="removeColorButton" type="button" aria-label="Remove last color">−</button><button id="addColorButton" type="button" aria-label="Add a color">+</button></span></div>
+      <div class="color-swatches" id="colorSwatches"></div>
+      <div class="color-preview" id="colorPreview" aria-hidden="true"></div>
+    </div>
