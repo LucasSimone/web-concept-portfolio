@@ -1,0 +1,69 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the sliders below. Each one also sets which burst patterns go off, which colors they come in, and the sky behind them. Adjusting any slider afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Celebration</option>
+        <option value="night">Night Sky</option>
+        <option value="calm">Calm</option>
+        <option value="finale">Finale</option>
+        <option value="willow">Willow</option>
+        <option value="mono">Monochrome</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Launch rate <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-launchRate">?<span class="hint" role="tooltip" id="hint-launchRate">How many rockets go up per second, on average. The gaps between them are random, so they come in clusters and lulls rather than on a beat. Clicking the sky sends up extra ones on top of these.</span></span></span><span id="launchRateVal" class="value"></span></label>
+      <input type="range" id="launchRateRange" min="0.2" max="5" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Burst size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-burstSize">?<span class="hint" role="tooltip" id="hint-burstSize">How many particles a peony or ring throws out. A crossette throws a sixth as many (at least 6), and each of those splits into four. A palm uses about half, spread over 5 to 8 arms. Each sky has a ceiling of 2,500 particles at once, so at high rates later bursts come out thinner.</span></span></span><span id="burstSizeVal" class="value"></span></label>
+      <input type="range" id="burstSizeRange" min="20" max="250" step="10" value="90" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Burst radius <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-burstRadius">?<span class="hint" role="tooltip" id="hint-burstRadius">How far, in px, the fastest particles of a peony or ring would travel if gravity were off. Willows reach about half as far and palms nearly as far. Rockets also aim to burst at least 0.6× this far below the top edge, so big bursts go off lower (never below halfway down).</span></span></span><span id="burstRadiusVal" class="value"></span></label>
+      <input type="range" id="burstRadiusRange" min="40" max="300" step="10" value="130" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Gravity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gravity">?<span class="hint" role="tooltip" id="hint-gravity">How hard burst particles are pulled down, in px/sec². Willows feel 70% of it and palms 130%. Rockets aren't affected: they always slow to a stop right where they burst. 0 lets bursts hang as perfect shapes.</span></span></span><span id="gravityVal" class="value"></span></label>
+      <input type="range" id="gravityRange" min="0" max="250" step="10" value="80" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Trail length <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-trailLength">?<span class="hint" role="tooltip" id="hint-trailLength">How long the glow a particle leaves behind takes to fade to about 5%, in seconds. Longer trails make faster particles draw longer streaks. A willow's long drooping trails are embers it drops along the way, and last up to a second whatever this is set to.</span></span></span><span id="trailLengthVal" class="value"></span></label>
+      <input type="range" id="trailLengthRange" min="0.05" max="0.8" step="0.05" value="0.3" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Particle size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-particleSize">?<span class="hint" role="tooltip" id="hint-particleSize">How thick a peony or ring particle is drawn when it bursts, in px. Each varies it by ±20%, and shrinks to 40% of its starting size by the time it fades out. Palm arms are 1.6× as thick, crossettes 1.3× and willows 0.8×.</span></span></span><span id="particleSizeVal" class="value"></span></label>
+      <input type="range" id="particleSizeRange" min="0.5" max="5" step="0.5" value="2" />
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="clickToggle" type="button" class="toggle-button" aria-pressed="true">Click to launch: On</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-click">?<span class="hint" role="tooltip" id="hint-click">When on, clicking anywhere in a sky sends a rocket up from the bottom edge, from somewhere near below that spot, to burst right where you clicked, on top of the automatic launches. Clicks on links and buttons inside it are left alone. Off makes the sky ignore the mouse entirely.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Background <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-background">?<span class="hint" role="tooltip" id="hint-background">The sky color. A dark one switches to glowing light: overlapping bursts add up brighter, particles run whiter as they burn, and the text on top turns white. A light one draws the bursts as paint instead, with particles running darker. Pick burst colors that stand out against it.</span></span></span></div>
+      <div class="color-swatches"><input type="color" id="backgroundInput" class="t-swatch" aria-label="Background color" value="#ffffff" /></div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="blendToggle" type="button" class="toggle-button" aria-pressed="false">Colors: Specific</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-blend">?<span class="hint" role="tooltip" id="hint-blend">Specific makes every burst exactly one of the colors below. Range treats them as a gradient, left to right, and each burst can land anywhere along it. With two or more colors, about a quarter of bursts are two-tone, split down the middle at a random angle.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Colors <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-colors">?<span class="hint" role="tooltip" id="hint-colors">The burst colors, from one up to six. + adds a swatch on the end and − removes the last one. The strip underneath shows what you'll get: separate bands for Specific, a smooth blend for Range. Within a burst, each particle is that color or a version 20% or 40% of the way to white (on a dark sky) or black (on a light one), so it glitters.</span></span></span><span class="color-count-buttons"><button id="removeColorButton" type="button" aria-label="Remove last color">−</button><button id="addColorButton" type="button" aria-label="Add a color">+</button></span></div>
+      <div class="color-swatches" id="colorSwatches"></div>
+      <div class="color-preview" id="colorPreview" aria-hidden="true"></div>
+    </div>

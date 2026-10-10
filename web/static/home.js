@@ -280,6 +280,12 @@ OuterWorlds.initAll('.liftoff-card.bg-outer-worlds', {
 FallingLeaves.initAll('.liftoff-card.bg-falling-leaves', {
   count: 18, size: 9,
 });
+// Small, sparse bursts sized to the card, so most of it stays clear behind
+// the title. Click-to-launch stays on, as on the demo page:
+// the click that opens the card sends one up on the way out.
+Fireworks.initAll('.liftoff-card.bg-fireworks', {
+  launchRate: 0.6, burstSize: 45, burstRadius: 55, particleSize: 1.5, gravity: 50,
+});
 
 // --- Components Lab card preview -------------------------------------
 // Same idea as the background cards above: the card is a live board rather

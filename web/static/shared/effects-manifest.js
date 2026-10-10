@@ -116,6 +116,14 @@
       docsPath: '/docs/background/falling-leaves.html',
     },
     {
+      slug: 'fireworks',
+      name: 'Fireworks',
+      category: 'background',
+      demoPath: '/background/fireworks/index.html',
+      jsPath: '/background/fireworks/fireworks.js',
+      docsPath: '/docs/background/fireworks.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

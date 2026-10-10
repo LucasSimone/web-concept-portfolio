@@ -1,0 +1,283 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Interactive</p>
+      <h1>Fireworks</h1>
+      <p>
+        A canvas of fireworks. Rockets go up from the
+        bottom edge at random places and times, wobbling slightly and
+        dropping a faint trail of sparks, and slow to a stop at the top of
+        their climb, where they burst. A burst throws particles outward
+        that slow with drag, fall under gravity, shrink and fade, leaving
+        short trails. About one particle in eight twinkles as it fades, and
+        about one in twelve crackles into a pop of tiny sparks when it goes
+        out. The sky is white by default and takes any color: over a dark
+        one the bursts are drawn as light instead, so overlapping bursts
+        glow brighter where they cross and the element's text turns white.
+        Clicking the element sends a rocket
+        up to burst at the cursor. Purely decorative otherwise — it sits
+        behind the element's content and never touches real page elements.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/fireworks/index.html">View Demo</a>
+        <a class="btn" href="/background/fireworks/fireworks.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#patterns">Burst Patterns</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="fireworks.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required to
+        render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-fireworks" aria-label="Fireworks background"&gt;
+  &lt;span class="label"&gt;Light up the sky&lt;/span&gt;
+&lt;/section&gt;
+&lt;script src="fireworks.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No data attribute needed — just apply the class to a container with
+        a size of its own. A <code>ResizeObserver</code> on the host element
+        keeps the canvas sized to fit, moving everything in flight
+        proportionally rather than restarting the show. Auto-initializes
+        against every <code>.bg-fireworks</code> element. To configure
+        options:
+      </p>
+      <pre><code>Fireworks.initAll('.bg-fireworks', {
+  launchRate: 2,
+  burstRadius: 160,
+});</code></pre>
+      <p>
+        Run that as a plain script straight after
+        <code>fireworks.js</code>, before the page finishes loading: once
+        auto-init has claimed an element, <code>initAll</code> skips it and
+        returns nothing for it. To change one that's already running, use
+        <code>Fireworks.get(el).update(options)</code>.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Night sky</h3>
+        <p>
+          Any dark <code>background</code> switches to drawing with light:
+          colors add up where bursts overlap, the brightest particles run
+          toward white rather than black, rockets are a warm glow instead
+          of a dark streak, and the element gets the
+          <code>bg-fireworks--dark</code> class, which turns its text
+          white. Pale, bright colors suit it; the deeper defaults are
+          picked for white.
+        </p>
+        <pre><code>Fireworks.initAll('.bg-fireworks', {
+  background: '#070a1a',
+  colors: ['#ff4d5e', '#ffa53d', '#ffe36e', '#6ef0a0', '#62a8ff', '#c77dff'],
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Finale</h3>
+        <p>
+          Four rockets a second, bigger bursts, every pattern. Everything on
+          element has its own ceiling of 2,500 particles, so pushing the rate
+          higher thins bursts out rather than slowing the page down.
+        </p>
+        <pre><code>Fireworks.initAll('.bg-fireworks', {
+  launchRate: 4,
+  burstSize: 120,
+  burstRadius: 150,
+  trailLength: 0.25,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Golden willow</h3>
+        <p>
+          Willow bursts only, in a gold range. Each willow particle drops
+          embers as it goes, which hang and fade on their own, so the
+          trails are long whatever <code>trailLength</code> is.
+        </p>
+        <pre><code>Fireworks.initAll('.bg-fireworks', {
+  patterns: ['willow'],
+  colors: ['#ffd27a', '#e8a33d'],
+  blend: true,
+  launchRate: 0.6,
+  gravity: 60,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A range of colors</h3>
+        <p>
+          With <code>blend</code> on, <code>colors</code> is read as a
+          gradient through the colors in the order given, instead of a list
+          to pick from. Each burst lands somewhere along it. With
+          <code>blend</code> off or on, about a quarter of bursts are
+          two-tone whenever there's more than one color to pick from: two
+          colors well apart, split down the middle.
+        </p>
+        <pre><code>Fireworks.initAll('.bg-fireworks', {
+  colors: ['#9ad0ff', '#c9b6ff', '#ffd6e8'],
+  blend: true,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Over an existing backdrop</h3>
+        <p>
+          Set <code>background</code> to <code>'transparent'</code> (or
+          <code>null</code>) and the canvas has no sky of its own, so
+          fireworks go off over whatever the host element shows: a photo of
+          a skyline, a gradient. The injected styles give the host a white
+          <code>background</code> and are added at the end of
+          <code>&lt;head&gt;</code>, so override it with a more specific
+          selector, such as <code>.hero.bg-fireworks</code>. Whether to
+          draw as light or as paint is decided from the host's background
+          color when the option is set, so a host that changes its
+          background later should call
+          <code>update({ background: 'transparent' })</code> again. The
+          host's text color is left to its own styles.
+        </p>
+        <pre><code>Fireworks.initAll('.bg-fireworks', {
+  background: 'transparent',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Celebrate on demand</h3>
+        <p>
+          <code>launchRate: 0</code> keeps the sky empty until you call
+          <code>launch()</code>, say when a form goes through.
+        </p>
+        <pre><code>// Straight after fireworks.js, before auto-init claims the element.
+const [show] = Fireworks.initAll('.bg-fireworks', { launchRate: 0 });
+form.addEventListener('submit', () =&gt; {
+  show.launch(200, 120);
+  show.launch(420, 90);
+});</code></pre>
+      </div>
+
+      <h2 id="patterns">Burst Patterns</h2>
+      <p>
+        <code>patterns</code> is a list, and each rocket picks one entry
+        from it at random, so repeating an entry makes it more common.
+        <code>Fireworks.PATTERNS</code> lists the built-in names:
+      </p>
+      <ul>
+        <li><code>'peony'</code> — an even ball, the classic burst.</li>
+        <li><code>'ring'</code> — a single ring, tilted at a random angle so it's usually seen as an ellipse.</li>
+        <li><code>'willow'</code> — slower, longer-lived particles that droop and leave a trail of embers.</li>
+        <li><code>'crossette'</code> — a few particles that each split into four a third of the way through their life.</li>
+        <li><code>'palm'</code> — 5 to 8 thick arms that travel far and droop heavily.</li>
+      </ul>
+
+      <h3>Write your own</h3>
+      <p>
+        An entry can also be a function. It's given the particle count
+        (<code>burstSize</code>) and returns one starting velocity per
+        particle, as <code>[x, y]</code>, where a length of
+        <code>1</code> is full burst speed: fast enough to coast
+        <code>burstRadius</code> px before drag stops it, with gravity off.
+        Positive <code>y</code> is down. It can return more or fewer
+        particles than it was asked for. Entries that aren't a pair of
+        finite numbers are skipped, and a function that throws bursts as
+        nothing (with the error in the console) rather than stopping the
+        show.
+      </p>
+      <pre><code>// A heart. The classic parametric curve, scaled to about 1 across.
+function heart(count) {
+  const out = [];
+  for (let i = 0; i &lt; count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    const x = 16 * Math.sin(t) ** 3;
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+    out.push([x / 17, y / 17]);
+  }
+  return out;
+}
+
+Fireworks.initAll('.bg-fireworks', {
+  patterns: [heart, 'peony'],
+  colors: ['#ff4d5e', '#ff8fab'],
+});</code></pre>
+      <p>
+        For more control, pass an object instead: <code>velocities</code>
+        is the same function, and any of the other fields scale that
+        pattern's particles against the defaults.
+      </p>
+      <pre><code>{
+  velocities: heart,
+  life: 1.5,      // × how long particles last (1.3–1.9s by default)
+  drag: 0.8,      // × how quickly they slow down
+  gravity: 0.5,   // × the gravity option
+  size: 1.2,      // × particleSize
+  embers: false,  // drop willow-style embers along the way
+  split: 0,       // split into this many, a third of the way through life
+}</code></pre>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>launchRate</code></td><td><code>1</code></td><td>Average rockets per second, at random intervals. <code>0</code> stops automatic launches; clicks and <code>launch()</code> still work</td></tr>
+          <tr><td><code>burstSize</code></td><td><code>90</code></td><td>Particle count handed to each burst's pattern. Crossettes use a sixth of it (at least 6) before splitting each into four; palms about half. Each element caps its own particles at 2,500</td></tr>
+          <tr><td><code>burstRadius</code></td><td><code>130</code></td><td>How far, in px, a peony's fastest particles coast with gravity off. Automatic rockets also burst at least 0.6× this (or 10% of the height) below the top edge, and never below halfway down</td></tr>
+          <tr><td><code>gravity</code></td><td><code>80</code></td><td>Downward pull on burst particles, in px/sec². Willows feel 70% of it, palms 130%. Rockets aren't affected</td></tr>
+          <tr><td><code>trailLength</code></td><td><code>0.3</code></td><td>Seconds for the glow a particle leaves behind to fade to about 5%. Willow embers last up to a second regardless</td></tr>
+          <tr><td><code>particleSize</code></td><td><code>2</code></td><td>Starting thickness of a peony or ring particle, in px, ±20% each. Shrinks to 40% by the time it fades. Palms draw 1.6× as thick, crossettes 1.3×, willows 0.8×</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>The sky color behind the canvas, any CSS color. A dark one draws the bursts as additive light and adds the <code>bg-fireworks--dark</code> class (white text) to the element. A see-through color is judged as it looks over the host's background. <code>'transparent'</code> or <code>null</code> leaves the host's own background showing, and picks light or dark from that; so does any other CSS background (a gradient, an image), which is applied but can't be measured</td></tr>
+          <tr><td><code>colors</code></td><td>six saturated hexes</td><td>Array of CSS colors (hex, <code>rgb()</code>, named, anything the canvas accepts; transparency is ignored). Each burst picks one (or a point between them, with <code>blend</code>), and each particle is that color or a version 20% or 40% of the way to black (on a light sky) or white (on a dark one)</td></tr>
+          <tr><td><code>blend</code></td><td><code>false</code></td><td>When <code>true</code>, <code>colors</code> is a gradient through its colors in order, spaced evenly, and each burst lands anywhere along it. When <code>false</code>, each burst is exactly one of the listed colors</td></tr>
+          <tr><td><code>patterns</code></td><td><code>['peony', 'peony', 'ring', 'willow', 'crossette', 'palm']</code></td><td>Array of built-in pattern names, velocity functions or pattern objects; each rocket picks one. See <a href="#patterns">Burst Patterns</a></td></tr>
+          <tr><td><code>clickToLaunch</code></td><td><code>true</code></td><td>Whether a click on the element sends a rocket up to burst at the cursor. Clicks on links, buttons and form fields inside the element are left alone. Can be switched with <code>update()</code> at any time</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.launch(x, y)</code></td><td>Sends a rocket up from the bottom edge to burst at <code>(x, y)</code>, in px from the element's top-left corner. Does nothing under reduced motion.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. A new <code>launchRate</code> takes effect at once rather than after the wait already scheduled; new <code>colors</code>, <code>blend</code> and <code>patterns</code> apply from the next burst on, leaving bursts already in the air as they were; anything else applies on the next frame.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the resize and visibility observers, removes the click listener and the canvas.</td></tr>
+          <tr><td><code>Fireworks.get(elOrSelector)</code> / <code>Fireworks.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+          <tr><td><code>Fireworks.PATTERNS</code></td><td>The names of the built-in patterns.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Trails come from never fully clearing the canvas: each frame erases
+        part of what's there and draws the new positions on top, with
+        additive blending on a dark sky. The erasing happens in steps of at
+        least 12% rather than every frame, so trails can't get stuck as a
+        faint ghost on a fast screen, and the canvas is wiped clean
+        whenever the sky goes empty. The loop pauses when the element is scrolled well
+        out of view. Respects <code>prefers-reduced-motion</code> by
+        skipping the animation loop entirely and drawing one still frame of
+        three bursts caught mid-spread, so the sky is still lit but doesn't
+        move, and clicks do nothing. The demo page edits
+        <code>colors</code>, <code>blend</code>, <code>background</code>
+        and <code>clickToLaunch</code> directly, up to six colors; <code>patterns</code> only changes with its Profile
+        dropdown, so reach for that option in code for your own patterns.
+      </p>
+    </div>
+  </div>
