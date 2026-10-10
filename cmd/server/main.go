@@ -6,18 +6,21 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/hex"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/lsimone/web-concept-portfolio/internal/contact"
 	"github.com/lsimone/web-concept-portfolio/internal/httpserver"
+	"github.com/lsimone/web-concept-portfolio/internal/jsprint"
 	"github.com/lsimone/web-concept-portfolio/internal/render"
 	"github.com/lsimone/web-concept-portfolio/web"
 )
@@ -82,9 +85,22 @@ func main() {
 		}
 	}
 
+	// JSPRINT_KEY turns on per-download stamping of every script (see
+	// internal/httpserver/stamp.go). The key both seals the stamp and
+	// decides where its hidden copy goes, so it's a secret: set it in the
+	// service's environment (or .env locally), and keep it, since reading
+	// a stamp found in the wild takes the same key. Any long random string
+	// will do, e.g. `openssl rand -hex 32`. Unset, scripts go out as-is.
+	var stamp *httpserver.Stamp
+	if key := os.Getenv("JSPRINT_KEY"); key != "" {
+		stamp = &httpserver.Stamp{Key: jsprint.Key(key), Owner: siteOwner, Build: buildByte()}
+	} else {
+		log.Print("JSPRINT_KEY unset: scripts are served unstamped")
+	}
+
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      httpserver.New(renderedFS, store, dev),
+		Handler:      httpserver.New(renderedFS, store, dev, stamp),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -112,6 +128,33 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("shutdown: %v", err)
 	}
+}
+
+// siteOwner is who a stamped script's notice says it's by.
+const siteOwner = "Lucas Simone"
+
+// buildCommit is the git commit this binary was built from, set at build
+// time where there's no .git to read it from (the Docker build excludes
+// it): go build -ldflags "-X main.buildCommit=$(git rev-parse HEAD)".
+var buildCommit string
+
+// buildByte is the first byte of the build's commit, which every stamp
+// records so a found copy can be matched to the build that served it.
+// It's 0 when the commit is unknown.
+func buildByte() byte {
+	commit := buildCommit
+	if info, ok := debug.ReadBuildInfo(); ok && commit == "" {
+		for _, s := range info.Settings {
+			if s.Key == "vcs.revision" {
+				commit = s.Value
+			}
+		}
+	}
+	b, err := hex.DecodeString(commit[:min(len(commit), 2)])
+	if err != nil || len(b) == 0 {
+		return 0
+	}
+	return b[0]
 }
 
 // envOr returns the environment variable named key, or fallback if it's

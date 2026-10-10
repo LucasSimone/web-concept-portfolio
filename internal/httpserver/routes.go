@@ -12,7 +12,9 @@ import (
 )
 
 // New builds the site's top-level http.Handler:
-//   - "/"             serves staticFS (the embedded site) as plain files.
+//   - "/"             serves staticFS (the embedded site) as plain files,
+//     except that with stamp set every script is stamped per download
+//     (see stamp.go).
 //   - "POST /api/contact" saves a contact form submission, rate-limited
 //     per IP to 5 requests/hour to blunt naive spam.
 //   - "GET /healthz"  a trivial liveness check for Docker/load balancers.
@@ -22,10 +24,10 @@ import (
 // so a browser serving an edited file from its own cache instead of asking
 // again is a footgun during local iteration, not a feature worth its own
 // bug reports. Leave it in place for the real embedded-asset build.
-func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
+func New(staticFS fs.FS, contactStore *contact.Store, dev bool, stamp *Stamp) http.Handler {
 	mux := http.NewServeMux()
 
-	static := http.FileServerFS(staticFS)
+	static := stampScripts(staticFS, stamp, http.FileServerFS(staticFS))
 	if dev {
 		static = noCache(static)
 	}
@@ -49,21 +51,21 @@ func New(staticFS fs.FS, contactStore *contact.Store, dev bool) http.Handler {
 	// additionally takes shared/hover-delegate.js for its pointer-hover
 	// tracking.
 	bundled := map[string]http.HandlerFunc{
-		"/text-effects/rolodex/rolodex.js": bundledScript(staticFS,
+		"/text-effects/rolodex/rolodex.js": bundledScript(staticFS, stamp,
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
 			"text-effects/rolodex/rolodex.js"),
-		"/text-effects/type-pan/type-pan.js": bundledScript(staticFS,
+		"/text-effects/type-pan/type-pan.js": bundledScript(staticFS, stamp,
 			"shared/hover-scroll-source.js", "shared/sequence-stepper.js", "shared/scroll-progress.js",
 			"text-effects/type-pan/type-pan.js"),
-		"/background/outer-worlds/outer-worlds.js": bundledScript(staticFS,
+		"/background/outer-worlds/outer-worlds.js": bundledScript(staticFS, stamp,
 			"shared/world-map.js", "shared/earth-map.js", "background/outer-worlds/outer-worlds.js"),
-		"/carousel/sweep/sweep.js": bundledScript(staticFS,
+		"/carousel/sweep/sweep.js": bundledScript(staticFS, stamp,
 			"shared/carousel-kit.js", "shared/hover-delegate.js", "carousel/sweep/sweep.js"),
-		"/carousel/reel/reel.js": bundledScript(staticFS,
+		"/carousel/reel/reel.js": bundledScript(staticFS, stamp,
 			"shared/carousel-kit.js", "carousel/reel/reel.js"),
-		"/carousel/deck/deck.js": bundledScript(staticFS,
+		"/carousel/deck/deck.js": bundledScript(staticFS, stamp,
 			"shared/carousel-kit.js", "carousel/deck/deck.js"),
-		"/carousel/dial/dial.js": bundledScript(staticFS,
+		"/carousel/dial/dial.js": bundledScript(staticFS, stamp,
 			"shared/carousel-kit.js", "carousel/dial/dial.js"),
 	}
 	for path, handler := range bundled {

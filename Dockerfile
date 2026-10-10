@@ -3,7 +3,11 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server
+# .git is excluded from the build context, so the commit that every
+# stamped script records (see JSPRINT_KEY in cmd/server/main.go) has to be
+# passed in: docker build --build-arg BUILD_COMMIT=$(git rev-parse HEAD) .
+ARG BUILD_COMMIT=""
+RUN CGO_ENABLED=0 go build -ldflags "-X main.buildCommit=${BUILD_COMMIT}" -o /out/server ./cmd/server
 
 FROM alpine:3.20
 RUN adduser -D -u 10001 app && mkdir /data && chown app:app /data

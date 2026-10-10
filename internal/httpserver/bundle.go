@@ -3,6 +3,7 @@ package httpserver
 import (
 	"io/fs"
 	"net/http"
+	"path"
 )
 
 // bundledScript serves the concatenation of the given staticFS paths as a
@@ -18,21 +19,20 @@ import (
 // that's read straight off disk (see cmd/server/main.go), so editing either
 // source file and refreshing picks it up immediately, with no separate build
 // step to remember to run.
-func bundledScript(staticFS fs.FS, paths ...string) http.HandlerFunc {
+//
+// The bundle is stamped as one file (see Stamp), so the notice sits once
+// at the top and the hidden copy spans every part.
+func bundledScript(staticFS fs.FS, stamp *Stamp, paths ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var contents [][]byte
+		var bundle []byte
 		for _, p := range paths {
 			b, err := fs.ReadFile(staticFS, p)
 			if err != nil {
 				http.Error(w, "internal server error", http.StatusInternalServerError)
 				return
 			}
-			contents = append(contents, b)
+			bundle = append(append(bundle, b...), '\n')
 		}
-		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
-		for _, b := range contents {
-			w.Write(b)
-			w.Write([]byte("\n"))
-		}
+		serveJS(w, r, path.Base(r.URL.Path), stamp.apply(bundle, r))
 	}
 }
