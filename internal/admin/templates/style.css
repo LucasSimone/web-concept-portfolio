@@ -1,0 +1,814 @@
+/* Admin portal styling.
+ *
+ * Intentionally nothing like the public site's stylesheet: this is a tool
+ * for one person to read their mail in, so it goes for legibility and
+ * obvious controls over any of the effects the rest of the site exists to
+ * show off. No custom fonts (the system stack loads instantly and looks
+ * native on every platform), no animation beyond a hover, no JavaScript
+ * to style around.
+ *
+ * The organizing idea is hierarchy. The first version set nearly
+ * everything at one size and one weight inside a bordered table, which
+ * made a list of submissions read as a wall — nothing drew the eye to
+ * what mattered. So: three type sizes and three text colors, used
+ * consistently (who it's from > what they said > when), separation by
+ * whitespace rather than by drawing a line around everything, and colour
+ * reserved almost entirely for "unread" and for links. If something here
+ * needs emphasis, it gets it by being bigger or darker than its
+ * neighbours, never by adding another box.
+ *
+ * It is light, always, and deliberately does not follow the OS's dark
+ * setting. An earlier version did, via prefers-color-scheme, which meant
+ * the portal's appearance depended on a setting made somewhere else
+ * entirely and nobody could see both. One palette is one set of contrast
+ * decisions to get right, and this is a tool for one person who wants it
+ * light. Adding dark back later means restoring a @media block that
+ * redefines the custom properties below and nothing else — every colour
+ * in this file goes through them for exactly that reason.
+ */
+
+:root {
+  /* color-scheme stops the browser from darkening the parts the page
+     doesn't paint itself — form control interiors, scrollbars and the
+     text caret — which is what otherwise leaves a light page with dark
+     input boxes for anyone whose OS is set to dark. */
+  color-scheme: light;
+
+  --bg: #f7f8fa;
+  --surface: #ffffff;
+  --fg: #11151a;
+  /* Two levels of de-emphasis, not one: --fg-soft is for supporting text
+     that still gets read (a message snippet), --fg-faint for text that's
+     only consulted (a timestamp). Collapsing them is what makes a list
+     look uniform. */
+  --fg-soft: #4e5663;
+  --fg-faint: #828b98;
+  --line: #e4e7ec;
+  --line-soft: #eef0f3;
+  --accent: #2563eb;
+  --accent-soft: #eff4ff;
+  --accent-fg: #ffffff;
+  --danger: #c0352b;
+  --danger-soft: #fdf1f0;
+  --ok-bg: #e9f6ed;
+  --ok-fg: #15542b;
+  --error-bg: #fdecea;
+  --error-fg: #8d2018;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.04);
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--fg-faint);
+}
+
+/* Visually hidden but still read aloud — for labels whose placeholder
+   already says the same thing on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Top bar --- */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.bar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bar-brand {
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--fg);
+  text-decoration: none;
+  margin-right: 1rem;
+  letter-spacing: -0.01em;
+}
+
+/* Nav items are underlined on the active one rather than filled or
+   boxed, so the bar stays quiet and the page content keeps the contrast
+   budget. */
+.bar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.95rem 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--fg-soft);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.bar-link:hover {
+  color: var(--fg);
+}
+
+.bar-link.is-active {
+  color: var(--fg);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.badge {
+  min-width: 1.25rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--fg-faint);
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+/* --- Layout --- */
+
+main {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+
+main.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding-top: 0;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* --- Dashboard --- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.35rem;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-title a:hover {
+  color: var(--accent);
+}
+
+/* Two lines' worth of height whether or not the text needs both, so the
+   big unread numbers line up across cards instead of sitting at
+   different heights because one blurb happened to wrap. */
+.card-blurb {
+  margin: 0.25rem 0 0;
+  min-height: 2.55em;
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+}
+
+/* The one genuinely big number on the page. It is the answer to "do I
+   need to do anything", so it gets a size nothing else competes with. */
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 1.1rem 0 0.25rem;
+}
+
+.stat-value {
+  font-size: 2.6rem;
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.stat-value.is-unread {
+  color: var(--accent);
+}
+
+/* Nothing waiting is good news, so zero is quiet rather than alarming. */
+.stat-value.is-clear {
+  color: var(--fg-faint);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+}
+
+.mini-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.mini-row a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 0.75rem;
+  padding: 0.5rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.mini-row a:hover {
+  background: var(--bg);
+}
+
+.mini-who {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-row.is-unread .mini-who {
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.mini-when {
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+
+.mini-snippet {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  color: var(--fg-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-more {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+}
+
+.card-more a {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.card-more a:hover {
+  text-decoration: underline;
+}
+
+.card-empty {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: var(--fg-faint);
+}
+
+/* --- Search --- */
+
+.search {
+  display: flex;
+  gap: 0.4rem;
+}
+
+input[type="search"],
+input[type="text"],
+input[type="password"] {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.45rem 0.7rem;
+}
+
+input::placeholder {
+  color: var(--fg-faint);
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.search button {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.search button:hover {
+  color: var(--fg);
+  border-color: var(--fg-faint);
+}
+
+/* --- Status tabs --- */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 1.1rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg-soft);
+  text-decoration: none;
+}
+
+.tab:hover {
+  background: var(--line-soft);
+  color: var(--fg);
+}
+
+.tab.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-count {
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab.is-active .tab-count {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* --- Submission rows --- */
+
+/* A card holding hairline-separated rows, rather than a table with a
+   border around every cell. The whole row is one link, so the click
+   target is the row and not a few words inside it. */
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.row + .row {
+  border-top: 1px solid var(--line-soft);
+}
+
+.row a {
+  display: block;
+  padding: 0.95rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.row a:hover {
+  background: var(--bg);
+}
+
+.row-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.row-who {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Unread is carried by the sender's weight and colour plus an accent bar
+   on the row, not by bolding the entire row — bolding everything was
+   what flattened the hierarchy in the first place. */
+.row.is-unread a {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.row.is-unread .row-who {
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.row-when {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+
+.row-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-faint);
+}
+
+.row-snippet {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.875rem;
+  color: var(--fg-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--fg-faint);
+}
+
+/* --- Paging --- */
+
+.paging {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.1rem;
+}
+
+.paging-where {
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Detail sheet --- */
+
+.breadcrumb {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.breadcrumb a {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.6rem;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sheet-title {
+  font-size: 1.3rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.sheet-sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+}
+
+.chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+
+.chip.is-unread {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* The message is the reason the page exists, so it's the largest text on
+   it. pre-wrap preserves the line breaks the sender typed without the
+   message containing any markup. */
+.message {
+  margin: 1.35rem 0 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Metadata sits below the message and reads as a quiet footnote to it. */
+.fields {
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) 1fr;
+  gap: 0.45rem 1.25rem;
+  margin: 1.6rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.875rem;
+}
+
+.fields dt {
+  color: var(--fg-faint);
+}
+
+.fields dd {
+  margin: 0;
+  color: var(--fg-soft);
+  /* User-agent strings and pasted URLs have no spaces to break at and
+     would otherwise push the layout wider than the screen. */
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 34rem) {
+  .fields {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+
+  .fields dd {
+    margin-bottom: 0.65rem;
+  }
+}
+
+/* --- Buttons and actions --- */
+
+.button {
+  display: inline-block;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 550;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button.secondary {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--line);
+}
+
+.button.secondary:hover {
+  border-color: var(--fg-faint);
+}
+
+.button.destructive {
+  background: var(--danger);
+  color: #fff;
+}
+
+.button.is-disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+/* Delete sits apart from the triage buttons and to the right, so the
+   destructive control is never the one next to the one you meant. */
+details.danger {
+  margin-left: auto;
+}
+
+details.danger summary {
+  color: var(--fg-faint);
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.4rem;
+  list-style: none;
+}
+
+details.danger summary::-webkit-details-marker {
+  display: none;
+}
+
+details.danger summary:hover,
+details.danger[open] summary {
+  color: var(--danger);
+}
+
+.danger-body {
+  margin-top: 0.6rem;
+  padding: 1rem;
+  background: var(--danger-soft);
+  border-radius: 8px;
+  max-width: 24rem;
+}
+
+.danger-body p {
+  margin: 0 0 0.85rem;
+  font-size: 0.85rem;
+  color: var(--fg-soft);
+}
+
+/* --- Empty states --- */
+
+.empty {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.empty-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--fg-soft);
+}
+
+/* --- Sign in --- */
+
+.signin {
+  width: 100%;
+  max-width: 21rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.75rem;
+}
+
+.signin h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.signin-sub {
+  margin: 0.3rem 0 1.25rem;
+  font-size: 0.875rem;
+  color: var(--fg-faint);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.stack label {
+  font-size: 0.85rem;
+  font-weight: 550;
+  margin-top: 0.6rem;
+}
+
+.stack .button {
+  margin-top: 1.1rem;
+  text-align: center;
+}
+
+.notice {
+  padding: 0.6rem 0.8rem;
+  border-radius: 7px;
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+}
+
+.notice.ok {
+  background: var(--ok-bg);
+  color: var(--ok-fg);
+}
+
+.notice.error {
+  background: var(--error-bg);
+  color: var(--error-fg);
+}

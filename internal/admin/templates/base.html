@@ -1,0 +1,55 @@
+{{- /*
+The shell every admin page renders into. Deliberately unlike the public
+site's layout (internal/render/layout.go), which loads the effects
+manifest, the nav script, every transition effect and a controls panel —
+none of which a submissions list has any use for. Nothing here loads any
+JavaScript at all.
+
+The robots meta tag is belt-and-braces alongside the X-Robots-Tag header
+that package admin sets on every response: the header is what a crawler
+that never renders the page sees, and the tag is what survives if this
+markup is saved or proxied somewhere the header isn't.
+*/ -}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>{{.Title}} — Admin</title>
+  <link rel="stylesheet" href="/admin/style.css" />
+</head>
+<body>
+{{if .SignedIn}}
+  {{- /* The nav carries unread badges so the count of what's waiting is
+         visible from every page, including the one you're already on.
+         aria-current marks the active item for a screen reader; the
+         class is what draws it. */ -}}
+  <header class="bar">
+    <nav class="bar-nav">
+      <a class="bar-brand" href="/admin/">Admin</a>
+      <a class="bar-link{{if eq .Nav "home"}} is-active{{end}}"
+         {{if eq .Nav "home"}}aria-current="page"{{end}} href="/admin/">Overview</a>
+      <a class="bar-link{{if eq .Nav "/admin/inquiries"}} is-active{{end}}"
+         {{if eq .Nav "/admin/inquiries"}}aria-current="page"{{end}} href="/admin/inquiries">
+        Inquiries
+        {{if .InquiryUnread}}<span class="badge">{{.InquiryUnread}}</span>{{end}}
+      </a>
+      <a class="bar-link{{if eq .Nav "/admin/bugs"}} is-active{{end}}"
+         {{if eq .Nav "/admin/bugs"}}aria-current="page"{{end}} href="/admin/bugs">
+        Bugs
+        {{if .BugUnread}}<span class="badge">{{.BugUnread}}</span>{{end}}
+      </a>
+    </nav>
+    <form method="post" action="/admin/logout">
+      <input type="hidden" name="csrf" value="{{.CSRF}}" />
+      <button class="link-button" type="submit">Sign out</button>
+    </form>
+  </header>
+{{end}}
+
+  <main{{if not .SignedIn}} class="centered"{{end}}>
+{{template "content" .}}
+  </main>
+</body>
+</html>

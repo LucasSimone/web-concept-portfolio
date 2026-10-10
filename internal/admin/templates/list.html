@@ -1,0 +1,88 @@
+{{define "content"}}
+    <div class="page-head">
+      <h1 class="page-title">{{.View.Title}}</h1>
+
+      {{- /* Search is the only input on this page. It's a GET form, which
+             is doing more work than it looks like: the search ends up in
+             the URL, so a search is bookmarkable, the back button steps
+             through searches properly, and none of it needs JavaScript. */ -}}
+      <form class="search" method="get" action="{{.View.Path}}">
+        <label class="visually-hidden" for="q">Search {{.View.Short | lower}}</label>
+        <input id="q" name="q" type="search" value="{{.Query}}" placeholder="Search…" />
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    {{- /* The status filter is a row of tabs rather than a select plus a
+           submit button: one click instead of three, and each one shows
+           its own count, so the filter doubles as the summary that used
+           to need its own line of text. */ -}}
+    <nav class="tabs">
+      {{range .Tabs}}
+        <a class="tab{{if .Active}} is-active{{end}}" href="{{.URL}}"
+           {{if .Active}}aria-current="page"{{end}}>
+          {{.Label}}<span class="tab-count">{{.Count}}</span>
+        </a>
+      {{end}}
+    </nav>
+
+    {{if .Submissions}}
+      <ul class="rows">
+        {{range .Submissions}}
+          {{- /* One row is one link covering the whole block, so the
+                 click target is the row rather than the few words of
+                 message text that happened to be a link before.
+
+                 The three pieces are deliberately not the same weight:
+                 who it's from reads first, the message second, the date
+                 last and quietest. That hierarchy is the fix for a table
+                 where every cell looked equally important. */ -}}
+          <li class="row{{if eq .Status "new"}} is-unread{{end}}">
+            <a href="/admin/submission/{{.ID}}{{$.BackQuery}}">
+              <span class="row-top">
+                <span class="row-who">
+                  {{if .Name}}{{.Name}}{{else if .Effect}}{{.Effect}}{{else}}Anonymous{{end}}
+                </span>
+                {{if ne .Status "new"}}
+                  <span class="row-status">{{if eq .Status "archived"}}Archived{{else}}Read{{end}}</span>
+                {{end}}
+                <span class="row-when">{{prettyTime .CreatedAt}}</span>
+              </span>
+              <span class="row-snippet">{{summarize .Message}}</span>
+              {{if .Email}}<span class="row-meta">{{.Email}}</span>{{end}}
+            </a>
+          </li>
+        {{end}}
+      </ul>
+
+      {{if gt .Pages 1}}
+        <nav class="paging">
+          {{if .HasPrev}}
+            <a class="button secondary" href="{{$.View.Path}}{{.PrevQuery}}">← Newer</a>
+          {{else}}
+            <span class="button secondary is-disabled">← Newer</span>
+          {{end}}
+          <span class="paging-where">{{.FirstShown}}–{{.LastShown}} of {{.Total}}</span>
+          {{if .HasNext}}
+            <a class="button secondary" href="{{$.View.Path}}{{.NextQuery}}">Older →</a>
+          {{else}}
+            <span class="button secondary is-disabled">Older →</span>
+          {{end}}
+        </nav>
+      {{end}}
+    {{else}}
+      {{- /* Two different empty states, because they mean different
+             things and need different next steps: a filter that matched
+             nothing is a dead end to back out of, an empty inbox is just
+             an empty inbox. */ -}}
+      <div class="empty">
+        {{if .Filtered}}
+          <p class="empty-title">Nothing matches</p>
+          <p><a href="{{.View.Path}}">Clear the filters</a> to see everything.</p>
+        {{else}}
+          <p class="empty-title">{{.View.Empty}}</p>
+          <p class="muted">It'll show up here as soon as someone sends one.</p>
+        {{end}}
+      </div>
+    {{end}}
+{{end}}

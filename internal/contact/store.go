@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS submissions (
 	site       TEXT NOT NULL DEFAULT '',
 	link       TEXT NOT NULL DEFAULT '',
 	browser    TEXT NOT NULL DEFAULT '',
+	status     TEXT NOT NULL DEFAULT 'new',
 	created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );`
 	if _, err := db.Exec(schema); err != nil {
@@ -67,6 +68,12 @@ var laterColumns = []struct{ name, definition string }{
 	{"site", "TEXT NOT NULL DEFAULT ''"},
 	{"link", "TEXT NOT NULL DEFAULT ''"},
 	{"browser", "TEXT NOT NULL DEFAULT ''"},
+	// status arrived with the admin portal, which is the only thing that
+	// ever writes it — submissions still come in through the public form
+	// handler, which doesn't set it and lets the default apply. Defaulting
+	// to StatusNew means every submission that predates the portal shows up
+	// in it as unread, which is exactly right: nobody had read them.
+	{"status", "TEXT NOT NULL DEFAULT 'new'"},
 }
 
 // addMissingColumns adds whichever of laterColumns the table doesn't have

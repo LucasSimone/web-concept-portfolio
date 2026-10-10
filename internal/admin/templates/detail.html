@@ -1,0 +1,85 @@
+{{define "content"}}
+    <p class="breadcrumb"><a href="{{.BackPath}}{{.BackQuery}}">← {{.View.Title}}</a></p>
+
+    {{- /* The message is the point of this page, so it comes first and
+           largest, and the metadata sits under it rather than above it.
+           The old layout led with a block of labels and buried the one
+           thing worth reading at the bottom. */ -}}
+    <article class="sheet">
+      <header class="sheet-head">
+        <div>
+          <h1 class="sheet-title">
+            {{if .Submission.Name}}{{.Submission.Name}}{{else}}Anonymous{{end}}
+          </h1>
+          <p class="sheet-sub">
+            {{.View.One}} #{{.Submission.ID}} · {{prettyTime .Submission.CreatedAt}}
+          </p>
+        </div>
+        {{if ne .Submission.Status "new"}}
+          <span class="chip">{{titleCase .Submission.Status}}</span>
+        {{else}}
+          <span class="chip is-unread">Unread</span>
+        {{end}}
+      </header>
+
+      <div class="message">{{.Submission.Message}}</div>
+
+      {{if .Fields}}
+        <dl class="fields">
+          {{range .Fields}}
+            <dt>{{.Label}}</dt>
+            <dd>
+              {{if .Link}}
+                {{- /* rel="noreferrer nofollow" matters on the reporter's
+                       link specifically: without noreferrer, clicking it
+                       hands that site the admin URL in a Referer header.
+                       target="_blank" keeps the portal open behind it. */ -}}
+                <a href="{{.Link}}" target="_blank" rel="noreferrer nofollow">{{.Value}}</a>
+              {{else}}
+                {{.Value}}
+              {{end}}
+            </dd>
+          {{end}}
+        </dl>
+      {{end}}
+    </article>
+
+    <div class="actions">
+      {{- /* One small form per status rather than a select plus a submit:
+             a single click per outcome, and the button's label says what
+             the click does. Only states this submission isn't already in
+             are offered. */ -}}
+      {{range .Actions}}
+        <form method="post" action="/admin/submission/{{$.Submission.ID}}/status">
+          <input type="hidden" name="csrf" value="{{$.CSRF}}" />
+          <input type="hidden" name="to" value="{{.Status}}" />
+          <input type="hidden" name="status" value="{{$.Status}}" />
+          <input type="hidden" name="q" value="{{$.Query}}" />
+          <input type="hidden" name="page" value="{{$.Page}}" />
+          <button class="button secondary" type="submit">{{.Label}}</button>
+        </form>
+      {{end}}
+
+      {{- /* Delete is behind a <details> disclosure: two deliberate
+             clicks, no confirm() dialog. A dialog would mean this page
+             needs JavaScript, and a modal that blocks the whole browser
+             is a poor fit for an action whose only real requirement is
+             that it not happen by accident. */ -}}
+      <details class="danger">
+        <summary>Delete</summary>
+        <div class="danger-body">
+          <p>
+            This can't be undone. Archiving keeps the submission and takes
+            it out of the way — delete is for spam.
+          </p>
+          <form method="post" action="/admin/submission/{{.Submission.ID}}/delete">
+            <input type="hidden" name="csrf" value="{{.CSRF}}" />
+            <input type="hidden" name="status" value="{{.Status}}" />
+            <input type="hidden" name="q" value="{{.Query}}" />
+            <input type="hidden" name="page" value="{{.Page}}" />
+            <button class="button destructive" type="submit">Delete permanently</button>
+          </form>
+        </div>
+      </details>
+    </div>
+{{end}}

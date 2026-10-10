@@ -1,0 +1,32 @@
+{{define "content"}}
+    <div class="signin">
+      <h1>Admin</h1>
+      <p class="signin-sub">Sign in to read form submissions.</p>
+
+      {{if .SignedOut}}
+        <p class="notice ok">You've been signed out.</p>
+      {{end}}
+      {{if .Error}}
+        <p class="notice error">{{.Error}}</p>
+      {{end}}
+
+      {{if not .LockedOut}}
+        <form method="post" action="/admin/login" class="stack">
+          <input type="hidden" name="csrf" value="{{.CSRF}}" />
+          <label for="user">Username</label>
+          {{/* autofocus so the form is typable on load without reaching
+               for the mouse. The autocomplete names let a password
+               manager fill both fields; "current-password" rather than
+               "new-password" stops a manager offering to generate one. */}}
+          <input id="user" name="user" type="text" autocomplete="username"
+                 autocapitalize="none" spellcheck="false" autofocus required />
+
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password"
+                 autocomplete="current-password" required />
+
+          <button class="button" type="submit">Sign in</button>
+        </form>
+      {{end}}
+    </div>
+{{end}}

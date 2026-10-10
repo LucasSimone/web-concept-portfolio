@@ -18,7 +18,42 @@ const (
 	SiteOwn  = "own-site"
 )
 
+// Triage states, set from the admin portal (see internal/admin). A
+// submission starts at StatusNew because the column defaults to it — the
+// public form handler never writes status at all, so "unread" is a
+// property of nobody having touched it rather than something the form has
+// to assert. StatusArchived is the resting place for spam and for
+// anything dealt with; the portal hides archived submissions unless you
+// ask for them, which is the whole point of having it separate from
+// StatusRead.
+const (
+	StatusNew      = "new"
+	StatusRead     = "read"
+	StatusArchived = "archived"
+)
+
+// Statuses lists the triage states in the order the portal offers them.
+// Used to validate a status coming in off a form before it reaches SQL,
+// so an unknown value is rejected rather than stored and left to confuse
+// every later filter.
+var Statuses = []string{StatusNew, StatusRead, StatusArchived}
+
+// ValidStatus reports whether status is one of Statuses.
+func ValidStatus(status string) bool {
+	for _, s := range Statuses {
+		if s == status {
+			return true
+		}
+	}
+	return false
+}
+
 // Submission is one stored form submission, from either form.
+//
+// The first group of fields is what a form posts and Save writes. The
+// last group (ID, Status, CreatedAt) is the opposite direction: columns
+// the database owns, filled in when the admin portal reads a row back
+// out, and meaningless on the way in.
 type Submission struct {
 	// Kind is KindInquiry or KindBug.
 	Kind string `json:"kind"`
@@ -50,6 +85,18 @@ type Submission struct {
 	// Browser is the reporter's user-agent string, shown to them on the
 	// bug form and sent along to help reproduce. Empty on inquiries.
 	Browser string `json:"browser"`
+
+	// ID, Status and CreatedAt are read-side only: the database assigns
+	// them and the admin portal displays them. They're `json:"-"` on
+	// purpose and it matters — this same struct is what handler.go
+	// decodes a *public, unauthenticated* request body into, so without
+	// the tag a crafted POST to /api/contact could name an id or hand
+	// itself a status. Save's column list ignores these three regardless,
+	// but a tag makes that a property of the type instead of a detail of
+	// one INSERT statement that a later edit could quietly drop.
+	ID        int64  `json:"-"`
+	Status    string `json:"-"`
+	CreatedAt string `json:"-"`
 }
 
 // request is the JSON body posted to /api/contact: a Submission plus the

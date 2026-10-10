@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/lsimone/web-concept-portfolio/internal/admin"
 	"github.com/lsimone/web-concept-portfolio/internal/contact"
 	"github.com/lsimone/web-concept-portfolio/internal/httpserver"
 	"github.com/lsimone/web-concept-portfolio/internal/render"
@@ -29,13 +30,20 @@ func main() {
 	// .env file and so falls back to real env vars only.
 	loadDotEnv(".env")
 
-	// PORT and DB_PATH are the only two knobs today. Both have sane
-	// defaults so `go run ./cmd/server` works with zero setup. DEV=1 trades
-	// the embedded, compiled-in static site for one read live off disk, so
-	// editing HTML/CSS/JS shows up on refresh without a rebuild.
+	// PORT and DB_PATH both have sane defaults so `go run ./cmd/server`
+	// works with zero setup. DEV=1 trades the embedded, compiled-in static
+	// site for one read live off disk, so editing HTML/CSS/JS shows up on
+	// refresh without a rebuild.
 	port := envOr("PORT", "8080")
 	dbPath := envOr("DB_PATH", "data/contact.db")
 	dev := os.Getenv("DEV") != ""
+
+	// ADMIN_PASSWORD_HASH enables the submissions portal at /admin, and
+	// its absence disables it — see below. Generate one with
+	// `make admin-password`. ADMIN_USER is optional and defaults to
+	// "admin".
+	adminUser := os.Getenv("ADMIN_USER")
+	adminHash := os.Getenv("ADMIN_PASSWORD_HASH")
 
 	// Make sure the SQLite file's parent directory exists (e.g. "data/"
 	// on a fresh checkout, or "/data" in the Docker volume) before we
@@ -82,9 +90,24 @@ func main() {
 		}
 	}
 
+	// The admin portal is opt-in and fails closed: a bad or missing
+	// ADMIN_PASSWORD_HASH leaves adminCred nil, and httpserver.New then
+	// never registers /admin at all. The alternative — starting with a
+	// portal that accepts any password, or none — would turn one missing
+	// env var on a deploy into a publicly readable inbox, so the error
+	// is logged loudly and the site serves on without the portal.
+	//
+	// Note this runs before the server starts listening, so the warning
+	// is the last thing in the log before "listening on ..." and is hard
+	// to miss when wondering why /admin 404s.
+	adminCred, err := admin.ParseCredential(adminUser, adminHash)
+	if err != nil {
+		log.Printf("admin portal disabled: %v", err)
+	}
+
 	srv := &http.Server{
 		Addr:         ":" + port,
-		Handler:      httpserver.New(renderedFS, store, dev),
+		Handler:      httpserver.New(renderedFS, store, dev, adminCred),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

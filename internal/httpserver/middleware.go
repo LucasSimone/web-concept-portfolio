@@ -121,19 +121,32 @@ func (l *ipRateLimiter) sweepPeriodically(interval time.Duration) {
 // requester's IP.
 func (l *ipRateLimiter) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// NOTE: keyed on the direct connection address, which is correct
-		// only while this server faces the internet directly (today's
-		// deployment). Once a reverse proxy sits in front (planned for the
-		// VPS), every request will share the proxy's address here and this
-		// will need to read X-Forwarded-For from a *trusted* proxy instead.
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			host = r.RemoteAddr
-		}
-		if !l.allow(host) {
+		if !l.allow(clientIP(r)) {
 			http.Error(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// clientIP is the key both rate-limited things share: the contact API's
+// middleware above, and the admin login limiter, which can't use that
+// middleware because a plain-text 429 is the wrong answer for someone
+// mistyping a password (see routes.go, where it's wired to a function
+// that lets the login page explain itself instead).
+//
+// NOTE: this is the direct connection address, which is correct only
+// while this server faces the internet directly (today's deployment).
+// Once a reverse proxy sits in front (planned for the VPS), every
+// request will share the proxy's address here and this will need to read
+// X-Forwarded-For from a *trusted* proxy instead. That change now has
+// two callers rather than one, and the login limiter is the one where
+// getting it wrong is worse: collapsing every visitor onto one key would
+// let any stranger's failed logins lock the owner out.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }

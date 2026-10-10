@@ -1,0 +1,59 @@
+{{define "content"}}
+    {{- /*
+    The dashboard answers one question — is there anything to deal with —
+    and it has to answer it without being read word by word. So the
+    unread count is the biggest thing on each card, and the three recent
+    submissions below it are there so the answer is "yes, and here's
+    what" rather than only a number.
+
+    No filters and no table live on this page on purpose: every control
+    here would be a decision to make before getting any information.
+    */ -}}
+    <h1 class="page-title">Overview</h1>
+
+    <div class="cards">
+      {{range .Cards}}
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title"><a href="{{.View.Path}}">{{.View.Title}}</a></h2>
+              <p class="card-blurb">{{.View.Blurb}}</p>
+            </div>
+          </div>
+
+          <div class="stat">
+            {{if .Counts.New}}
+              <a class="stat-value is-unread" href="{{.UnreadPath}}">{{.Counts.New}}</a>
+              <span class="stat-label">
+                unread of {{.Counts.Total}}
+              </span>
+            {{else}}
+              <span class="stat-value is-clear">0</span>
+              <span class="stat-label">
+                unread{{if .Counts.Total}} · {{.Counts.Total}} total{{end}}
+              </span>
+            {{end}}
+          </div>
+
+          {{if .Recent}}
+            <ul class="mini-list">
+              {{range .Recent}}
+                <li class="mini-row{{if eq .Status "new"}} is-unread{{end}}">
+                  <a href="/admin/submission/{{.ID}}">
+                    <span class="mini-who">
+                      {{if .Name}}{{.Name}}{{else if .Effect}}{{.Effect}}{{else}}Anonymous{{end}}
+                    </span>
+                    <span class="mini-snippet">{{summarize .Message}}</span>
+                    <span class="mini-when">{{prettyTime .CreatedAt}}</span>
+                  </a>
+                </li>
+              {{end}}
+            </ul>
+            <p class="card-more"><a href="{{.View.Path}}">See all {{.View.Short | lower}} →</a></p>
+          {{else}}
+            <p class="card-empty">{{.View.Empty}}</p>
+          {{end}}
+        </section>
+      {{end}}
+    </div>
+{{end}}
