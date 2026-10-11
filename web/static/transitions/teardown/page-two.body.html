@@ -1,0 +1,90 @@
+
+  <main class="teardown-demo teardown-demo--controls">
+    <section class="teardown-hero">
+      <p class="eyebrow">Transition · Teardown</p>
+      <h1>Page Two</h1>
+      <p>
+        Same script, same install, no per-link setup. This page started
+        blank with every piece of it waiting off-screen, then flew them in
+        and put itself together. Hit the browser's back button afterward
+        and Page One is just there, since nothing replays on a bfcache
+        restore. The controls change the trip back only.
+      </p>
+      <a class="btn teardown-next" id="ptTransitionLink" href="index.html">← Back to Page One</a>
+    </section>
+
+    <section class="teardown-tiles">
+      <div class="teardown-tile"><span class="teardown-tile-glyph">▲</span><span>Measured</span></div>
+      <div class="teardown-tile"><span class="teardown-tile-glyph">●</span><span>Flown in</span></div>
+      <div class="teardown-tile"><span class="teardown-tile-glyph">■</span><span>Landed</span></div>
+      <div class="teardown-tile"><span class="teardown-tile-glyph">◆</span><span>Put back</span></div>
+    </section>
+
+    <section class="teardown-section teardown-article">
+      <p class="teardown-kicker">Scroll down</p>
+      <h2>Built from the top</h2>
+      <p>
+        On the way in, the order runs backward: whatever left last on the
+        page before lands first here. With <em>Top to bottom</em>, the
+        page assembles itself like it's being typeset, row by row.
+      </p>
+      <p>
+        A <a href="index.html">link from down here</a> starts the next
+        teardown from this scroll position, and the next page builds in at
+        the top.
+      </p>
+    </section>
+
+    <section class="teardown-section teardown-banner">
+      <h2>A gradient banner</h2>
+      <p>Its background is copied onto a stand-in when it's split, so the gradient flies after its text.</p>
+    </section>
+
+    <section class="teardown-section">
+      <h3 class="teardown-subhead">How a trip goes</h3>
+      <ol class="teardown-timeline">
+        <li><strong>Click.</strong> Every piece on screen is measured where it sits.</li>
+        <li><strong>Tear down.</strong> Pieces fly off, nearest the click first.</li>
+        <li><strong>Blank.</strong> The background goes last, leaving the blank color.</li>
+        <li><strong>Arrive.</strong> The next page starts blank, its pieces waiting off-screen.</li>
+        <li><strong>Build.</strong> They fly in and land, and every style is put back.</li>
+      </ol>
+    </section>
+
+    <section class="teardown-section teardown-gallery">
+      <div class="teardown-swatch" style="background:#000"></div>
+      <div class="teardown-swatch teardown-swatch--ring"></div>
+      <div class="teardown-swatch teardown-swatch--stripe"></div>
+      <div class="teardown-swatch" style="background:#555"></div>
+      <div class="teardown-swatch teardown-swatch--stripe"></div>
+      <div class="teardown-swatch" style="background:#999"></div>
+      <div class="teardown-swatch teardown-swatch--ring"></div>
+      <div class="teardown-swatch" style="background:#000"></div>
+    </section>
+
+    <section class="teardown-section teardown-faq">
+      <h3 class="teardown-subhead">Questions</h3>
+      <details>
+        <summary>What happens on a refresh?</summary>
+        <p>Nothing. Only a trip that started with an intercepted click builds in.</p>
+      </details>
+      <details>
+        <summary>What if the link doesn't go anywhere?</summary>
+        <p>A download or an empty response leaves this page here, so it builds itself back.</p>
+      </details>
+      <details>
+        <summary>Can a part of the page stay put?</summary>
+        <p>Mark it <code>data-teardown="keep"</code>, or try Keep nav bar in the controls.</p>
+      </details>
+      <p class="teardown-footnote">
+        Bottom of the page. <a href="index.html">Back to Page One from here</a>.
+      </p>
+    </section>
+
+    <section class="teardown-element">
+      <p class="element-demo-hint">Teardown also works on elements, not just pages:</p>
+      <div class="t-el element-demo" id="elementDemo" role="button" tabindex="0">Click me</div>
+    </section>
+  </main>
+
+  <script src="demo.js"></script>

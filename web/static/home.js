@@ -1071,9 +1071,16 @@ if (!prefersReducedMotion) {
     const surface = card.querySelector('.liftoff-card');
     if (!surface) return;
     surface.classList.add('t-el');
-    // Card is too small for scanlines to read as anything but noise —
-    // Static's own option, ignored by engines that don't have one.
-    const overrides = card.dataset.tTransition === 'static' ? { scanlines: false } : undefined;
+    // Per-engine options, each ignored by engines that don't have it. The
+    // card is too small for Static's scanlines to read as anything but
+    // noise, and Teardown would otherwise fly Liftoff's own ground shadow
+    // and thrust dashes out with the card's contents, as if they were
+    // content too.
+    const OVERRIDES = {
+      static: { scanlines: false },
+      teardown: { keep: '.liftoff-card__shadow, .liftoff-card__glow--thrust' },
+    };
+    const overrides = OVERRIDES[card.dataset.tTransition];
     // Hovering commandeers the card's own cover()/reveal() calls rather
     // than reaching into shutter.js/aperture.js: cover()/reveal() are
     // built so a newer call on the same target supersedes an in-flight one

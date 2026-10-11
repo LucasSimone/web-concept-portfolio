@@ -1,0 +1,126 @@
+    <div class="control-row">
+      <label for="ptProfile">Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the controls below. Adjusting anything afterward just tweaks that preset. Keep nav bar isn't part of any of them.</span></span>
+      </label>
+      <select id="ptProfile">
+        <option value="default" selected>Demolition</option>
+        <option value="gravity">Gravity</option>
+        <option value="whirlpool">Whirlpool</option>
+        <option value="gust">Gust</option>
+        <option value="tidy">Tidy</option>
+        <option value="rubber">Rubber Band</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptMotion">Motion
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-motion">?<span class="hint" role="tooltip" id="hint-motion">How each piece flies. Slide: a straight line. Tumble: a straight line, spinning. Throw: tossed up, then falls off the bottom. Spiral: swirls outward around the center.</span></span>
+      </label>
+      <select id="ptMotion">
+        <option value="slide">Slide</option>
+        <option value="tumble" selected>Tumble</option>
+        <option value="throw">Throw</option>
+        <option value="spiral">Spiral</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptDirection">Direction
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-direction">?<span class="hint" role="tooltip" id="hint-direction">Which way the pieces go. Away from click blasts them out from where you clicked. From center explodes them out from the middle. Nearest edge sends each one out its closest side.</span></span>
+      </label>
+      <select id="ptDirection">
+        <option value="origin" selected>Away from click</option>
+        <option value="center">From center</option>
+        <option value="edge">Nearest edge</option>
+        <option value="up">Up</option>
+        <option value="down">Down</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+        <option value="random">Random</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptOrder">Order
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-order">?<span class="hint" role="tooltip" id="hint-order">Which pieces go first, and on the next page, which land first. Nearest click first runs as a wave out from where you clicked.</span></span>
+      </label>
+      <select id="ptOrder">
+        <option value="origin" selected>Nearest click first</option>
+        <option value="reading">Top to bottom</option>
+        <option value="reverse">Bottom to top</option>
+        <option value="random">Random</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptGrouping">Grouping
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-grouping">?<span class="hint" role="tooltip" id="hint-grouping">How finely the page breaks apart. Sections: big blocks. Cards: anything with its own background, border or shadow stays whole. Pieces: every heading, paragraph and image on its own. Words: every word on its own.</span></span>
+      </label>
+      <select id="ptGrouping">
+        <option value="sections">Sections</option>
+        <option value="cards" selected>Cards</option>
+        <option value="pieces">Pieces</option>
+        <option value="words">Words</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptBackground">Background
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-background">?<span class="hint" role="tooltip" id="hint-background">The page's own background. Fly: it's the last piece out, leaving the blank color behind. Fade: it fades to the blank color. Stay: it never moves.</span></span>
+      </label>
+      <select id="ptBackground">
+        <option value="fly" selected>Fly</option>
+        <option value="fade">Fade</option>
+        <option value="stay">Stay</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="ptKeepNav" />
+        Keep nav bar
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-keep-nav">?<span class="hint" role="tooltip" id="hint-keep-nav">Leaves the nav bar where it is while everything else goes, since it's the same on both pages. On your own site, mark anything like that with data-teardown="keep" or list it in the keep option. Not part of any profile.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">1400ms</span></label>
+      <input type="range" id="ptDuration" min="400" max="4000" step="50" value="1400" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-easing">?<span class="hint" role="tooltip" id="hint-easing">The shape of each piece's flight. Ease In pulls away slowly and accelerates off, and lands the same way in reverse. Anticipate winds back before it goes and overshoots as it lands.</span></span>
+      </label>
+      <select id="ptEasing">
+        <option value="ease-in" selected>Ease In</option>
+        <option value="linear">Linear</option>
+        <option value="ease-in-out">Ease In Out</option>
+        <option value="cubic-bezier(.6,-.28,.735,.045)">Anticipate</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptStagger"><span class="label-text">Stagger <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stagger">?<span class="hint" role="tooltip" id="hint-stagger">How spread out the pieces' start times are. At 0 everything goes at once.</span></span></span><span class="value" id="ptStaggerVal">60%</span></label>
+      <input type="range" id="ptStagger" min="0" max="0.9" step="0.05" value="0.6" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptSpin"><span class="label-text">Spin <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-spin">?<span class="hint" role="tooltip" id="hint-spin">How much the pieces rotate in flight. Slide never spins.</span></span></span><span class="value" id="ptSpinVal">50%</span></label>
+      <input type="range" id="ptSpin" min="0" max="1" step="0.05" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptFade"><span class="label-text">Fade <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fade">?<span class="hint" role="tooltip" id="hint-fade">How much the pieces fade out as they go.</span></span></span><span class="value" id="ptFadeVal">0%</span></label>
+      <input type="range" id="ptFade" min="0" max="1" step="0.05" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptScale"><span class="label-text">End Scale <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-scale">?<span class="hint" role="tooltip" id="hint-scale">How big the pieces are by the time they're off the screen. Below 1 they shrink away, above 1 they grow as if flying past you.</span></span></span><span class="value" id="ptScaleVal">1.00×</span></label>
+      <input type="range" id="ptScale" min="0" max="3" step="0.05" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptColor">Blank Page</label>
+      <input type="color" id="ptColor" class="t-swatch" value="#ffffff" aria-label="Blank page color" />
+    </div>

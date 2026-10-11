@@ -7,14 +7,20 @@
  * fixed edge tab to pull it back out when hidden (see the shared rules in
  * site.css). Open by default on desktop, closed by default on mobile -
  * every visit, for every demo. The one exception: the two-page transition
- * labs (Shutter, Aperture, Static, Inkblot, Power Off), where a desktop
+ * labs (every 'transitions' entry in EFFECTS_MANIFEST), where a desktop
  * visitor's choice on Page One should still hold on Page Two rather than
  * snapping back open.
  * Everywhere else nothing is persisted, so a demo's controls always start
  * fresh.
  */
 (function () {
-  var PERSISTED_FOLDERS = ['/transitions/shutter/', '/transitions/aperture/', '/transitions/static/', '/transitions/inkblot/', '/transitions/power-off/'];
+  // Each transition's demo folder, read off the manifest (loaded just
+  // before this script) so a new transition is covered automatically.
+  var PERSISTED_FOLDERS = (window.EFFECTS_MANIFEST || []).filter(function (entry) {
+    return entry.category === 'transitions';
+  }).map(function (entry) {
+    return entry.demoPath.replace(/[^/]*$/, '');
+  });
   var persistsAcrossPages = PERSISTED_FOLDERS.some(function (folder) {
     return window.location.pathname.indexOf(folder) === 0;
   });

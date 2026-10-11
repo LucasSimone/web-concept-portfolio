@@ -230,9 +230,10 @@
         So it loads alongside
         <a href="/docs/transitions/shutter.html">Shutter</a>,
         <a href="/docs/transitions/aperture.html">Aperture</a>,
-        <a href="/docs/transitions/static.html">Static</a> and
-        <a href="/docs/transitions/power-off.html">Power Off</a> without any
-        of them clobbering the others. This site's own layout loads all five
+        <a href="/docs/transitions/static.html">Static</a>,
+        <a href="/docs/transitions/power-off.html">Power Off</a> and
+        <a href="/docs/transitions/teardown.html">Teardown</a> without any
+        of them clobbering the others. This site's own layout loads all six
         on every page, each reacting only to links tagged with its own slug:
       </p>
       <pre><code>&lt;script&gt;
@@ -242,13 +243,15 @@
     static:      { selector: '[data-t-transition="static"]' },
     inkblot:     { selector: '[data-t-transition="inkblot"]' },
     'power-off': { selector: '[data-t-transition="power-off"]' },
+    teardown:    { selector: '[data-t-transition="teardown"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;
 &lt;script src="static.js"&gt;&lt;/script&gt;
 &lt;script src="inkblot.js"&gt;&lt;/script&gt;
-&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="power-off.js"&gt;&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
       <pre><code>&lt;a href="/a" data-t-transition="static"&gt;Uses Static&lt;/a&gt;
 &lt;a href="/b" data-t-transition="inkblot"&gt;Uses Inkblot&lt;/a&gt;</code></pre>
       <p>

@@ -1,0 +1,634 @@
+/* Page-specific styles for the Teardown transition demo.
+   Base layout/nav comes from /shared/site.css. The teardown effect's own
+   CSS ships inside ./teardown.js and is injected automatically. */
+
+.teardown-demo {
+  min-height: calc(100vh - 57px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  text-align: center;
+  padding: 4vh 6vw;
+}
+
+.teardown-hero {
+  max-width: 60ch;
+}
+
+.teardown-hero .eyebrow {
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+}
+
+.teardown-hero h1 {
+  font-size: clamp(40px, 9vw, 96px);
+  line-height: 1;
+  margin: 0 0 1.5rem;
+}
+
+.teardown-hero p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+  margin: 0 0 2rem;
+}
+
+.teardown-hero p code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.4em;
+}
+
+.teardown-next {
+  display: inline-block;
+  padding: 14px 28px;
+  font-size: 14px;
+}
+
+/* `p` in the selector, not just the class, so this beats .teardown-hero p's
+   own margin (same specificity, declared earlier) instead of losing to it. */
+p.element-demo-hint {
+  font-size: 12px;
+  opacity: 0.55;
+  margin: 0 0 0.75rem;
+}
+
+.teardown-element {
+  width: min(320px, 100%);
+}
+
+/* Page One's cards: a border each, so Grouping visibly changes something —
+   Cards and Sections fly each one whole, Pieces and Words take them apart. */
+.teardown-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: min(820px, 100%);
+  text-align: left;
+}
+
+.teardown-card {
+  border: 1px solid #000;
+  padding: 18px 20px 20px;
+  background: #fff;
+}
+
+.teardown-card-num {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  opacity: 0.55;
+  margin-bottom: 10px;
+}
+
+.teardown-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.teardown-card p {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.75;
+  margin: 0;
+}
+
+/* Page Two's tiles: filled black, so each one's chrome is obvious when it
+   flies separately from its glyph and label. */
+.teardown-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  width: min(720px, 100%);
+}
+
+.teardown-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 1;
+  background: #000;
+  color: #fff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.teardown-tile-glyph {
+  font-size: 28px;
+  letter-spacing: 0;
+}
+
+@media (max-width: 720px) {
+  .teardown-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .teardown-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.element-demo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Same 320:140 aspect ratio as the old fixed 220x96 box, just scaled up
+     — width caps at 100% so it shrinks to fit on narrow viewports instead
+     of overflowing, and aspect-ratio scales height down to match rather
+     than needing a separate mobile breakpoint. */
+  width: min(320px, 100%);
+  aspect-ratio: 320 / 140;
+  /* Floor so the label never gets shorter than one comfortable line even
+     if the container shrinks well below 320px. */
+  min-height: 44px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  border: 1px solid #000;
+  cursor: pointer;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.element-demo:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.element-demo:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+/* Page One reserves space for the controls panel; Page Two has none. */
+.teardown-demo--controls {
+  margin-right: 300px;
+}
+
+/* --- Control panel --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.control-row .control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.control-checkbox input {
+  accent-color: #000;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.controls .hint {
+  font-size: 11px;
+  opacity: 0.55;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
+}
+
+@media (max-width: 720px) {
+  .teardown-demo--controls {
+    margin-right: 0;
+  }
+}
+
+/* --- The longer page below the fold: one of each kind of thing, so
+   every grouping has something to show on the way down. --- */
+.teardown-section {
+  width: min(720px, 100%);
+  text-align: left;
+}
+
+.teardown-kicker {
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin: 0 0 0.75rem;
+}
+
+.teardown-article h2,
+.teardown-banner h2 {
+  font-size: 32px;
+  margin: 0 0 1rem;
+}
+
+.teardown-article p {
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+
+.teardown-article code,
+.teardown-faq code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0.1em 0.4em;
+}
+
+.teardown-article blockquote {
+  margin: 1.5rem 0 0;
+  padding: 0.5rem 0 0.5rem 1.25rem;
+  border-left: 4px solid #000;
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+.teardown-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teardown-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid #000;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.teardown-stat-num {
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.teardown-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.teardown-columns h3,
+.teardown-form h3,
+.teardown-subhead {
+  font-size: 18px;
+  margin: 0 0 0.75rem;
+}
+
+.teardown-columns ul,
+.teardown-columns ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.teardown-figure {
+  margin: 0;
+  padding: 24px;
+  border: 1px solid #000;
+}
+
+.teardown-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.teardown-figure figcaption {
+  margin-top: 12px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.teardown-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px auto;
+  align-items: end;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid #000;
+}
+
+.teardown-form h3 {
+  grid-column: 1 / -1;
+}
+
+.teardown-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+}
+
+.teardown-form input,
+.teardown-form select,
+.teardown-form button {
+  box-sizing: border-box;
+  height: 40px;
+  border: 1px solid #000;
+  border-radius: 0;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.teardown-form input,
+.teardown-form select {
+  width: 100%;
+  padding: 0 12px;
+  background: #fff;
+  color: #000;
+}
+
+.teardown-form select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.teardown-form input:focus,
+.teardown-form select:focus {
+  outline: 2px solid #000;
+  outline-offset: -2px;
+}
+
+.teardown-form button {
+  justify-content: center;
+  padding: 0 20px;
+  background: #000;
+  color: #fff;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.teardown-form button:hover {
+  background: #fff;
+  color: #000;
+}
+
+.teardown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.teardown-table th,
+.teardown-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #000;
+  text-align: left;
+}
+
+.teardown-footnote {
+  margin: 1.5rem 0 0;
+  font-size: 14px;
+}
+
+.teardown-banner {
+  padding: 40px;
+  background: linear-gradient(135deg, #000 0%, #444 100%);
+  color: #fff;
+}
+
+.teardown-banner p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+.teardown-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.teardown-timeline li {
+  position: relative;
+  padding: 0 0 1.25rem 1.75rem;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.teardown-timeline li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #000;
+}
+
+.teardown-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teardown-swatch {
+  aspect-ratio: 1;
+}
+
+.teardown-swatch--ring {
+  border: 10px solid #000;
+  border-radius: 50%;
+}
+
+.teardown-swatch--stripe {
+  background: repeating-linear-gradient(45deg, #000 0 8px, #fff 8px 16px);
+  border: 1px solid #000;
+}
+
+.teardown-faq details {
+  border-top: 1px solid #000;
+  padding: 12px 0;
+}
+
+.teardown-faq details:last-of-type {
+  border-bottom: 1px solid #000;
+}
+
+.teardown-faq summary {
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.teardown-faq details p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+@media (max-width: 720px) {
+  .teardown-stats,
+  .teardown-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teardown-columns,
+  .teardown-form {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,133 @@
+
+  <main class="teardown-demo teardown-demo--controls">
+    <section class="teardown-hero">
+      <p class="eyebrow">Transition · Teardown</p>
+      <h1>Page One</h1>
+      <p>
+        The link below is a plain <code>&lt;a href&gt;</code> with nothing
+        wired to it. <code>teardown.js</code> watches the whole document:
+        clicking sends every piece of this page flying off the screen, the
+        background last, and the same script on the next page flies that
+        page's pieces in until it has built itself. The controls change
+        this trip only.
+      </p>
+      <a class="btn teardown-next" id="ptTransitionLink" href="page-two.html">Transition Page →</a>
+    </section>
+
+    <section class="teardown-cards">
+      <article class="teardown-card">
+        <span class="teardown-card-num">01</span>
+        <h3>Grouping</h3>
+        <p>Cards keeps anything with its own background, border or shadow in one piece. Pieces and Words take it all apart.</p>
+      </article>
+      <article class="teardown-card">
+        <span class="teardown-card-num">02</span>
+        <h3>Background</h3>
+        <p>The page's own background is a piece too. It leaves last and lands first, so every trip passes through a blank page.</p>
+      </article>
+      <article class="teardown-card">
+        <span class="teardown-card-num">03</span>
+        <h3>Kept</h3>
+        <p>Anything marked <code>data-teardown="keep"</code> stays where it is while everything around it goes. Try Keep nav bar.</p>
+      </article>
+    </section>
+
+    <section class="teardown-section teardown-article">
+      <p class="teardown-kicker">Scroll down</p>
+      <h2>A longer page</h2>
+      <p>
+        Only what's on screen flies. Scroll to anywhere on this page and
+        follow a link from there: the pieces in view take off from where
+        they sit, and everything above and below stays out of sight until
+        the next page has built itself.
+      </p>
+      <p>
+        Text holds together as a paragraph under <em>Cards</em> and
+        <em>Pieces</em>, and comes apart word by word under <em>Words</em>,
+        <strong>bold</strong>, <a href="page-two.html">links</a> and
+        <code>code</code> included, without changing where any line breaks.
+      </p>
+      <blockquote>
+        The page takes itself apart, then the next one puts itself
+        together.
+      </blockquote>
+    </section>
+
+    <section class="teardown-section teardown-stats">
+      <div class="teardown-stat"><span class="teardown-stat-num">4</span><span>motions</span></div>
+      <div class="teardown-stat"><span class="teardown-stat-num">8</span><span>directions</span></div>
+      <div class="teardown-stat"><span class="teardown-stat-num">4</span><span>orders</span></div>
+      <div class="teardown-stat"><span class="teardown-stat-num">4</span><span>groupings</span></div>
+    </section>
+
+    <section class="teardown-section teardown-columns">
+      <div>
+        <h3>Flies whole</h3>
+        <ul>
+          <li>Images, video and canvases</li>
+          <li>Form controls and buttons</li>
+          <li>Tables and bulleted lists</li>
+          <li>Anything rotated or clipped</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Comes apart</h3>
+        <ol>
+          <li>Plain wrappers, always</li>
+          <li>Cards, under Pieces or Words</li>
+          <li>Text, under Words</li>
+          <li>Anything marked to split</li>
+        </ol>
+      </div>
+    </section>
+
+    <figure class="teardown-section teardown-figure">
+      <svg viewBox="0 0 400 160" role="img" aria-label="Blocks scattering away from a grid">
+        <rect x="20" y="40" width="40" height="40" />
+        <rect x="70" y="40" width="40" height="40" />
+        <rect x="20" y="90" width="40" height="40" />
+        <rect x="70" y="90" width="40" height="40" />
+        <rect x="190" y="30" width="40" height="40" transform="rotate(14 210 50)" />
+        <rect x="250" y="80" width="40" height="40" transform="rotate(-22 270 100)" />
+        <rect x="320" y="20" width="40" height="40" transform="rotate(38 340 40)" />
+        <rect x="330" y="105" width="40" height="40" transform="rotate(-48 350 125)" />
+      </svg>
+      <figcaption>An inline SVG is one piece, however it's grouped.</figcaption>
+    </figure>
+
+    <form class="teardown-section teardown-form" onsubmit="return false">
+      <h3>Form controls</h3>
+      <label>Name <input type="text" placeholder="Ada Lovelace"></label>
+      <label>Plan
+        <select>
+          <option>Starter</option>
+          <option>Studio</option>
+        </select>
+      </label>
+      <button type="button" class="btn">Sign up</button>
+    </form>
+
+    <section class="teardown-section">
+      <table class="teardown-table">
+        <thead>
+          <tr><th>Grouping</th><th>Cards</th><th>Text</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sections</td><td>Whole</td><td>Whole</td></tr>
+          <tr><td>Cards</td><td>Whole</td><td>Whole</td></tr>
+          <tr><td>Pieces</td><td>Split</td><td>Whole</td></tr>
+          <tr><td>Words</td><td>Split</td><td>Split</td></tr>
+        </tbody>
+      </table>
+      <p class="teardown-footnote">
+        Bottom of the page. <a href="page-two.html">Go to Page Two from here</a>.
+      </p>
+    </section>
+
+    <section class="teardown-element">
+      <p class="element-demo-hint">Teardown also works on elements, not just pages:</p>
+      <div class="t-el element-demo" id="elementDemo" role="button" tabindex="0">Click me</div>
+    </section>
+  </main>
+
+  <script src="demo.js"></script>

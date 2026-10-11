@@ -180,6 +180,14 @@
       docsPath: '/docs/transitions/power-off.html',
     },
     {
+      slug: 'teardown',
+      name: 'Teardown',
+      category: 'transitions',
+      demoPath: '/transitions/teardown/index.html',
+      jsPath: '/transitions/teardown/teardown.js',
+      docsPath: '/docs/transitions/teardown.html',
+    },
+    {
       slug: 'liftoff',
       name: 'Liftoff',
       category: 'concepts',

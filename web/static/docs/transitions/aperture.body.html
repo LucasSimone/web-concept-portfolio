@@ -198,10 +198,11 @@ Transitions.aperture.play(cardB);
         <code>t-aperture-pending</code> — so it registers alongside
         <a href="/docs/transitions/shutter.html">Shutter</a>,
         <a href="/docs/transitions/static.html">Static</a>,
-        <a href="/docs/transitions/inkblot.html">Inkblot</a> and
-        <a href="/docs/transitions/power-off.html">Power Off</a> without any
+        <a href="/docs/transitions/inkblot.html">Inkblot</a>,
+        <a href="/docs/transitions/power-off.html">Power Off</a> and
+        <a href="/docs/transitions/teardown.html">Teardown</a> without any
         of them clobbering the others. This site's own layout does exactly
-        that: all five scripts load on every page, each one reacting only
+        that: all six scripts load on every page, each one reacting only
         to links tagged with its own slug:
       </p>
       <pre><code>&lt;script&gt;
@@ -211,13 +212,15 @@ Transitions.aperture.play(cardB);
     static:      { selector: '[data-t-transition="static"]' },
     inkblot:     { selector: '[data-t-transition="inkblot"]' },
     'power-off': { selector: '[data-t-transition="power-off"]' },
+    teardown:    { selector: '[data-t-transition="teardown"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;
 &lt;script src="static.js"&gt;&lt;/script&gt;
 &lt;script src="inkblot.js"&gt;&lt;/script&gt;
-&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="power-off.js"&gt;&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Which link uses which effect is decided by the <em>value</em> of
         <code>data-t-transition</code> — each script only reacts to the

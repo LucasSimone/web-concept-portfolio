@@ -1,0 +1,411 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Transition · Navigation</p>
+      <h1>Teardown</h1>
+      <p>
+        The page takes itself apart: on exit every element flies off the
+        screen, the background last, until all that's left is a blank page.
+        On the next page every piece starts off-screen and flies in, so the
+        page builds itself. One continuous motion split across the
+        navigation boundary, same shape as
+        <a href="/docs/transitions/shutter.html">Shutter</a>,
+        <a href="/docs/transitions/aperture.html">Aperture</a>,
+        <a href="/docs/transitions/static.html">Static</a>,
+        <a href="/docs/transitions/inkblot.html">Inkblot</a> and
+        <a href="/docs/transitions/power-off.html">Power Off</a>, except
+        that nothing is drawn over the page: the pieces are the page's own
+        elements.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/transitions/teardown/index.html">View Demo</a>
+        <a class="btn" href="/transitions/teardown/teardown.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#pieces">How the Page Breaks Apart</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#element-transitions">Element Transitions</a>
+        <a href="#multiple-transitions">Multiple Transitions</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Like the other transitions, this one belongs in
+        <code>&lt;head&gt;</code> as a plain, non-<code>async</code>/<code>defer</code>
+        tag, on every page that should take part. It has to run before the
+        page paints, so an arriving page starts blank, with no flash of the
+        finished page before it builds itself.
+      </p>
+      <p>
+        Dropping the script in doesn't intercept anything by itself:
+        navigation is off until you set <code>selector</code>. With no
+        config at all you still get
+        <a href="#element-transitions"><code>play</code>/<code>cover</code>/<code>reveal</code></a>
+        for elements.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    teardown: { selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        It now intercepts any left-click on a same-origin
+        <code>&lt;a href&gt;</code> that isn't a hash link, a
+        <code>download</code> link, a <code>target="_blank"</code> link, or
+        opened with a modifier key held. The page tears down, then the
+        browser navigates. The build-up only plays on the page that
+        receives that navigation; a direct load, refresh or bookmark
+        renders normally, and a destination that doesn't load
+        <code>teardown.js</code> simply appears once the cover finishes.
+      </p>
+
+      <h2 id="pieces">How the Page Breaks Apart</h2>
+      <p>
+        At the start of every transition the script walks down from the
+        target and decides, element by element, whether it flies as one
+        piece or gets split into its children. <code>grouping</code> sets
+        how far down that goes:
+      </p>
+      <ul>
+        <li><code>'sections'</code>: anything smaller than about a third of the screen flies whole, so the page leaves in a few big blocks.</li>
+        <li><code>'cards'</code> (default): anything with its own background, border, shadow or <code>::before</code>/<code>::after</code> flies whole, as do links and buttons. Plain wrappers are split, and so is anything covering more than half the screen, so a page wrapper with a background doesn't leave as one slab.</li>
+        <li><code>'pieces'</code>: everything is split down to the elements that hold the content: headings, paragraphs, images, inputs.</li>
+        <li><code>'words'</code>: like <code>'pieces'</code>, and blocks of text are split into their words too.</li>
+      </ul>
+      <p>
+        Images, video, canvases, SVGs and form controls are always one
+        piece. A block of text (a paragraph with a link in it, say) flies
+        as one piece unless the grouping is <code>'words'</code> or it's
+        marked <code>data-teardown="split"</code>, and then it splits into
+        its words. A few containers fly whole unless they're marked
+        <code>split</code>, because their look can't be rebuilt from their
+        parts: tables, lists with bullets or numbers, anything rotated,
+        clipped, masked or filled with gradient text, web components with
+        a shadow root, overlays (anything fixed, sticky or absolutely
+        positioned with a <code>z-index</code>), and anything card-sized
+        that clips its contents (a rounded card cropping its image), so
+        nothing vanishes at its edge. The other way round, a box with a
+        parallax (<code>background-attachment: fixed</code>) background, or
+        with something inside using <code>mix-blend-mode</code>, is always
+        split, so the background stays lined up until it leaves and the
+        blend keeps blending with the page. Under <code>'words'</code>,
+        a list item with a bullet or number, text cut short with an
+        ellipsis or a line clamp, text in a right-to-left script, and text
+        with an underline set on the whole block fly as whole blocks, and an underlined link inside a paragraph flies as
+        one piece, so its underline goes with it.
+      </p>
+      <p>
+        A container that gets split still has its own background, border
+        and shadow. Those are copied onto a stand-in behind the content
+        that flies on its own, leaving after the last of the container's
+        contents has gone and landing before the first of them arrives.
+        The page's own background works the same way (see
+        <code>background</code>), which is why every trip passes through a
+        blank page in <code>color</code>.
+      </p>
+      <p>
+        Only what's on screen moves. Anything scrolled out of view is
+        hidden for the length of the transition and put back afterward, as
+        is anything the page's own scripts add while it runs, and every
+        piece is hidden once it's gone. So a carousel that keeps turning,
+        or a typing effect that keeps typing, can't bring anything back
+        onto the blank page.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Keep what both pages share</h3>
+        <p>
+          Teardown can't tell which parts of a page will still be there on
+          the next one, but you can. Mark them <code>data-teardown="keep"</code>
+          on both pages and they stay where they are while everything around
+          them goes, then stay on screen from the first paint of the next
+          page, so a shared header never blinks. A <code>keep</code> selector
+          does the same from config. Kept elements win over grouping: anything
+          holding one is split around it so it can stay behind. On an
+          arriving page, what the last page kept and what this page keeps
+          both count.
+        </p>
+        <pre><code>&lt;header class="site-header" data-teardown="keep"&gt;...&lt;/header&gt;
+
+&lt;script&gt;
+  window.TransitionConfig = {
+    teardown: { selector: 'a[href]', keep: '.site-header, #cookie-bar' },
+  };
+&lt;/script&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Hold something together, or take it apart</h3>
+        <p>
+          <code>data-teardown="group"</code> makes an element fly as one
+          piece whatever the grouping; <code>data-teardown="split"</code>
+          always breaks it into its children, even under
+          <code>'cards'</code> or <code>'sections'</code>.
+        </p>
+        <pre><code>&lt;figure data-teardown="group"&gt;
+  &lt;img src="chart.png" alt=""&gt;
+  &lt;figcaption&gt;Stays with its image&lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;div class="panel" data-teardown="split"&gt;...&lt;/div&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Exempt a link from the transition</h3>
+        <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Override one link's look</h3>
+        <p>
+          A link can override any option for its own transition, leaving
+          every other link on the page on the default profile. This is how
+          the <a href="/transitions/teardown/index.html">demo's controls
+          panel</a> changes only the Page One → Page Two link. The profile
+          travels to the next page with the navigation, along with where
+          the click landed, so the next page builds itself the same way the
+          last one came apart.
+        </p>
+        <pre><code>&lt;a href="page-two.html" data-t-motion="throw" data-t-grouping="words" data-t-stagger="0.8"&gt;
+  Enter Page Two
+&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Set the page-wide default</h3>
+        <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    teardown: {
+      motion: 'spiral',
+      direction: 'center',
+      grouping: 'pieces',
+      background: 'fade',
+      scale: 0.4,
+      selector: 'a[href]',
+    },
+  };
+&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <h2 id="element-transitions">Element Transitions</h2>
+      <p>
+        Teardown can also transition any element in place: fly its contents
+        out, swap them, then fly the new contents in. Mark the element
+        <code>class="t-el"</code> and call <code>play</code>:
+      </p>
+      <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
+
+&lt;script&gt;
+  Transitions.teardown.play(document.getElementById('card'), {
+    from: event, // optional: where 'origin' is
+    swap: (el) =&gt; { el.innerHTML = '&lt;h3&gt;New&lt;/h3&gt;&lt;p&gt;content&lt;/p&gt;'; },
+  });
+&lt;/script&gt;</code></pre>
+      <p>
+        <code>play(el, options)</code> covers <code>el</code>, calls
+        <code>options.swap(el)</code> once it's empty (waiting on it if it
+        returns a promise), then reveals whatever is there now.
+        <code>cover</code> and <code>reveal</code> are public on their own
+        for anything that doesn't fit that shape. All three take the same
+        fields as the options below, plus <code>from</code> (a click event,
+        an element, or <code>{ x, y }</code> in viewport px), and return a
+        promise that resolves when that step finishes.
+      </p>
+      <p>
+        The element itself is the stage: it stays put, its own background
+        and border stay with it, and its contents are clipped to it while
+        they fly, so they leave its edges rather than the screen's.
+        <code>background</code> and <code>color</code> only apply to the
+        page. Bare text sitting directly inside the element is wrapped for
+        the length of the transition so it has a box to move. Anything
+        <code>swap</code> adds stays hidden until <code>reveal</code> flies
+        it in, even if <code>swap</code> takes a while.
+      </p>
+      <p>
+        Calling <code>cover</code> while a <code>reveal</code> is still
+        running (or the other way round) turns the pieces around from
+        wherever they've got to, over the matching share of the duration,
+        rather than starting over.
+      </p>
+
+      <h2 id="multiple-transitions">Multiple Transitions</h2>
+      <p>
+        Teardown keeps its API, config and arrival flag under its own slug:
+        <code>window.Transitions.teardown</code>,
+        <code>window.TransitionConfig.teardown</code>, and a
+        <code>sessionStorage</code> key of <code>t-teardown-pending</code>.
+        So it loads alongside the other transitions without any of them
+        clobbering the others. This site's own layout loads all six on
+        every page, each reacting only to links tagged with its own slug:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter:     { selector: '[data-t-transition="shutter"]' },
+    aperture:    { selector: '[data-t-transition="aperture"]' },
+    static:      { selector: '[data-t-transition="static"]' },
+    inkblot:     { selector: '[data-t-transition="inkblot"]' },
+    'power-off': { selector: '[data-t-transition="power-off"]' },
+    teardown:    { selector: '[data-t-transition="teardown"]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;
+&lt;script src="aperture.js"&gt;&lt;/script&gt;
+&lt;script src="static.js"&gt;&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;
+&lt;script src="power-off.js"&gt;&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;a href="/a" data-t-transition="inkblot"&gt;Uses Inkblot&lt;/a&gt;
+&lt;a href="/b" data-t-transition="teardown"&gt;Uses Teardown&lt;/a&gt;</code></pre>
+      <p>
+        The scripts don't coordinate. Arriving on the next page, each one
+        only checks its own <code>sessionStorage</code> key, and only the
+        clicked link's effect wrote one, so only that effect's reveal
+        plays.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>duration</code></td><td><code>1400</code></td><td>ms for each half (tear down or build up) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'ease-in'</code></td><td>The shape of each piece's flight: <code>linear</code>, <code>ease</code>, <code>ease-in</code>, <code>ease-out</code>, <code>ease-in-out</code> or any <code>cubic-bezier()</code>, including ones that overshoot. It shapes the path, not the clock, so <code>ease-in</code> pulls away slowly and accelerates off on the way out, and decelerates into place on the way in</td></tr>
+          <tr><td><code>motion</code></td><td><code>'tumble'</code></td><td><code>'slide'</code> (straight line), <code>'tumble'</code> (straight line, spinning), <code>'throw'</code> (tossed up, then falls off the bottom), <code>'spiral'</code> (swirls outward around the center, or around the click with <code>direction: 'origin'</code>)</td></tr>
+          <tr><td><code>direction</code></td><td><code>'origin'</code></td><td>Which way pieces go: <code>'origin'</code> (away from the click, or the center with no click), <code>'center'</code> (out from the middle), <code>'edge'</code> (out each piece's nearest side), <code>'up'</code>, <code>'down'</code>, <code>'left'</code>, <code>'right'</code>, <code>'random'</code></td></tr>
+          <tr><td><code>order</code></td><td><code>'origin'</code></td><td>Which pieces go first, and on the way in, which land first: <code>'origin'</code> (nearest the click), <code>'reading'</code> (top to bottom), <code>'reverse'</code> (bottom to top), <code>'random'</code></td></tr>
+          <tr><td><code>stagger</code></td><td><code>0.6</code></td><td>0–0.9: how much of the duration the start times are spread over. At 0 everything goes at once</td></tr>
+          <tr><td><code>grouping</code></td><td><code>'cards'</code></td><td>How finely the page breaks apart: <code>'sections'</code>, <code>'cards'</code>, <code>'pieces'</code>, <code>'words'</code>. See <a href="#pieces">How the Page Breaks Apart</a></td></tr>
+          <tr><td><code>background</code></td><td><code>'fly'</code></td><td>The page's own background: <code>'fly'</code> (the last piece out, the first in), <code>'fade'</code>, or <code>'stay'</code> (never moves; the page passes through its own background instead of <code>color</code>)</td></tr>
+          <tr><td><code>color</code></td><td><code>'#fff'</code></td><td>The blank page left behind. Any CSS color</td></tr>
+          <tr><td><code>spin</code></td><td><code>0.5</code></td><td>0–1: how much pieces rotate in flight. <code>'slide'</code> never spins</td></tr>
+          <tr><td><code>fade</code></td><td><code>0</code></td><td>0–1: how much pieces fade out as they go</td></tr>
+          <tr><td><code>scale</code></td><td><code>1</code></td><td>How big pieces are by the time they're gone: below 1 they shrink away, above 1 they grow</td></tr>
+          <tr><td><code>keep</code></td><td><code>null</code></td><td>A selector for anything that stays where it is, same as marking it <code>data-teardown="keep"</code>. A call's or link's <code>keep</code> adds to the page's rather than replacing it</td></tr>
+          <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are intercepted. Navigation stays off until this is set</td></tr>
+          <tr><td><code>ready</code></td><td><code>null</code></td><td>A function returning a promise. An arriving page waits for it (up to 5 seconds) before building in, for content a script renders after the page loads. It always waits up to a second for fonts and on-screen images</td></tr>
+        </tbody>
+      </table>
+      <p>Per-link attributes, read from the clicked link and overriding the options above for that one transition:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Overrides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-t-motion</code></td><td><code>motion</code></td></tr>
+          <tr><td><code>data-t-direction</code></td><td><code>direction</code></td></tr>
+          <tr><td><code>data-t-order</code></td><td><code>order</code></td></tr>
+          <tr><td><code>data-t-stagger</code></td><td><code>stagger</code></td></tr>
+          <tr><td><code>data-t-grouping</code></td><td><code>grouping</code></td></tr>
+          <tr><td><code>data-t-background</code></td><td><code>background</code></td></tr>
+          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-spin</code></td><td><code>spin</code></td></tr>
+          <tr><td><code>data-t-fade</code></td><td><code>fade</code></td></tr>
+          <tr><td><code>data-t-scale</code></td><td><code>scale</code></td></tr>
+          <tr><td><code>data-t-keep</code></td><td><code>keep</code></td></tr>
+        </tbody>
+      </table>
+      <p>Attributes on the page's own elements:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-teardown="group"</code></td><td>Flies as one piece, whatever the grouping</td></tr>
+          <tr><td><code>data-teardown="split"</code></td><td>Always split into its children, or into words for a block of text</td></tr>
+          <tr><td><code>data-teardown="keep"</code></td><td>Never moves, and shows from the first paint of an arriving page</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>configure(options)</code></td>
+            <td>Merges options into the page-wide default profile, typically just to set <code>selector</code> from a script that runs after <code>teardown.js</code>.</td>
+          </tr>
+          <tr>
+            <td><code>cover(el, options)</code></td>
+            <td>Flies everything in <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>) off, resolving once it's empty. Leaves <code>el</code> torn down; pair with <code>reveal()</code>.</td>
+          </tr>
+          <tr>
+            <td><code>reveal(el, options)</code></td>
+            <td>Flies everything in <code>el</code> back in, resolving once it's landed and everything is put back. Called on an element that isn't torn down, it builds its current contents up from off-screen.</td>
+          </tr>
+          <tr>
+            <td><code>play(el, options)</code></td>
+            <td>Covers <code>el</code>, runs <code>options.swap(el)</code> (may return a promise), then reveals.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Pieces are moved with the individual <code>translate</code>,
+        <code>rotate</code> and <code>scale</code> properties, added to any
+        the element already has, and any <code>transform</code> keeps
+        applying on top. Nothing is written to a piece until it starts to
+        move. The page's own CSS transitions are switched off on each piece
+        while it flies, and every inline style the script touches is put
+        back exactly as it was once the piece lands. An animation running
+        on one of those three properties is held where it was for the
+        length of the flight.
+      </p>
+      <p>
+        A piece inside a scrolling or <code>overflow: hidden</code>
+        container (a carousel track, say) is clipped at that container's
+        edge as it leaves, rather than flying across the screen. Splitting
+        text into words leaves its text node where it was, emptied, with
+        the words in spans beside it, so a framework holding on to that
+        node can still write to it, insert next to it or remove it. If it
+        does, that text is put back as it was at once and lands in place
+        instead of flying. <code>'words'</code> keeps every word on its line
+        as it was, except that a very long word or URL can't break mid-word
+        while it's split. Anything the page changes in a piece's inline
+        style while it flies is kept when it lands.
+        An element target gets an extra child (the layer its ghosts fly
+        in) while it plays, which <code>:last-child</code> rules inside it
+        will see.
+      </p>
+      <p>
+        Clicks, keys and scrolling are blocked while the page is tearing
+        down or building up, including on an open dialog: every piece was
+        measured where it sat, so the page can't move under it. Shortcuts
+        with a modifier key still reach the browser. If the page is still
+        there four seconds after it's torn down, the link didn't lead
+        anywhere new (a download, an empty response, a cancelled "leave
+        this page?"), and the page builds itself back. A slow server
+        doesn't break the handoff: the next page builds in whenever it
+        arrives. A link's <code>referrerpolicy</code> and
+        <code>rel="noreferrer"</code> are kept.
+        Respects <code>prefers-reduced-motion</code>:
+        clicking a link navigates immediately, an arrival never builds up,
+        and <code>cover</code>/<code>reveal</code>/<code>play</code> resolve
+        straight away (<code>play</code>'s <code>swap</code> still runs). A
+        back/forward (bfcache) restore puts every torn-down target back
+        together instead of replaying anything. Arrival is signalled with a
+        short-lived <code>sessionStorage</code> entry, never anything in
+        the URL.
+      </p>
+    </div>
+  </div>

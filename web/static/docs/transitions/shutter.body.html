@@ -186,8 +186,9 @@ Transitions.shutter.play(cardB);
         clobbering the other. This site's own layout does exactly that,
         loading <a href="/docs/transitions/aperture.html">Aperture</a>,
         <a href="/docs/transitions/static.html">Static</a>,
-        <a href="/docs/transitions/inkblot.html">Inkblot</a> and
-        <a href="/docs/transitions/power-off.html">Power Off</a> alongside
+        <a href="/docs/transitions/inkblot.html">Inkblot</a>,
+        <a href="/docs/transitions/power-off.html">Power Off</a> and
+        <a href="/docs/transitions/teardown.html">Teardown</a> alongside
         Shutter on every page:
       </p>
       <pre><code>&lt;script&gt;
@@ -197,13 +198,15 @@ Transitions.shutter.play(cardB);
     static:      { selector: '[data-t-transition="static"]' },
     inkblot:     { selector: '[data-t-transition="inkblot"]' },
     'power-off': { selector: '[data-t-transition="power-off"]' },
+    teardown:    { selector: '[data-t-transition="teardown"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;
 &lt;script src="static.js"&gt;&lt;/script&gt;
 &lt;script src="inkblot.js"&gt;&lt;/script&gt;
-&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="power-off.js"&gt;&lt;/script&gt;
+&lt;script src="teardown.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Which link uses which effect is decided by the
         <em>value</em> of <code>data-t-transition</code> — each script
