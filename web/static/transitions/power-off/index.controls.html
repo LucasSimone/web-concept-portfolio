@@ -1,0 +1,28 @@
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">1000ms</span></label>
+      <input type="range" id="ptDuration" min="200" max="3000" step="50" value="1000" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-easing">?<span class="hint" role="tooltip" id="hint-easing">Pacing for the whole motion. Each stage (line, dot, fade) already has its own, so Linear is the natural look.</span></span>
+      </label>
+      <select id="ptEasing">
+        <option value="linear" selected>Linear</option>
+        <option value="ease-in-out">Ease In Out</option>
+        <option value="cubic-bezier(.65,0,.35,1)">Cubic Bezier</option>
+        <option value="cubic-bezier(.2,1,.1,1)">Punchy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptColor">Screen</label>
+      <input type="color" id="ptColor" class="t-swatch" value="#000000" aria-label="Switched-off screen color" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptGlow">Glow
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glow">?<span class="hint" role="tooltip" id="hint-glow">The color of the line, the dot, and the light bleeding off them.</span></span>
+      </label>
+      <input type="color" id="ptGlow" class="t-swatch" value="#ffffff" aria-label="Glow color" />
+    </div>

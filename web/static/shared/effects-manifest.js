@@ -172,6 +172,14 @@
       docsPath: '/docs/transitions/inkblot.html',
     },
     {
+      slug: 'power-off',
+      name: 'Power Off',
+      category: 'transitions',
+      demoPath: '/transitions/power-off/index.html',
+      jsPath: '/transitions/power-off/power-off.js',
+      docsPath: '/docs/transitions/power-off.html',
+    },
+    {
       slug: 'liftoff',
       name: 'Liftoff',
       category: 'concepts',

@@ -275,6 +275,24 @@
   color: #fff;
 }
 
+/* Power Off: the same white title once a hover has switched the card off,
+   but lifted over the screen only then, not for the whole hover the way
+   Inkblot's is. The line and dot run straight through the middle of the
+   card, so a title already above the overlay would sit across them in
+   black and skip the wash-out the rest of the card goes through. Dropped
+   back under the moment the hover ends, so the power-on reveals it like
+   everything else. */
+.variation-card[data-t-transition="power-off"] .liftoff-card.is-covered {
+  --t-power-off-z: 1;
+}
+.variation-card[data-t-transition="power-off"] .liftoff-card.is-covered .title-wrap {
+  z-index: 2;
+}
+.variation-card[data-t-transition="power-off"] .liftoff-card.is-covered h2 {
+  color: #fff;
+  transition: color 0.2s ease;
+}
+
 /* Circuit Board: the real reusable background effect, applied to the
    whole card instead of just the title. Targets the .liftoff-card wrapper
    (see the Liftoff comment above) rather than the anchor, so the canvas

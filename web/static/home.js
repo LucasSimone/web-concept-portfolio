@@ -1104,8 +1104,8 @@ if (!prefersReducedMotion) {
           pendingCycle = null;
         }
         // Marks the card once a hover has fully covered it, for anything
-        // that should only show on the covered card (see the Inkblot
-        // card's white title in style.css). Never set by the auto cycle,
+        // that should only show on the covered card (see the Inkblot and
+        // Power Off cards' white titles in style.css). Never set by the auto cycle,
         // only a hover that's still on the card when the cover lands.
         engine.cover(surface, overrides).then(() => {
           if (hovering && myGen === gen) surface.classList.add('is-covered');

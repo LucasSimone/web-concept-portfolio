@@ -1,0 +1,249 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Transition · Navigation</p>
+      <h1>Power Off</h1>
+      <p>
+        An old CRT switching off: on exit the picture collapses from the top
+        and bottom into a single bright line, the line pulls in to a
+        glowing dot, and the dot fades out to a black screen. On the next
+        page the set powers back on, playing the same motion in reverse
+        until the picture fills the screen. One continuous motion split
+        across the navigation boundary, same shape as
+        <a href="/docs/transitions/shutter.html">Shutter</a>,
+        <a href="/docs/transitions/aperture.html">Aperture</a>,
+        <a href="/docs/transitions/static.html">Static</a> and
+        <a href="/docs/transitions/inkblot.html">Inkblot</a>.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/transitions/power-off/index.html">View Demo</a>
+        <a class="btn" href="/transitions/power-off/power-off.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#element-transitions">Element Transitions</a>
+        <a href="#multiple-transitions">Multiple Transitions</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Like the other transitions, this one belongs in
+        <code>&lt;head&gt;</code> as a plain, non-<code>async</code>/<code>defer</code>
+        tag, on every page that should take part. It has to run before the
+        page paints, so an arriving page starts on a switched-off screen
+        with no flash of the page underneath.
+      </p>
+      <p>
+        Dropping the script in doesn't intercept anything by itself:
+        navigation is off until you set <code>selector</code>. With no
+        config at all you still get
+        <a href="#element-transitions"><code>play</code>/<code>cover</code>/<code>reveal</code></a>
+        for elements. The slug has a hyphen, so the API is reached with
+        brackets: <code>Transitions['power-off']</code>.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    'power-off': { selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        It now intercepts any left-click on a same-origin
+        <code>&lt;a href&gt;</code> that isn't a hash link, a
+        <code>download</code> link, a <code>target="_blank"</code> link, or
+        opened with a modifier key held. The screen switches off, then the
+        browser navigates. The reveal only plays on the page that receives
+        that navigation; a direct load, refresh or bookmark never shows the
+        overlay, and a destination that doesn't load
+        <code>power-off.js</code> simply appears once the cover finishes.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Exempt a link from the transition</h3>
+        <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Override one link's look</h3>
+        <p>
+          A link can override any option for its own transition, leaving
+          every other link on the page on the default profile. This is how
+          the <a href="/transitions/power-off/index.html">demo's controls
+          panel</a> changes only the Page One → Page Two link. The profile
+          travels to the next page with the navigation, so it powers on in
+          the same colors it switched off in.
+        </p>
+        <pre><code>&lt;a href="page-two.html" data-t-glow="#9fe8ff" data-t-duration="1400"&gt;
+  Enter Page Two
+&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Set the page-wide default</h3>
+        <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    'power-off': { duration: 800, color: '#0b0f0b', glow: '#b6ffb0', selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <h2 id="element-transitions">Element Transitions</h2>
+      <p>
+        Power Off can also transition any element in place: switch it off,
+        swap what's inside, then power it back on. Mark the element
+        <code>class="t-el"</code> (it gives the overlay something to size
+        itself against) and call <code>play</code>:
+      </p>
+      <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
+
+&lt;script&gt;
+  Transitions['power-off'].play(document.getElementById('card'), {
+    swap: (el) =&gt; { el.textContent = 'New content'; },
+  });
+&lt;/script&gt;</code></pre>
+      <p>
+        <code>play(el, options)</code> covers <code>el</code>, calls
+        <code>options.swap(el)</code> once it's off (waiting on it if it
+        returns a promise), then reveals. <code>cover</code> and
+        <code>reveal</code> are public on their own for anything that
+        doesn't fit that shape. All three take the same fields as the
+        options below and return a promise that resolves when that step
+        finishes. Every element keeps its own state, so several elements,
+        or the same one called repeatedly, animate independently. The line
+        and dot are sized from the element, so a small card gets a thin
+        line and a small dot rather than the full-screen ones.
+      </p>
+      <p>
+        Calling <code>cover</code> while a <code>reveal</code> is still
+        running (or the other way round) turns the motion around from
+        wherever it's got to, over the matching share of the duration,
+        rather than starting over.
+      </p>
+
+      <h2 id="multiple-transitions">Multiple Transitions</h2>
+      <p>
+        Power Off keeps its API, config and arrival flag under its own
+        slug: <code>window.Transitions['power-off']</code>,
+        <code>window.TransitionConfig['power-off']</code>, and a
+        <code>sessionStorage</code> key of <code>t-power-off-pending</code>.
+        So it loads alongside the other transitions without any of them
+        clobbering the others. This site's own layout loads all five on
+        every page, each reacting only to links tagged with its own slug:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter:     { selector: '[data-t-transition="shutter"]' },
+    aperture:    { selector: '[data-t-transition="aperture"]' },
+    static:      { selector: '[data-t-transition="static"]' },
+    inkblot:     { selector: '[data-t-transition="inkblot"]' },
+    'power-off': { selector: '[data-t-transition="power-off"]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;
+&lt;script src="aperture.js"&gt;&lt;/script&gt;
+&lt;script src="static.js"&gt;&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;
+&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;a href="/a" data-t-transition="static"&gt;Uses Static&lt;/a&gt;
+&lt;a href="/b" data-t-transition="power-off"&gt;Uses Power Off&lt;/a&gt;</code></pre>
+      <p>
+        The scripts don't coordinate. Arriving on the next page, each one
+        only checks its own <code>sessionStorage</code> key, and only the
+        clicked link's effect wrote one, so only that effect's reveal
+        plays.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>duration</code></td><td><code>1000</code></td><td>ms for each half (power off or power on) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'linear'</code></td><td>Easing for the overall motion: <code>linear</code>, <code>ease</code>, <code>ease-in</code>, <code>ease-out</code>, <code>ease-in-out</code> or any <code>cubic-bezier()</code>. Each stage already has its own pacing, so linear is the natural look</td></tr>
+          <tr><td><code>color</code></td><td><code>'#000'</code></td><td>The switched-off screen. Any CSS color</td></tr>
+          <tr><td><code>glow</code></td><td><code>'#fff'</code></td><td>The line, the dot, and the light bleeding off them. Any CSS color</td></tr>
+          <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are intercepted. Navigation stays off until this is set</td></tr>
+        </tbody>
+      </table>
+      <p>Per-link attributes, read from the clicked link and overriding the options above for that one transition:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Overrides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-glow</code></td><td><code>glow</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>configure(options)</code></td>
+            <td>Merges options into the page-wide default profile, typically just to set <code>selector</code> from a script that runs after <code>power-off.js</code>.</td>
+          </tr>
+          <tr>
+            <td><code>cover(el, options)</code></td>
+            <td>Switches <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>) off, resolving once it's fully off. Leaves <code>el</code> covered; pair with <code>reveal()</code>.</td>
+          </tr>
+          <tr>
+            <td><code>reveal(el, options)</code></td>
+            <td>Powers <code>el</code> back on, resolving once it's fully revealed and cleaned up. Called on an element that isn't covered, it powers on from off.</td>
+          </tr>
+          <tr>
+            <td><code>play(el, options)</code></td>
+            <td>Covers <code>el</code>, runs <code>options.swap(el)</code> (may return a promise), then reveals.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        The overlay is a single element: the slot of screen still lit. A
+        box-shadow with a huge spread paints the screen color everywhere
+        outside it, a blurred shadow on top is the glow bleeding off the
+        line, and a layer inside washes what's still showing toward the
+        glow color as the slot narrows, so by the time it's a line it's
+        pure light. Every frame is worked out from how far through the
+        motion it is, so the fully covered frame is always just the screen
+        color and the next page picks up from it exactly.
+      </p>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: clicking a link
+        navigates immediately with no cover, an arrival never plays a
+        reveal, and <code>cover</code>/<code>reveal</code>/<code>play</code>
+        resolve straight away (<code>play</code>'s <code>swap</code> still
+        runs). A back/forward (bfcache) restore resets every covered
+        element instead of replaying anything. Arrival is signalled with a
+        short-lived <code>sessionStorage</code> entry, never anything in
+        the URL.
+      </p>
+      <p>
+        The overlay stacks above the target's own content, not the whole
+        page. For the navigation case (covering <code>&lt;html&gt;</code>)
+        that's the top of everything; for an element it's only as high as
+        that element's stacking context allows.
+      </p>
+    </div>
+  </div>

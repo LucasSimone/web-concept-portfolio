@@ -229,23 +229,26 @@
         <code>sessionStorage</code> key of <code>t-inkblot-pending</code>.
         So it loads alongside
         <a href="/docs/transitions/shutter.html">Shutter</a>,
-        <a href="/docs/transitions/aperture.html">Aperture</a> and
-        <a href="/docs/transitions/static.html">Static</a> without any of
-        them clobbering the others. This site's own layout loads all four
+        <a href="/docs/transitions/aperture.html">Aperture</a>,
+        <a href="/docs/transitions/static.html">Static</a> and
+        <a href="/docs/transitions/power-off.html">Power Off</a> without any
+        of them clobbering the others. This site's own layout loads all five
         on every page, each reacting only to links tagged with its own slug:
       </p>
       <pre><code>&lt;script&gt;
   window.TransitionConfig = {
-    shutter:  { selector: '[data-t-transition="shutter"]' },
-    aperture: { selector: '[data-t-transition="aperture"]' },
-    static:   { selector: '[data-t-transition="static"]' },
-    inkblot:  { selector: '[data-t-transition="inkblot"]' },
+    shutter:     { selector: '[data-t-transition="shutter"]' },
+    aperture:    { selector: '[data-t-transition="aperture"]' },
+    static:      { selector: '[data-t-transition="static"]' },
+    inkblot:     { selector: '[data-t-transition="inkblot"]' },
+    'power-off': { selector: '[data-t-transition="power-off"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;
 &lt;script src="static.js"&gt;&lt;/script&gt;
-&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;
+&lt;script src="power-off.js"&gt;&lt;/script&gt;</code></pre>
       <pre><code>&lt;a href="/a" data-t-transition="static"&gt;Uses Static&lt;/a&gt;
 &lt;a href="/b" data-t-transition="inkblot"&gt;Uses Inkblot&lt;/a&gt;</code></pre>
       <p>
