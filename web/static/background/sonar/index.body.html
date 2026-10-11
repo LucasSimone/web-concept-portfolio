@@ -1,0 +1,53 @@
+
+  <main>
+    <section class="sonar-intro">
+      <p class="eyebrow">Background 09 — Interactive</p>
+      <h1>Sonar</h1>
+      <p class="intro">
+        Click anywhere to send out a ping. The ring spreads from the cursor
+        and bounces off whatever you can see, lighting up each surface it
+        hits. A box with a visible border turns it away. A box with no
+        border isn't there at all, so the ring passes in and bounces off
+        whatever is inside.
+      </p>
+    </section>
+
+    <section class="sonar-hero bg-sonar" aria-label="Sonar background, full width">
+      <span class="sonar-label">Ping</span>
+
+      <div class="sonar-box sonar-box--a">Bordered: the ring bounces off it</div>
+
+      <div class="sonar-box sonar-box--frame">
+        <p>Bordered, with things inside. Click in here to bounce around inside.</p>
+        <div class="sonar-chip">Hidden from outside</div>
+      </div>
+
+      <div class="sonar-open">
+        <p>No border, so the ring passes straight in to these:</p>
+        <div class="sonar-chips">
+          <span class="sonar-chip">One</span>
+          <span class="sonar-chip">Two</span>
+          <span class="sonar-chip">Three</span>
+        </div>
+      </div>
+
+      <div class="sonar-pill">Filled: solid</div>
+      <button class="sonar-button" type="button">A real button</button>
+      <div class="sonar-ring" aria-hidden="true"></div>
+      <div class="sonar-rule" aria-hidden="true"></div>
+    </section>
+
+    <p class="section-label">Applied to a smaller element</p>
+    <div class="sonar-card-row">
+      <div class="sonar-card bg-sonar">
+        <p>Same class, same script — smaller box.</p>
+      </div>
+      <div class="sonar-card bg-sonar">
+        <div class="sonar-card__inset">A bordered inset</div>
+        <p>Everything here is read from the page itself.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="sonar.js"></script>
+  <script src="demo.js"></script>

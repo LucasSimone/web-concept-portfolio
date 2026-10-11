@@ -341,6 +341,20 @@
   display: block;
 }
 
+/* Sonar: same override pattern as Gears above. It has two canvases. */
+.liftoff-card.bg-sonar {
+  isolation: isolate;
+  background: #fff;
+  color: #000;
+}
+.sonar__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+}
+
 /* --- Carousel Lab card previews ---------------------------------------
    Each Carousel Lab card runs a live, miniature instance of the mechanism
    it links to, in a band between the title and the "View" line - the same

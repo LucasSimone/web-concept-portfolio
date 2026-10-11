@@ -1,0 +1,79 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the controls below, including the colors. Adjusting anything afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Ping</option>
+        <option value="radar">Radar</option>
+        <option value="deep">Deep Sea</option>
+        <option value="echo">Echo Chamber</option>
+        <option value="watch">On Watch</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label>Origin
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-origin">?<span class="hint" role="tooltip" id="hint-origin">Where a click sends the ring out from. Cursor pings from the point you click. Clicked element sends it out of the outline of whatever you click: the button, a bordered box, a big letter. A box with only a border sends it inward too. Clicking empty space pings from the cursor either way.</span></span>
+      </label>
+      <select id="originSelect">
+        <option value="cursor" selected>Cursor</option>
+        <option value="element">Clicked element</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-speed">?<span class="hint" role="tooltip" id="hint-speed">How fast the ring spreads, in px/sec.</span></span></span><span id="speedVal" class="value"></span></label>
+      <input type="range" id="speedRange" min="100" max="1200" step="20" value="420" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Range <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-range">?<span class="hint" role="tooltip" id="hint-range">How far a ping travels before it has faded out, in px. Distance after a bounce counts too.</span></span></span><span id="rangeVal" class="value"></span></label>
+      <input type="range" id="rangeRange" min="150" max="2000" step="50" value="700" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Reflectivity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-reflectivity">?<span class="hint" role="tooltip" id="hint-reflectivity">How much of its strength the ring keeps each time it bounces. At 100% only distance fades it.</span></span></span><span id="reflectivityVal" class="value"></span></label>
+      <input type="range" id="reflectivityRange" min="0" max="1" step="0.05" value="0.75" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Fade <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fade">?<span class="hint" role="tooltip" id="hint-fade">How long the points the ring leaves on what it hits take to fade, in seconds.</span></span></span><span id="fadeVal" class="value"></span></label>
+      <input type="range" id="fadeRange" min="0.1" max="4" step="0.1" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Auto ping <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-autoPing">?<span class="hint" role="tooltip" id="hint-autoPing">Seconds between pings sent out on their own from random spots. 0 turns them off, so only clicks ping.</span></span></span><span id="autoPingVal" class="value"></span></label>
+      <input type="range" id="autoPingRange" min="0" max="6" step="0.5" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Glow <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-glow">?<span class="hint" role="tooltip" id="hint-glow">A soft glow under the ring's line. Off keeps it a clean hairline.</span></span></span><span id="glowVal" class="value"></span></label>
+      <input type="range" id="glowRange" min="0" max="0.4" step="0.02" value="0" />
+    </div>
+
+    <div class="control-row">
+      <label>Text
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-text">?<span class="hint" role="tooltip" id="hint-text">What the ring sees in text. Letters traces each letter's own outline, holes and all. Word boxes puts a box round each word. Auto traces letters in text 24px and up and boxes smaller words, where letter outlines would just shatter the ring.</span></span>
+      </label>
+      <select id="textSelect">
+        <option value="auto" selected>Auto</option>
+        <option value="glyphs">Letters</option>
+        <option value="words">Word boxes</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="wallsToggle" type="button" class="toggle-button" aria-pressed="false">Show walls: Off</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-walls">?<span class="hint" role="tooltip" id="hint-walls">Draws a dashed line along every surface the ring can hit: visible borders, filled boxes, and text. Boxes with no visible border don't get one.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Colors <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-colors">?<span class="hint" role="tooltip" id="hint-colors">The ring's color, then the background behind it.</span></span></span></div>
+      <div class="color-swatches">
+        <input type="color" id="colorInput" class="t-swatch" aria-label="Ring color" value="#000000" />
+        <input type="color" id="backgroundInput" class="t-swatch" aria-label="Background color" value="#ffffff" />
+      </div>
+    </div>

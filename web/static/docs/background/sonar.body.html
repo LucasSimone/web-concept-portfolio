@@ -1,0 +1,234 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Interactive</p>
+      <h1>Sonar</h1>
+      <p>
+        A canvas background where a click sends out a ping. A hairline ring
+        spreads from the cursor, bounces off whatever is visible inside the
+        element, and leaves a trail of points on each surface it strikes, so
+        outlines build up like a sonar return, letter shapes included. It fades with distance and loses some strength at every
+        bounce. The surfaces come from the page itself, read fresh on every
+        ping, so the ring bounces off the element's real content. It sits
+        behind that content and never changes it.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/sonar/index.html">View Demo</a>
+        <a class="btn" href="/background/sonar/sonar.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#what-it-hits">What It Hits</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="sonar.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required to
+        render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-sonar" aria-label="Sonar background"&gt;
+  &lt;div class="card"&gt;Something to bounce off&lt;/div&gt;
+&lt;/section&gt;
+&lt;script src="sonar.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No data attribute needed. Just apply the class to a container with
+        a size of its own. It initializes itself on every
+        <code>.bg-sonar</code> element. To configure options:
+      </p>
+      <pre><code>Sonar.initAll('.bg-sonar', {
+  speed: 300,
+  range: 900,
+  reflectivity: 0.8,
+});</code></pre>
+
+      <h2 id="what-it-hits">What It Hits</h2>
+      <p>
+        The ring only hits things you can see, and it can't pass through
+        them. Starting from the element, each thing inside it is one of
+        these:
+      </p>
+      <ul>
+        <li><strong>A visible border</strong> is a wall, rounded corners and all. A ring from outside bounces off it and never reaches what's inside. A ping that starts inside bounces around in there. A border on only some sides gives a wall on just those sides.</li>
+        <li><strong>No visible border</strong> means the box isn't there as far as the ring is concerned. It passes straight in and hits whatever is inside, by the same rules, and so on down.</li>
+        <li><strong>Solid</strong> things are walls the whole way round, and nothing inside them is read. That covers a background that differs from what's behind it, a background image or gradient, a box shadow, and images, SVGs, videos, iframes and form controls.</li>
+        <li><strong>Text</strong> is solid. By default, text 24px and up is traced letter by letter: each letter's real outline, holes and all, so a ring bounces off the curve of an "S" and can't get inside an "o". Smaller text is a box per word, since letter outlines that small would just shatter the ring. The <code>text</code> option changes this.</li>
+      </ul>
+      <p>
+        A border counts as visible when it has a width, a style other than
+        <code>none</code> or <code>hidden</code>, and a color that isn't
+        fully transparent. Anything with <code>display: none</code>, zero
+        opacity or <code>visibility: hidden</code> is skipped. Anything
+        clipped by an <code>overflow</code> ancestor is clipped here too.
+        The element's own edges aren't walls: a ring that reaches one just
+        leaves. Turn on <code>showWalls</code> to see exactly what was
+        read.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Radar screen</h3>
+        <p>
+          Green on near-black, with a faint glow under the line and points
+          that linger. A dark
+          <code>background</code> also gives the element the
+          <code>bg-sonar--dark</code> class, which turns its text white.
+        </p>
+        <pre><code>Sonar.initAll('.bg-sonar', {
+  speed: 320,
+  range: 1000,
+  fade: 2.5,
+  glow: 0.12,
+  color: '#3dff8b',
+  background: '#04140b',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Echo chamber</h3>
+        <p>
+          Walls that hardly soak anything up, a long range, and every letter
+          traced, body text included, so one ping rattles around the whole
+          element.
+        </p>
+        <pre><code>Sonar.initAll('.bg-sonar', {
+  speed: 560,
+  range: 2000,
+  reflectivity: 0.92,
+  fade: 0.8,
+  text: 'glyphs',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>From the element you click</h3>
+        <p>
+          A click on a button, a bordered or filled box, or a large letter
+          sends the ring out of that thing's own outline, so it grows out
+          of the button's shape rather than from the cursor. The click still
+          does whatever it does. A box with only a border sends a ring
+          inward too, to bounce around inside it, and a letter's holes send
+          theirs into the hole. A click on empty space pings from the cursor
+          as usual.
+        </p>
+        <pre><code>Sonar.initAll('.bg-sonar', {
+  origin: 'element',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>On its own</h3>
+        <p>
+          Pings from random spots every so often, so the background keeps
+          moving with nobody clicking.
+        </p>
+        <pre><code>Sonar.initAll('.bg-sonar', {
+  autoPing: 2,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>From your own code</h3>
+        <p>
+          Send a ping from anywhere, in px from the inside of the element's
+          top-left corner, or out of any element inside it, for instance
+          when something on the page changes.
+        </p>
+        <pre><code>const sonar = Sonar.get('.bg-sonar');
+sonar.ping(sonar.el.clientWidth / 2, sonar.el.clientHeight / 2);
+sonar.emit(document.querySelector('#save-button'));</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>speed</code></td><td><code>380</code></td><td>How fast the ring spreads, in px/sec</td></tr>
+          <tr><td><code>range</code></td><td><code>800</code></td><td>How far a ping travels before it has faded out, in px, distance after a bounce included. It also sets how many rays a ping has, so the front stays smooth all the way out</td></tr>
+          <tr><td><code>reflectivity</code></td><td><code>0.7</code></td><td>Share of its strength the ring keeps at each bounce. At 1, only distance fades it</td></tr>
+          <tr><td><code>fade</code></td><td><code>1.5</code></td><td>Seconds the points a ping leaves on what it hits take to fade to about 5%</td></tr>
+          <tr><td><code>text</code></td><td><code>'auto'</code></td><td>What the ring sees in text. <code>'glyphs'</code> traces each letter's outline, <code>'words'</code> puts a box round each word, and <code>'auto'</code> traces letters 24px and up and boxes smaller words</td></tr>
+          <tr><td><code>glow</code></td><td><code>0</code></td><td>Strength of a soft glow under the ring's line, from 0 (a clean hairline) to 1</td></tr>
+          <tr><td><code>autoPing</code></td><td><code>0</code></td><td>Seconds between pings sent out on their own from random spots, or 0 for none</td></tr>
+          <tr><td><code>clickToPing</code></td><td><code>true</code></td><td>Whether a click pings. In <code>'cursor'</code> mode, clicks on links, buttons and form fields inside the element are left alone, as are clicks inside something solid</td></tr>
+          <tr><td><code>origin</code></td><td><code>'cursor'</code></td><td>Where a click sends the ring out from: <code>'cursor'</code>, the point clicked, or <code>'element'</code>, the outline of what was clicked. That's the nearest element round the click with a visible border all the way round or a fill, or the letter whose ink was clicked. A click on empty space pings from the cursor either way</td></tr>
+          <tr><td><code>showWalls</code></td><td><code>false</code></td><td>Draws a dashed line along every surface the ring can hit</td></tr>
+          <tr><td><code>color</code></td><td><code>'#000000'</code></td><td>Ring color, any CSS color</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>Canvas background, any CSS background. A dark color adds the <code>bg-sonar--dark</code> class (white text) to the element. <code>'transparent'</code> or <code>null</code> leaves the host's own background showing</td></tr>
+          <tr><td><code>lineWidth</code></td><td><code>1</code></td><td>Width of the ring's line in px. The points it leaves are 1.5 times this across</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.ping(x, y)</code></td><td>Sends a ping out from <code>x, y</code>, in px from the inside of the element's top-left corner. Returns <code>false</code>, and sends nothing, from outside the element or inside something solid.</td></tr>
+          <tr><td><code>.emit(el)</code></td><td>Sends a ping out of the outline of <code>el</code>, or of the nearest element round it that has one, whatever <code>origin</code> is set to. Returns <code>false</code>, and sends nothing, if there isn't one inside the element.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. Everything applies on the next frame, pings in flight included, except <code>text</code>, which applies from the next ping.</td></tr>
+          <tr><td><code>.refresh()</code></td><td>Reads the walls again and redraws them, for when the content changes while <code>showWalls</code> is on. Pings always read them fresh.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the observers, removes the click listener and the canvases.</td></tr>
+          <tr><td><code>Sonar.get(elOrSelector)</code> / <code>Sonar.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        A ping starts as a ring of up to 1,600 rays, enough to keep them
+        about 3px apart at the end of its range. Each ray reflects off the
+        first wall in its way, angle in equal to angle out. The front is
+        drawn by joining neighboring rays that have bounced off the same
+        surfaces, so it folds where it bounces and tears apart at corners.
+        Where a curved surface spreads two neighbors apart, a new ray is
+        traced between them from the start, so the reflected front stays a
+        smooth curve rather than a few straight chords. A ping can grow to
+        6,000 rays this way. Walls are filed in a coarse grid, so a ray only
+        tests the few near it.
+      </p>
+      <p>
+        A ping from an element's outline works the same way, with its rays
+        laid out along the outline rather than round a point. Each starts
+        straight out from its stretch of outline, and a fan of rays at each
+        outward corner rounds the front off there.
+      </p>
+      <p>
+        Letters are drawn into an offscreen canvas in the page's own font,
+        placed where the browser laid each one out, and traced back out of
+        the pixels. Each traced letter is kept per font and character, so
+        retracing a page is quick, and the cache is dropped when a web font
+        finishes loading. The traced outlines are polygons, but along a
+        smooth stretch the surface direction is blended from one corner to
+        the next, so a curve reflects like a curve and not a row of flat
+        mirrors.
+      </p>
+      <p>
+        The canvas sits behind the content, so a ring inside a filled box
+        would be hidden. That's why clicks inside something solid don't
+        ping, including clicks on a letter's ink. A click inside a letter's
+        hole does ping. Transformed elements are read as their bounding boxes, so a
+        rotated box bounces like the upright box around it. The loop only
+        runs while something is moving or fading, and pauses when the
+        element is scrolled well out of view. Respects
+        <code>prefers-reduced-motion</code>: a click works out the whole
+        ping at once and draws only the points it leaves, which stay until
+        the next one.
+      </p>
+    </div>
+  </div>

@@ -132,6 +132,14 @@
       docsPath: '/docs/background/gears.html',
     },
     {
+      slug: 'sonar',
+      name: 'Sonar',
+      category: 'background',
+      demoPath: '/background/sonar/index.html',
+      jsPath: '/background/sonar/sonar.js',
+      docsPath: '/docs/background/sonar.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

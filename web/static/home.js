@@ -292,6 +292,13 @@ Fireworks.initAll('.liftoff-card.bg-fireworks', {
 Gears.initAll('.liftoff-card.bg-gears', {
   toothSize: 3, maxTeeth: 28, density: 0.22, powered: 0.6, grab: false,
 });
+// Pings on its own every few seconds, so the card shows the ring bouncing
+// off its own title and labels without anyone clicking. Click-to-ping
+// stays on, as with Fireworks: the click that opens the card sends one
+// out on the way.
+Sonar.initAll('.liftoff-card.bg-sonar', {
+  autoPing: 2.5, range: 420, speed: 260,
+});
 
 // --- Components Lab card preview -------------------------------------
 // Same idea as the background cards above: the card is a live board rather
