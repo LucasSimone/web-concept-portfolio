@@ -196,6 +196,14 @@
       docsPath: '/docs/concepts/spotlight.html',
     },
     {
+      slug: 'confetti',
+      name: 'Confetti',
+      category: 'concepts',
+      demoPath: '/concepts/confetti/index.html',
+      jsPath: '/concepts/confetti/confetti.js',
+      docsPath: '/docs/concepts/confetti.html',
+    },
+    {
       slug: 'sweep',
       name: 'Sweep',
       category: 'carousel',

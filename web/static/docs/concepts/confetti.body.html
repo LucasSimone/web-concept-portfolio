@@ -1,0 +1,293 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Concept · Click</p>
+      <h1>Confetti</h1>
+      <p>
+        Paper confetti, fired by a click. It comes in three modes: out of
+        the clicked element's edges, out of the exact point the cursor
+        clicked, or across the whole window. Element and cursor confetti go
+        in whatever direction you give them, by name or in degrees, or every
+        direction at once. Screen confetti shoots up from the bottom edge,
+        drops from the top, or fires in from the two bottom corners. Each
+        piece pops out fast, air drag slows it almost at once, and it
+        flutters down swaying, spinning and tumbling end over end, so its
+        darker back face flashes as it turns.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/concepts/confetti/index.html">View Demo</a>
+        <a class="btn" href="/concepts/confetti/confetti.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#modes">Modes</a>
+        <a href="#direction">Direction</a>
+        <a href="#from-code">Firing From Code</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#shapes">Shapes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="confetti.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag for the one canvas
+        it draws on, so no companion CSS file is needed. Nothing is added
+        to the page until the first confetti is fired.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;button class="confetti-el"&gt;Celebrate&lt;/button&gt;
+&lt;script src="confetti.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Every <code>.confetti-el</code> on the page is set up on load, and
+        a click on one fires confetti up out of its top edge. Data
+        attributes change that per element, so one blanket auto-init still
+        covers buttons that each do something different:
+      </p>
+      <pre><code>&lt;button class="confetti-el" data-confetti-direction="all"&gt;All around&lt;/button&gt;
+&lt;div class="confetti-el" data-confetti-mode="mouse"&gt;Click anywhere&lt;/div&gt;
+&lt;button class="confetti-el" data-confetti-mode="screen" data-confetti-from="top"&gt;
+  Make it rain
+&lt;/button&gt;</code></pre>
+      <p>
+        The attributes are <code>data-confetti-mode</code>,
+        <code>-direction</code>, <code>-from</code>, <code>-count</code>,
+        <code>-spread</code> and <code>-reach</code>. They win over options
+        passed to <code>initAll</code>. To set options for a group of
+        elements in code:
+      </p>
+      <pre><code>Confetti.initAll('.save-button', {
+  colors: ['#2a9d8f', '#e9a800'],
+  count: 80,
+});</code></pre>
+      <p>
+        Run that as a plain script straight after
+        <code>confetti.js</code>, before the page finishes loading: once
+        auto-init has claimed an element, <code>initAll</code> skips it.
+        To change one that's already set up, use
+        <code>Confetti.get(el).update(options)</code>. If your elements
+        don't carry the <code>confetti-el</code> class, auto-init never
+        touches them and you can call <code>initAll</code> any time.
+      </p>
+
+      <h2 id="modes">Modes</h2>
+      <ul>
+        <li><code>'element'</code> (the default): out of the clicked element's edges, in <code>direction</code>.</li>
+        <li><code>'mouse'</code>: out of the point that was clicked, in <code>direction</code>. A click from the keyboard (Enter or Space on a button) has no pointer position, so it fires from the middle of the element.</li>
+        <li><code>'screen'</code>: across the whole window, <code>from</code> <code>'bottom'</code> (the whole bottom edge shoots up), <code>'top'</code> (it drops in from above and rains down) or <code>'sides'</code> (two cannons in the bottom corners fire up and inward). The element is only the trigger.</li>
+      </ul>
+      <p>
+        Each mode has its own defaults for <code>count</code>,
+        <code>spread</code>, <code>reach</code> and
+        <code>duration</code>, since a shower across the window wants
+        several times the pieces of a button pop. Leaving one of them out
+        (or setting it to <code>null</code>) uses the mode's own value.
+        See <a href="#options">Options</a>.
+      </p>
+
+      <h2 id="direction">Direction</h2>
+      <p>
+        <code>direction</code> applies to element and mouse confetti. It
+        takes any of:
+      </p>
+      <ul>
+        <li>A name: <code>'up'</code>, <code>'down'</code>, <code>'left'</code>, <code>'right'</code>, <code>'up-left'</code>, <code>'up-right'</code>, <code>'down-left'</code>, <code>'down-right'</code>.</li>
+        <li>An angle in degrees, compass style, the same as a CSS gradient's angle: <code>0</code> is straight up, <code>90</code> right, <code>180</code> down, <code>270</code> left. Numeric strings work too, so <code>data-confetti-direction="120"</code> is fine.</li>
+        <li><code>'all'</code>: every way at once.</li>
+      </ul>
+      <p>
+        <code>spread</code> fans pieces out across a cone that many degrees
+        wide, centered on the direction. <code>0</code> fires one straight
+        line and <code>360</code> fires every way.
+      </p>
+      <p>
+        With a direction, element confetti leaves from every edge that
+        faces that way at all, each in proportion to how squarely it faces
+        it. <code>'up'</code> is the top edge only, and
+        <code>'up-right'</code> is the top and right edges together, with
+        every piece flying the one way. With <code>'all'</code>, pieces
+        leave from anywhere around the outline, each straight out from its
+        own edge (give or take <code>spread</code>), so a wide button
+        throws most of its confetti up and down. Mouse confetti with
+        <code>'all'</code> goes out evenly in a full circle.
+      </p>
+
+      <h2 id="from-code">Firing From Code</h2>
+      <p>
+        The click wiring is a thin layer over three functions you can call
+        yourself, with no element set up at all. They take the same
+        options as an element does.
+      </p>
+      <pre><code>// Out of an element's edges (an element or a selector).
+Confetti.fromElement('#save', { direction: 'all' });
+
+// Out of a point, in window coordinates (clientX / clientY).
+Confetti.burst(event.clientX, event.clientY, { direction: 135 });
+
+// Across the whole window.
+Confetti.screen({ from: 'top' });</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Celebrate a form going through</h3>
+        <p>
+          Fire it when the work is actually done, not on the click, so a
+          failed submit doesn't celebrate.
+        </p>
+        <pre><code>form.addEventListener('submit', async (event) =&gt; {
+  event.preventDefault();
+  await send(new FormData(form));
+  Confetti.screen({ from: 'sides' });
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A button that bursts on all sides</h3>
+        <pre><code>&lt;button class="confetti-el"
+        data-confetti-direction="all"
+        data-confetti-count="90"&gt;Like&lt;/button&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Out of the cursor, aimed down-right</h3>
+        <pre><code>Confetti.initAll('.board', {
+  mode: 'mouse',
+  direction: 135,
+  spread: 30,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A gentle drift</h3>
+        <p>
+          Low gravity keeps pieces in the air longer, since they fall at
+          about a third of <code>gravity</code> px per second once drag
+          has caught them. Reach stays about the same: launch speed is worked
+          out from it.
+        </p>
+        <pre><code>Confetti.screen({
+  from: 'top',
+  gravity: 200,
+  count: 120,
+  shapes: ['circle'],
+  colors: ['#a7c4f2', '#c9b3ec'],
+});</code></pre>
+      </div>
+
+      <h2 id="shapes">Shapes</h2>
+      <p>
+        <code>shapes</code> is a list, and each piece picks one entry from
+        it at random, so repeating an entry makes it more common.
+        <code>Confetti.SHAPES</code> lists the built-in names:
+        <code>'square'</code>, <code>'strip'</code> (a long thin scrap),
+        <code>'circle'</code>, <code>'triangle'</code> and
+        <code>'star'</code>.
+      </p>
+
+      <h3>Write your own</h3>
+      <p>
+        An entry can also be a function. It's called as
+        <code>draw(ctx, size)</code> for every piece on every frame, and
+        should fill a shape about <code>size</code> px across, centered on
+        <code>(0, 0)</code>. The fill color is already set, and the piece's
+        position, spin and tumble are already applied to the context, so
+        draw it flat. Keep it cheap: a few hundred pieces call it 60 times
+        a second. A function that throws is swapped for a square on that
+        piece, with the error in the console, rather than stopping the
+        animation.
+      </p>
+      <pre><code>function heart(ctx, size) {
+  const s = size / 2;
+  ctx.beginPath();
+  ctx.moveTo(0, s * 0.9);
+  ctx.bezierCurveTo(-s * 1.2, 0, -s * 0.9, -s * 1.1, 0, -s * 0.45);
+  ctx.bezierCurveTo(s * 0.9, -s * 1.1, s * 1.2, 0, 0, s * 0.9);
+  ctx.fill();
+}
+
+Confetti.initAll('.like-button', {
+  shapes: [heart, heart, 'circle'],
+  colors: ['#e63946', '#ff7a8a'],
+});</code></pre>
+      <p>
+        Emoji work the same way, as text:
+      </p>
+      <pre><code>function party(ctx, size) {
+  ctx.font = `${size * 1.6}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🎉', 0, 0);
+}</code></pre>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>mode</code></td><td><code>'element'</code></td><td><code>'element'</code>, <code>'mouse'</code> or <code>'screen'</code>. See <a href="#modes">Modes</a></td></tr>
+          <tr><td><code>direction</code></td><td><code>'up'</code></td><td>Element and mouse modes. A name, a compass angle in degrees (0 up, clockwise) or <code>'all'</code>. See <a href="#direction">Direction</a></td></tr>
+          <tr><td><code>from</code></td><td><code>'bottom'</code></td><td>Screen mode. <code>'bottom'</code>, <code>'top'</code> or <code>'sides'</code></td></tr>
+          <tr><td><code>count</code></td><td>element <code>60</code>, mouse <code>40</code>, screen <code>220</code></td><td>Pieces per click. At most 1,500 can be in the air at once across the page; anything fired past that is dropped</td></tr>
+          <tr><td><code>spread</code></td><td>element <code>50</code>, mouse <code>60</code>, screen <code>30</code></td><td>Width of the cone pieces fan out across, in degrees, centered on the direction. With <code>'all'</code>, how far each piece can stray from straight out of its edge. For screen confetti, the cone each piece along the bottom edge (or each corner cannon) fires within</td></tr>
+          <tr><td><code>reach</code></td><td>element <code>200</code>, mouse <code>160</code>, screen <code>null</code></td><td>How high, in px, the fastest pieces climb when fired straight up. Launch speed is solved from this, gravity and drag, so the fastest piece tops out within a few percent of it (the shortfall is from stepping the motion frame by frame); the rest get 45% to 100% of that speed. Fired sideways or down they travel about as far. Screen mode's <code>null</code> means 85% of the window's height from the bottom, 75% from the corners</td></tr>
+          <tr><td><code>duration</code></td><td>element <code>3.5</code>, mouse <code>3</code>, screen <code>null</code></td><td>Seconds each piece lasts (±20%) before fading out over its last 0.6s. <code>null</code> or <code>0</code> keeps it until it falls out of the window (or 15 seconds at most)</td></tr>
+          <tr><td><code>gravity</code></td><td><code>500</code></td><td>Downward pull in px/sec². Drag holds a falling piece to about a third of this many px per second</td></tr>
+          <tr><td><code>size</code></td><td><code>9</code></td><td>About how big a piece is across, in px, ±25% each</td></tr>
+          <tr><td><code>colors</code></td><td>six saturated hexes</td><td>Array of CSS colors (hex, <code>rgb()</code>, named, anything the canvas accepts; transparency is ignored). Each piece picks one. Its back face is the same color 30% darker</td></tr>
+          <tr><td><code>shapes</code></td><td><code>['square', 'strip', 'circle']</code></td><td>Array of built-in shape names or drawing functions; each piece picks one. See <a href="#shapes">Shapes</a></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.fire(event?)</code></td><td>Fires this element's confetti as if it had been clicked. Mouse mode fires from the event's <code>clientX</code>/<code>clientY</code> if one is given, otherwise from the middle of the element.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. They apply from the next click; confetti already in the air is left as it was.</td></tr>
+          <tr><td><code>.resolved</code></td><td>The options this element actually fires with, the mode's own defaults filled in.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Removes the click listener. Confetti already in the air finishes falling.</td></tr>
+          <tr><td><code>Confetti.fromElement(elOrSelector, options)</code></td><td>Fires out of an element's edges, with element mode's defaults. <code>mode: 'mouse'</code> swaps in mouse mode's defaults; <code>mode: 'screen'</code> fires <code>Confetti.screen(options)</code> instead.</td></tr>
+          <tr><td><code>Confetti.burst(x, y, options)</code></td><td>Fires out of a point in window coordinates, with mouse mode's defaults. <code>mode: 'element'</code> swaps in element mode's defaults; <code>mode: 'screen'</code> fires <code>Confetti.screen(options)</code> instead.</td></tr>
+          <tr><td><code>Confetti.screen(options)</code></td><td>Fires across the whole window.</td></tr>
+          <tr><td><code>Confetti.clear()</code></td><td>Takes every piece out of the air at once.</td></tr>
+          <tr><td><code>Confetti.get(elOrSelector)</code> / <code>Confetti.getAll(selector)</code></td><td>Static lookups for already-initialized elements, by element/selector.</td></tr>
+          <tr><td><code>Confetti.SHAPES</code> / <code>Confetti.DIRECTIONS</code> / <code>Confetti.MODE_DEFAULTS</code></td><td>The built-in shape names, the direction names, and each mode's own defaults.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        All the confetti on a page, from every element and every call,
+        draws into one canvas fixed over the window, added the first time
+        anything fires. It ignores the pointer, so it never gets in the way
+        of a click, and its animation loop stops whenever nothing is in
+        the air, so idle confetti buttons cost nothing. It sits at
+        <code>z-index: 2147483000</code>, above almost anything; override
+        <code>.confetti-canvas</code> to tuck it under a modal of your own.
+        Because the canvas is fixed to the window, confetti stays where it
+        is on screen if the page scrolls under it.
+      </p>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: under it every way of
+        firing does nothing at all, since there's no still version of
+        confetti that would mean anything. Clicks still reach the element as
+        normal. The demo page edits
+        <code>count</code> (as a multiplier on each mode's own),
+        <code>spread</code>, <code>reach</code>, <code>gravity</code>,
+        <code>size</code>, <code>shapes</code> and <code>colors</code>,
+        and leaves <code>spread</code> and <code>reach</code> alone on the
+        screen buttons.
+      </p>
+    </div>
+  </div>

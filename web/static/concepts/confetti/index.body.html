@@ -1,0 +1,83 @@
+
+  <main>
+    <section class="cf-intro">
+      <p class="eyebrow">Click for confetti</p>
+      <h1>Confetti</h1>
+      <p class="intro">
+        Paper confetti on a click. It can burst out of the element you
+        clicked, out of the cursor, or across the whole window. Each piece
+        pops out fast, then slows and flutters down, tumbling so its darker
+        back face flashes as it turns. Element and cursor confetti fly in
+        any direction you give them, or every direction at once.
+      </p>
+      <button type="button" class="confetti-el cf-btn cf-btn--hero">Click me</button>
+      <p class="cf-reduced-note">Your system is set to reduce motion, so the confetti is switched off on this page.</p>
+    </section>
+
+    <section class="cf-section">
+      <p class="eyebrow">Element</p>
+      <h2>Out of the element</h2>
+      <p class="direction">
+        Pieces leave from whichever edges face the way they're going: the
+        top edge for up, the top and right edges for up-right. All around
+        sends each piece straight out from its own edge.
+      </p>
+      <div class="cf-buttons">
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="up">Up</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="all">All around</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="up-left">Up-left</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="up-right">Up-right</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="left">Left</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="right">Right</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-direction="down">Down</button>
+      </div>
+
+      <div class="cf-angle">
+        <button type="button" id="angleButton" class="confetti-el cf-btn cf-btn--angle" data-confetti-direction="30">
+          <span class="cf-arrow" aria-hidden="true">↑</span>
+          <span>Fire at <span id="angleReadout">30</span>°</span>
+        </button>
+        <label class="cf-angle-input">
+          <span>Any angle: 0° is up, 90° is right</span>
+          <input type="range" id="angleInput" min="0" max="359" step="1" value="30" />
+        </label>
+      </div>
+    </section>
+
+    <section class="cf-section">
+      <p class="eyebrow">Mouse</p>
+      <h2>Out of the cursor</h2>
+      <p class="direction">
+        The burst comes from exactly where you clicked. The direction works
+        the same way as for elements.
+      </p>
+      <div class="cf-pads">
+        <div class="confetti-el cf-pad" data-confetti-mode="mouse" data-confetti-direction="up">
+          <span>Click anywhere in here</span>
+          <code>direction: 'up'</code>
+        </div>
+        <div class="confetti-el cf-pad" data-confetti-mode="mouse" data-confetti-direction="all">
+          <span>Click anywhere in here</span>
+          <code>direction: 'all'</code>
+        </div>
+      </div>
+    </section>
+
+    <section class="cf-section cf-section--last">
+      <p class="eyebrow">Screen</p>
+      <h2>Across the whole window</h2>
+      <p class="direction">
+        Fired from the edges of the window, whatever was clicked. These
+        buttons are one way to trigger it. In your own code it's one call,
+        <code>Confetti.screen()</code>, say when a form goes through.
+      </p>
+      <div class="cf-buttons">
+        <button type="button" class="confetti-el cf-btn" data-confetti-mode="screen" data-confetti-from="bottom">From the bottom</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-mode="screen" data-confetti-from="top">From the top</button>
+        <button type="button" class="confetti-el cf-btn" data-confetti-mode="screen" data-confetti-from="sides">From the corners</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="confetti.js"></script>
+  <script src="demo.js"></script>

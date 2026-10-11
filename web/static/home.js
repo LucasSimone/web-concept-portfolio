@@ -986,10 +986,28 @@ if (!prefersReducedMotion) {
     mirrorHover[method]();
   }
 
+  // The Confetti card fires a small burst out of its title as the pointer
+  // arrives, since a click on it opens the page rather than firing. Sized
+  // down to the card, and fired at most once a second: the sweep's
+  // hover-follow can slide a card out from under a still cursor and back,
+  // and every one of those re-entries would otherwise be another burst.
+  const confettiCard = document.getElementById('confettiPreview');
+  const CONFETTI_COOLDOWN_MS = 1000;
+  let confettiLast = 0;
+  function confettiOn(card, method) {
+    if (method !== 'enter' || card !== confettiCard) return;
+    const now = performance.now();
+    if (now - confettiLast < CONFETTI_COOLDOWN_MS) return;
+    confettiLast = now;
+    Confetti.fromElement(card.querySelector('h2') || card, {
+      count: 34, reach: 90, spread: 70, size: 7, duration: 2.2,
+    });
+  }
+
   // Every homepage hover/focus-reactive effect a card can carry, so adding
   // one only means adding it here instead of hunting down every hover/focus
   // call site below.
-  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn, mirrorOn];
+  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn, mirrorOn, confettiOn];
   function hoverPopOn(card, method) {
     HOVER_EFFECTS.forEach((effectOn) => effectOn(card, method));
   }

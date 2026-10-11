@@ -212,6 +212,8 @@
     <label for="conceptTypeFilter">Filter by type</label>
     <select id="conceptTypeFilter">
       <option value="all" selected>All concepts</option>
+      <option value="hover">Hover</option>
+      <option value="click">Click</option>
     </select>
   </div>
 
@@ -230,6 +232,18 @@
       <div class="liftoff-card spotlight-el" data-liftoff="off">
         <div class="type">Hover</div>
         <div class="title-wrap"><h2>Spotlight</h2></div>
+        <div class="go">View →</div>
+      </div>
+    </a>
+    <!-- Clicking a card opens it, so the confetti here goes off on hover
+         instead, out of the card's title (see confettiOn in home.js).
+         `data-liftoff="off"` for the same reason as the Spotlight card:
+         a lifting, drifting card under the burst reads as two effects at
+         once. -->
+    <a class="variation-card sweep-card liftoff-host" href="/concepts/confetti/index.html" data-type="click">
+      <div class="liftoff-card" data-liftoff="off" id="confettiPreview">
+        <div class="type">Click</div>
+        <div class="title-wrap"><h2>Confetti</h2></div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -425,6 +439,7 @@
   <script src="/background/sonar/sonar.js"></script>
   <script src="/concepts/liftoff/liftoff.js"></script>
   <script src="/concepts/spotlight/spotlight.js"></script>
+  <script src="/concepts/confetti/confetti.js"></script>
   <!-- hover-delegate.js is bundled ahead of sweep.js by routes.go
        (bindHoverDelegate must exist before home.js runs, and this is the
        only script tag that loads it). -->

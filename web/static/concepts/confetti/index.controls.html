@@ -1,0 +1,57 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for every control below, including which shapes and colors the confetti comes in. Adjusting any control afterward just tweaks that preset. Every button and pad on the page uses these settings. Each keeps its own mode and direction.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Celebration</option>
+        <option value="pastel">Pastel</option>
+        <option value="gold">Gold &amp; Silver</option>
+        <option value="mono">Monochrome</option>
+        <option value="hearts">Hearts</option>
+        <option value="blizzard">Blizzard</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Amount <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-amount">?<span class="hint" role="tooltip" id="hint-amount">A multiplier on how many pieces each click fires. Every mode has its own base count (60 for an element, 40 for the cursor, 220 for the whole screen), and this scales all three together, so a screen shower stays bigger than a button pop. At most 1,500 pieces can be in the air at once across the page, and anything fired past that is dropped.</span></span></span><span id="amountVal" class="value"></span></label>
+      <input type="range" id="amountRange" min="0.25" max="3" step="0.25" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Spread <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-spread">?<span class="hint" role="tooltip" id="hint-spread">How wide the cone the pieces fan out across is, in degrees, centered on the direction they're fired. 0 is a single straight line and 180 is a half circle. For "All around" it's how far each piece can stray from pointing straight out of its own edge. Applies to element and cursor confetti. The screen modes keep their own narrow 30°.</span></span></span><span id="spreadVal" class="value"></span></label>
+      <input type="range" id="spreadRange" min="0" max="180" step="5" value="50" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Reach <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-reach">?<span class="hint" role="tooltip" id="hint-reach">How high the fastest pieces climb before they stop rising, in px, when fired straight up. The launch speed is worked out from this, gravity and air drag, so the fastest piece tops out within a few percent of it; the rest are fired at 45% to 100% of that speed. Fired sideways or down, pieces travel about as far. Applies to element and cursor confetti. The screen modes size their reach to the window instead.</span></span></span><span id="reachVal" class="value"></span></label>
+      <input type="range" id="reachRange" min="40" max="500" step="10" value="200" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Gravity <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-gravity">?<span class="hint" role="tooltip" id="hint-gravity">How hard the pieces are pulled down, in px/sec². Air drag holds them to a slow fall of about a third of this many px per second, so at 500 they drift down at about 170 px/s. Lower makes them hang in the air longer. Reach stays about the same either way, since launch speed is worked out from it.</span></span></span><span id="gravityVal" class="value"></span></label>
+      <input type="range" id="gravityRange" min="100" max="1200" step="50" value="500" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-size">?<span class="hint" role="tooltip" id="hint-size">About how big a piece is across, in px. Each one varies by ±25%. A strip is about a third as wide as it is long.</span></span></span><span id="sizeVal" class="value"></span></label>
+      <input type="range" id="sizeRange" min="4" max="20" step="1" value="9" />
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Shapes <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shapes">?<span class="hint" role="tooltip" id="hint-shapes">Which shapes the pieces come in. Each piece picks one at random from the ones switched on, and at least one always stays on. The first five are built in. Heart is a custom shape: a small drawing function defined in this page's own demo.js, the same way you'd add one of your own.</span></span></span></div>
+      <div class="shape-chips" id="shapeChips">
+        <button type="button" class="toggle-button" data-shape="square" aria-pressed="true">Square</button>
+        <button type="button" class="toggle-button" data-shape="strip" aria-pressed="true">Strip</button>
+        <button type="button" class="toggle-button" data-shape="circle" aria-pressed="true">Circle</button>
+        <button type="button" class="toggle-button" data-shape="triangle" aria-pressed="false">Triangle</button>
+        <button type="button" class="toggle-button" data-shape="star" aria-pressed="false">Star</button>
+        <button type="button" class="toggle-button" data-shape="heart" aria-pressed="false">Heart</button>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Colors <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-colors">?<span class="hint" role="tooltip" id="hint-colors">The confetti colors, from one up to six. + adds a swatch on the end and − removes the last one. Each piece picks one at random. Its back face is the same color 30% darker, which shows whenever it tumbles over.</span></span></span><span class="color-count-buttons"><button id="removeColorButton" type="button" aria-label="Remove last color">−</button><button id="addColorButton" type="button" aria-label="Add a color">+</button></span></div>
+      <div class="color-swatches" id="colorSwatches"></div>
+      <div class="color-preview" id="colorPreview" aria-hidden="true"></div>
+    </div>
