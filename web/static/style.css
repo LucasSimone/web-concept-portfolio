@@ -256,6 +256,25 @@
   border: 1px solid #000;
 }
 
+/* Inkblot: once a hover has inked the card solid, its title shows on the
+   ink in white. The ink is lowered to just above the card's own chrome
+   (z-index 1, via inkblot.js's --t-inkblot-z) so the title can sit over
+   it; the title stays black until then, so while ink is still spreading
+   or receding it's hidden under the black wherever the ink has reached,
+   the same as the rest of the card. */
+.variation-card[data-t-transition="inkblot"] .liftoff-card {
+  --t-inkblot-z: 1;
+}
+.variation-card[data-t-transition="inkblot"] .title-wrap {
+  z-index: 2;
+}
+.variation-card[data-t-transition="inkblot"] h2 {
+  transition: color 0.2s ease;
+}
+.variation-card[data-t-transition="inkblot"] .liftoff-card.is-covered h2 {
+  color: #fff;
+}
+
 /* Circuit Board: the real reusable background effect, applied to the
    whole card instead of just the title. Targets the .liftoff-card wrapper
    (see the Liftoff comment above) rather than the anchor, so the canvas

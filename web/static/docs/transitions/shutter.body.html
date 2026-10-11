@@ -184,8 +184,9 @@ Transitions.shutter.play(cardB);
         <code>t-shutter-pending</code> — so a second, differently named
         effect's script can register alongside this one without either
         clobbering the other. This site's own layout does exactly that,
-        loading <a href="/docs/transitions/aperture.html">Aperture</a> and
-        <a href="/docs/transitions/static.html">Static</a> alongside
+        loading <a href="/docs/transitions/aperture.html">Aperture</a>,
+        <a href="/docs/transitions/static.html">Static</a> and
+        <a href="/docs/transitions/inkblot.html">Inkblot</a> alongside
         Shutter on every page:
       </p>
       <pre><code>&lt;script&gt;
@@ -193,11 +194,13 @@ Transitions.shutter.play(cardB);
     shutter:  { selector: '[data-t-transition="shutter"]' },
     aperture: { selector: '[data-t-transition="aperture"]' },
     static:   { selector: '[data-t-transition="static"]' },
+    inkblot:  { selector: '[data-t-transition="inkblot"]' },
   };
 &lt;/script&gt;
 &lt;script src="shutter.js"&gt;&lt;/script&gt;
 &lt;script src="aperture.js"&gt;&lt;/script&gt;
-&lt;script src="static.js"&gt;&lt;/script&gt;</code></pre>
+&lt;script src="static.js"&gt;&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
       <p>
         Which link uses which effect is decided by the
         <em>value</em> of <code>data-t-transition</code> — each script
@@ -225,7 +228,7 @@ Transitions.shutter.play(cardB);
         That's a different multiplicity than
         <a href="#element-transitions">Element Transitions</a>' concurrent
         instances above — this section is about running <em>different</em>
-        named effects (Shutter, Aperture, Static, …) on one page without
+        named effects (Shutter, Aperture, Static, Inkblot, …) on one page without
         them colliding; that one is about running <em>this same</em> effect on
         several elements (or the same element repeatedly) at once, which
         works because each target keeps its own independent state rather

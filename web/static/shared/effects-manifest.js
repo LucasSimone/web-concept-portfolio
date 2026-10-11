@@ -164,6 +164,14 @@
       docsPath: '/docs/transitions/static.html',
     },
     {
+      slug: 'inkblot',
+      name: 'Inkblot',
+      category: 'transitions',
+      demoPath: '/transitions/inkblot/index.html',
+      jsPath: '/transitions/inkblot/inkblot.js',
+      docsPath: '/docs/transitions/inkblot.html',
+    },
+    {
       slug: 'liftoff',
       name: 'Liftoff',
       category: 'concepts',

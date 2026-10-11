@@ -1098,16 +1098,23 @@ if (!prefersReducedMotion) {
       enter() {
         if (hovering) return;
         hovering = true;
-        gen++;
+        const myGen = ++gen;
         if (pendingCycle) {
           clearTimeout(pendingCycle);
           pendingCycle = null;
         }
-        engine.cover(surface, overrides);
+        // Marks the card once a hover has fully covered it, for anything
+        // that should only show on the covered card (see the Inkblot
+        // card's white title in style.css). Never set by the auto cycle,
+        // only a hover that's still on the card when the cover lands.
+        engine.cover(surface, overrides).then(() => {
+          if (hovering && myGen === gen) surface.classList.add('is-covered');
+        });
       },
       leave() {
         if (!hovering) return;
         hovering = false;
+        surface.classList.remove('is-covered');
         const myGen = gen;
         engine.reveal(surface, overrides).then(() => { if (myGen === gen) scheduleCycle(myGen); });
       },
@@ -1128,6 +1135,19 @@ if (!prefersReducedMotion) {
       if (card && transitionCards.has(card)) transitionCards.get(card).enter();
     });
   }
+
+  // A bfcache restore (Back after clicking a card through) has each
+  // transition script wipe its cover off the card, but nothing here knows
+  // that happened, so a card left marked covered would keep its white
+  // title on a now-white card. Only the mark is cleared: leave() would
+  // reveal(), and revealing a card with no cover left starts from solid.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    transitionCards.forEach((_, card) => {
+      const surface = card.querySelector('.liftoff-card');
+      if (surface) surface.classList.remove('is-covered');
+    });
+  });
 }
 
 // Remembers how far down the homepage the user had scrolled, so following a

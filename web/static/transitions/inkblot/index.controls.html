@@ -1,0 +1,69 @@
+    <div class="control-row">
+      <label for="ptProfile">Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the controls below, including the color. Adjusting anything afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="ptProfile">
+        <option value="default" selected>India Ink</option>
+        <option value="fountain">Fountain Pen</option>
+        <option value="downpour">Downpour</option>
+        <option value="spill">Spill</option>
+        <option value="squid">Squid</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptStyle">Style
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-style">?<span class="hint" role="tooltip" id="hint-style">Where the drops land. Splatter: a few big drops with spray around them. Rain: many medium drops, one after another. Pool: one drop in the middle spreading out, ringed by the rest.</span></span>
+      </label>
+      <select id="ptStyle">
+        <option value="splatter" selected>Splatter</option>
+        <option value="rain">Rain</option>
+        <option value="pool">Pool</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptOrigin">Origin
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-origin">?<span class="hint" role="tooltip" id="hint-origin">Where the ink starts. Scatter lands drops wherever the style puts them. Cursor starts at the point you click and runs outward. Clicked element bursts out of the button you pressed first. Not part of any profile.</span></span>
+      </label>
+      <select id="ptOrigin">
+        <option value="scatter">Scatter</option>
+        <option value="cursor">Cursor</option>
+        <option value="element" selected>Clicked element</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptDuration">Duration <span class="value" id="ptDurationVal">1200ms</span></label>
+      <input type="range" id="ptDuration" min="300" max="3000" step="50" value="1200" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptEasing">Easing</label>
+      <select id="ptEasing">
+        <option value="cubic-bezier(.65,0,.35,1)">Cubic Bezier</option>
+        <option value="linear">Linear</option>
+        <option value="ease-in-out" selected>Ease In Out</option>
+        <option value="cubic-bezier(.2,1,.1,1)">Punchy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label for="ptDrops"><span class="label-text">Drops <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-drops">?<span class="hint" role="tooltip" id="hint-drops">How many main drops land. Rain lands five times this many, smaller.</span></span></span><span class="value" id="ptDropsVal">4</span></label>
+      <input type="range" id="ptDrops" min="1" max="12" step="1" value="4" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptSplatter"><span class="label-text">Splatter <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-splatter">?<span class="hint" role="tooltip" id="hint-splatter">How much small spray lands around each drop before the blots swallow it.</span></span></span><span class="value" id="ptSplatterVal">50%</span></label>
+      <input type="range" id="ptSplatter" min="0" max="1" step="0.05" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptBleed"><span class="label-text">Bleed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-bleed">?<span class="hint" role="tooltip" id="hint-bleed">Width of the pale, wet fringe running ahead of the ink's edge. At 0 the edge is crisp.</span></span></span><span class="value" id="ptBleedVal">50%</span></label>
+      <input type="range" id="ptBleed" min="0" max="1" step="0.05" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label for="ptColor">Ink Color</label>
+      <input type="color" id="ptColor" class="t-swatch" value="#000000" aria-label="Ink color" />
+    </div>

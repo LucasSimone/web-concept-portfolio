@@ -61,11 +61,13 @@ const layoutSrc = `<!doctype html>
       shutter: { selector: '[data-t-transition="shutter"]' },
       aperture: { selector: '[data-t-transition="aperture"]' },
       static: { selector: '[data-t-transition="static"]' },
+      inkblot: { selector: '[data-t-transition="inkblot"]' },
     };
   </script>
   <script src="/transitions/shutter/shutter.js"></script>
   <script src="/transitions/aperture/aperture.js"></script>
   <script src="/transitions/static/static.js"></script>
+  <script src="/transitions/inkblot/inkblot.js"></script>
 {{.Head}}</head>
 <body>
   <nav class="site-nav">

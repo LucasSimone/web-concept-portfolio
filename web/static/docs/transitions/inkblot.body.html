@@ -1,0 +1,351 @@
+
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Transition · Navigation</p>
+      <h1>Inkblot</h1>
+      <p>
+        Ink dropped on paper: a few drops land on exit, soak outward into
+        ragged, bleeding blots, throw off small spatter, and merge into
+        each other until the screen is solid ink. On the next page the same
+        blots recede and dry away to reveal it. One continuous motion split
+        across the navigation boundary, same shape as
+        <a href="/docs/transitions/shutter.html">Shutter</a>,
+        <a href="/docs/transitions/aperture.html">Aperture</a> and
+        <a href="/docs/transitions/static.html">Static</a>.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/transitions/inkblot/index.html">View Demo</a>
+        <a class="btn" href="/transitions/inkblot/inkblot.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#styles">Styles</a>
+        <a href="#origin">Origin</a>
+        <a href="#element-transitions">Element Transitions</a>
+        <a href="#multiple-transitions">Multiple Transitions</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Like the other transitions, this one belongs in
+        <code>&lt;head&gt;</code> as a plain, non-<code>async</code>/<code>defer</code>
+        tag, on every page that should take part. It has to run before the
+        page paints, so an arriving page starts under solid ink with no
+        flash of the page underneath.
+      </p>
+      <p>
+        Dropping the script in doesn't intercept anything by itself:
+        navigation is off until you set <code>selector</code>. With no
+        config at all you still get
+        <a href="#element-transitions"><code>Transitions.inkblot.play</code>/<code>cover</code>/<code>reveal</code></a>
+        for elements.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    inkblot: { selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        It now intercepts any left-click on a same-origin
+        <code>&lt;a href&gt;</code> that isn't a hash link, a
+        <code>download</code> link, a <code>target="_blank"</code> link, or
+        opened with a modifier key held. The ink spreads, then the browser
+        navigates. The reveal only plays on the page that receives that
+        navigation; a direct load, refresh or bookmark never shows the
+        overlay, and a destination that doesn't load
+        <code>inkblot.js</code> simply appears once the cover finishes.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Exempt a link from the transition</h3>
+        <pre><code>&lt;a href="/elsewhere.html" data-no-transition&gt;Skip the transition&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Override one link's look</h3>
+        <p>
+          A link can override any option for its own transition, leaving
+          every other link on the page on the default profile. This is how
+          the <a href="/transitions/inkblot/index.html">demo's controls
+          panel</a> changes only the Page One → Page Two link. The profile
+          and the exact drops that link laid down travel to the next page
+          with the navigation, so it recedes the blots the last page spread.
+        </p>
+        <pre><code>&lt;a href="page-two.html" data-t-style="rain" data-t-color="#1b2f8f"&gt;
+  Enter Page Two
+&lt;/a&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Set the page-wide default</h3>
+        <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    inkblot: { duration: 1500, color: '#7a0d12', style: 'pool', bleed: 0.8, selector: 'a[href]' },
+  };
+&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
+      </div>
+
+      <h2 id="styles">Styles</h2>
+      <p>
+        Where the drops land and how big they grow is the part meant to
+        vary. <code>style</code> takes one of the built-in layouts:
+      </p>
+      <ul>
+        <li><code>'splatter'</code> (default): <code>drops</code> big drops spread across the target, landing early, each with a spray of spatter around it.</li>
+        <li><code>'rain'</code>: five times as many medium drops, landing one after another.</li>
+        <li><code>'pool'</code>: one drop in the middle that keeps spreading, ringed by the rest, so the cover closes from the center out.</li>
+      </ul>
+      <p>
+        Or a function that returns your own drops. It's called once per
+        cover with the target's size and the profile, and returns an array
+        of drops in px:
+      </p>
+      <pre><code>Transitions.inkblot.play(card, {
+  // A single row of drops falling left to right.
+  style: ({ width, height, drops, splatter, random }) =&gt;
+    Array.from({ length: 8 }, (_, i) =&gt; ({
+      x: (i + 0.5) * width / 8,
+      y: height / 2 + (random() - 0.5) * height * 0.3,
+      r: width / 7,
+      at: i / 12,   // when in the cover it lands, 0–1
+    })),
+});</code></pre>
+      <table>
+        <thead>
+          <tr><th>Drop field</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>x</code>, <code>y</code></td><td>Where it lands, in px from the target's top left</td></tr>
+          <tr><td><code>r</code></td><td>The radius it soaks out to, in px</td></tr>
+          <tr><td><code>at</code></td><td>When in the cover it lands, 0–1. Optional, default <code>0</code></td></tr>
+          <tr><td><code>grow</code></td><td>How much of the rest of the cover it spends spreading, 0–1. Optional: all of it for a big drop, a short burst for small spatter</td></tr>
+          <tr><td><code>lumps</code></td><td>How many extra lobes to give its outline. Optional: a few for big drops, none or one for spatter. <code>0</code> gives a round drop</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Drops don't have to cover the whole target: toward the end of the
+        cover the ink floods the gaps left between them, starting at the
+        edges of the blots around each one. The built-ins are on
+        <code>Transitions.inkblot.styles</code>, so a custom style can call
+        one and add to its result. A style that throws, or returns no
+        drops, falls back to <code>'splatter'</code>.
+      </p>
+      <p>
+        A function can't be written into a <code>data-t-style</code>
+        attribute, so per-link styles are names only. A function set in
+        <code>TransitionConfig</code> or passed to <code>configure</code>
+        works for navigation too: the drops it produced are what travel to
+        the next page, not the function.
+      </p>
+
+      <h2 id="origin">Origin</h2>
+      <p>
+        Where the ink starts is its own option, so it works with every
+        style, custom ones included:
+      </p>
+      <ul>
+        <li><code>'scatter'</code> (default): drops land wherever the style puts them.</li>
+        <li><code>'cursor'</code>: the first drop lands where the click was, throwing spatter outward. The style's drops keep their places and sizes but land in order of distance from the click, so the ink runs outward across the page.</li>
+        <li><code>'element'</code>: ink fills the pressed button or link almost at once, so it reads as bursting, then runs outward from there the same way.</li>
+      </ul>
+      <p>
+        For navigation the clicked link supplies both the point and the
+        element. A link activated from the keyboard starts from its own
+        center. For <code>cover</code>/<code>play</code>, pass the click as
+        <code>from</code>: the event itself, an element, or
+        <code>{ x, y, element }</code> in viewport px:
+      </p>
+      <pre><code>button.addEventListener('click', (event) =&gt; {
+  Transitions.inkblot.play(panel, {
+    origin: 'element',
+    from: event,          // bursts out of the button, then across the panel
+    swap: (el) =&gt; { el.innerHTML = nextPanel; },
+  });
+});</code></pre>
+      <p>
+        With no <code>from</code>, both fall back to scattering. If the
+        pressed element is the target itself, there's no outline to burst
+        from, so <code>'element'</code> starts from the click point like
+        <code>'cursor'</code>. A custom style also gets the resolved origin as
+        <code>origin</code> (<code>{ x, y, rect }</code> in the target's
+        px, or <code>null</code>), though its drops are re-timed around it
+        either way. On the next page the reveal recedes the same drops in
+        reverse, so the ink drains back toward where it started.
+      </p>
+
+      <h2 id="element-transitions">Element Transitions</h2>
+      <p>
+        Inkblot can also transition any element in place: cover it, swap
+        what's inside, then reveal. Mark the element
+        <code>class="t-el"</code> (it gives the overlay something to size
+        itself against) and call <code>play</code>:
+      </p>
+      <pre><code>&lt;div class="t-el" id="card"&gt;...&lt;/div&gt;
+
+&lt;script&gt;
+  Transitions.inkblot.play(document.getElementById('card'), {
+    swap: (el) =&gt; { el.textContent = 'New content'; },
+  });
+&lt;/script&gt;</code></pre>
+      <p>
+        <code>play(el, options)</code> covers <code>el</code>, calls
+        <code>options.swap(el)</code> once it's solid ink (waiting on it if
+        it returns a promise), then reveals. Pass the click as
+        <code>from</code> to start the ink there (see <a href="#origin">Origin</a>). <code>cover</code> and
+        <code>reveal</code> are public on their own for anything that
+        doesn't fit that shape. All three take the same fields as the
+        options below and return a promise that resolves when that step
+        finishes. Every element keeps its own state, so several elements,
+        or the same one called repeatedly, animate independently.
+      </p>
+      <p>
+        Calling <code>cover</code> while a <code>reveal</code> is still
+        running (or the other way round) turns the same blots around from
+        wherever they've got to, over the matching share of the duration,
+        rather than starting over.
+      </p>
+
+      <h2 id="multiple-transitions">Multiple Transitions</h2>
+      <p>
+        Inkblot keeps its API, config and arrival flag under its own slug:
+        <code>window.Transitions.inkblot</code>,
+        <code>window.TransitionConfig.inkblot</code>, and a
+        <code>sessionStorage</code> key of <code>t-inkblot-pending</code>.
+        So it loads alongside
+        <a href="/docs/transitions/shutter.html">Shutter</a>,
+        <a href="/docs/transitions/aperture.html">Aperture</a> and
+        <a href="/docs/transitions/static.html">Static</a> without any of
+        them clobbering the others. This site's own layout loads all four
+        on every page, each reacting only to links tagged with its own slug:
+      </p>
+      <pre><code>&lt;script&gt;
+  window.TransitionConfig = {
+    shutter:  { selector: '[data-t-transition="shutter"]' },
+    aperture: { selector: '[data-t-transition="aperture"]' },
+    static:   { selector: '[data-t-transition="static"]' },
+    inkblot:  { selector: '[data-t-transition="inkblot"]' },
+  };
+&lt;/script&gt;
+&lt;script src="shutter.js"&gt;&lt;/script&gt;
+&lt;script src="aperture.js"&gt;&lt;/script&gt;
+&lt;script src="static.js"&gt;&lt;/script&gt;
+&lt;script src="inkblot.js"&gt;&lt;/script&gt;</code></pre>
+      <pre><code>&lt;a href="/a" data-t-transition="static"&gt;Uses Static&lt;/a&gt;
+&lt;a href="/b" data-t-transition="inkblot"&gt;Uses Inkblot&lt;/a&gt;</code></pre>
+      <p>
+        The scripts don't coordinate. Arriving on the next page, each one
+        only checks its own <code>sessionStorage</code> key, and only the
+        clicked link's effect wrote one, so only that effect's reveal
+        plays.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>duration</code></td><td><code>1200</code></td><td>ms for each half (spread or recede) of the motion</td></tr>
+          <tr><td><code>easing</code></td><td><code>'ease-in-out'</code></td><td>Easing for the overall motion: <code>linear</code>, <code>ease</code>, <code>ease-in</code>, <code>ease-out</code>, <code>ease-in-out</code> or any <code>cubic-bezier()</code>. Each drop also eases out on its own as it soaks in</td></tr>
+          <tr><td><code>color</code></td><td><code>'#000'</code></td><td>The ink. Any CSS color</td></tr>
+          <tr><td><code>style</code></td><td><code>'splatter'</code></td><td>Where drops land and how big they grow: <code>'splatter'</code>, <code>'rain'</code>, <code>'pool'</code>, or a function (see <a href="#styles">Styles</a>)</td></tr>
+          <tr><td><code>drops</code></td><td><code>4</code></td><td>How many main drops a built-in style lays down</td></tr>
+          <tr><td><code>splatter</code></td><td><code>0.5</code></td><td>0–1: how much small spatter a built-in style throws around its drops</td></tr>
+          <tr><td><code>bleed</code></td><td><code>0.5</code></td><td>0–1: width of the pale, wet fringe running ahead of the ink's edge. <code>0</code> is a crisp edge</td></tr>
+          <tr><td><code>origin</code></td><td><code>'scatter'</code></td><td>Where the ink starts: <code>'scatter'</code>, <code>'cursor'</code> (the click point) or <code>'element'</code> (the pressed button or link). See <a href="#origin">Origin</a></td></tr>
+          <tr><td><code>from</code></td><td>none</td><td><code>cover</code>/<code>play</code> only: the click to start from, as an event, an element, or <code>{ x, y, element }</code>. A clicked link supplies its own</td></tr>
+          <tr><td><code>selector</code></td><td><code>null</code> (off)</td><td>Which links are intercepted. Navigation stays off until this is set</td></tr>
+        </tbody>
+      </table>
+      <p>Per-link attributes, read from the clicked link and overriding the options above for that one transition:</p>
+      <table>
+        <thead>
+          <tr><th>Attribute</th><th>Overrides</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>data-t-duration</code></td><td><code>duration</code></td></tr>
+          <tr><td><code>data-t-easing</code></td><td><code>easing</code></td></tr>
+          <tr><td><code>data-t-color</code></td><td><code>color</code></td></tr>
+          <tr><td><code>data-t-style</code></td><td><code>style</code> (a built-in name)</td></tr>
+          <tr><td><code>data-t-drops</code></td><td><code>drops</code></td></tr>
+          <tr><td><code>data-t-splatter</code></td><td><code>splatter</code></td></tr>
+          <tr><td><code>data-t-bleed</code></td><td><code>bleed</code></td></tr>
+          <tr><td><code>data-t-origin</code></td><td><code>origin</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>configure(options)</code></td>
+            <td>Merges options into the page-wide default profile, typically just to set <code>selector</code> from a script that runs after <code>inkblot.js</code>.</td>
+          </tr>
+          <tr>
+            <td><code>cover(el, options)</code></td>
+            <td>Spreads ink over <code>el</code> (an element with <code>class="t-el"</code>, or <code>document.documentElement</code>), resolving once it's solid. Leaves <code>el</code> covered; pair with <code>reveal()</code>.</td>
+          </tr>
+          <tr>
+            <td><code>reveal(el, options)</code></td>
+            <td>Recedes the ink, resolving once <code>el</code> is fully revealed and cleaned up. Called on an element that isn't covered, it starts from solid ink with drops of its own.</td>
+          </tr>
+          <tr>
+            <td><code>play(el, options)</code></td>
+            <td>Covers <code>el</code>, runs <code>options.swap(el)</code> (may return a promise), then reveals.</td>
+          </tr>
+          <tr>
+            <td><code>styles</code></td>
+            <td>The built-in style functions, by name, for a custom style to build on.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        The blots are a metaball field: each drop is a small cluster of
+        overlapping circles, every circle adds a soft falloff to a
+        low-resolution grid, and a cell is ink wherever the sum crosses a
+        threshold. Summing is what makes nearby blots reach for each other
+        and fuse, and the clusters give each drop a lobed outline. A fixed
+        paper-grain texture roughens every edge so it wicks rather than
+        expands, and the grid is smoothed up to full size, which softens
+        it further. The grid is capped in size, so a full-screen overlay
+        costs the same at any resolution.
+      </p>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: clicking a link
+        navigates immediately with no cover, an arrival never plays a
+        reveal, and <code>cover</code>/<code>reveal</code>/<code>play</code>
+        resolve straight away (<code>play</code>'s <code>swap</code> still
+        runs). A back/forward (bfcache) restore resets every covered
+        element instead of replaying anything. Arrival is signalled with a
+        short-lived <code>sessionStorage</code> entry, never anything in
+        the URL.
+      </p>
+      <p>
+        The overlay stacks above the target's own content, not the whole
+        page. For the navigation case (covering <code>&lt;html&gt;</code>)
+        that's the top of everything; for an element it's only as high as
+        that element's stacking context allows.
+      </p>
+    </div>
+  </div>
