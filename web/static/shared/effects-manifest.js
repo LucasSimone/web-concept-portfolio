@@ -124,6 +124,14 @@
       docsPath: '/docs/background/fireworks.html',
     },
     {
+      slug: 'gears',
+      name: 'Gears',
+      category: 'background',
+      demoPath: '/background/gears/index.html',
+      jsPath: '/background/gears/gears.js',
+      docsPath: '/docs/background/gears.html',
+    },
+    {
       slug: 'shutter',
       name: 'Shutter',
       category: 'transitions',

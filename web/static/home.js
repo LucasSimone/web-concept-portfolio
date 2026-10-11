@@ -286,6 +286,12 @@ FallingLeaves.initAll('.liftoff-card.bg-falling-leaves', {
 Fireworks.initAll('.liftoff-card.bg-fireworks', {
   launchRate: 0.6, burstSize: 45, burstRadius: 55, particleSize: 1.5, gravity: 50,
 });
+// Smaller teeth so a card fits a few trains, and sparser than the demo so
+// the title stays clear. Brushing still pushes gears; grabbing is off,
+// since a press on the card belongs to the carousel's drag and the link.
+Gears.initAll('.liftoff-card.bg-gears', {
+  toothSize: 3, maxTeeth: 28, density: 0.22, powered: 0.6, grab: false,
+});
 
 // --- Components Lab card preview -------------------------------------
 // Same idea as the background cards above: the card is a live board rather

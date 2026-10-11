@@ -1,0 +1,214 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Background · Interactive</p>
+      <h1>Gears</h1>
+      <p>
+        A canvas of line-drawn gears laid out in trains whose teeth really
+        mesh. Every gear has the same size teeth, sits exactly its pitch
+        distance from the gear it meshes with, and is turned so its teeth
+        land in that gear's gaps. Turning one gear turns the rest of its
+        train at the right ratio, each in the opposite direction to its
+        neighbor: a gear half the size turns twice as fast. Some trains have
+        a motor, marked by a filled axle, and turn on their own. Pressing on
+        a gear grabs it, and letting go mid-turn flicks it. Moving the mouse
+        across a gear pushes it round. A flicked train coasts back to its
+        motor's speed, or to a stop. It sits behind the element's content
+        and never touches real page elements.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/background/gears/index.html">View Demo</a>
+        <a class="btn" href="/background/gears/gears.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#decorations">Decorations</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="gears.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag positioning the canvas
+        behind the element's content, so no companion CSS file is required to
+        render it — but the host element needs its own height/content,
+        since the injected CSS doesn't size it.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;section class="bg-gears" aria-label="Gears background"&gt;
+  &lt;span class="label"&gt;Wind it up&lt;/span&gt;
+&lt;/section&gt;
+&lt;script src="gears.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        No data attribute needed — just apply the class to a container with
+        a size of its own. Auto-initializes against every
+        <code>.bg-gears</code> element. A <code>ResizeObserver</code> keeps
+        the canvas sized to fit: gears stay where they are, since moving one
+        would pull it out of mesh, and new trains fill any space a resize
+        opens up. To configure options:
+      </p>
+      <pre><code>Gears.initAll('.bg-gears', {
+  toothSize: 3,
+  density: 0.2,
+  powered: 0.6,
+});</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Pocket watch</h3>
+        <p>
+          Fine teeth, big spoked wheels packed close, nearly every train
+          ticking over slowly, in brass on cream.
+        </p>
+        <pre><code>Gears.initAll('.bg-gears', {
+  toothSize: 2.5,
+  maxTeeth: 54,
+  density: 0.45,
+  speed: 8,
+  powered: 0.8,
+  decorate: 'spokes',
+  color: '#6b4e16',
+  background: '#f7f1e3',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Blueprint</h3>
+        <p>
+          Light lines on a dark ground. A dark <code>background</code> also
+          gives the element the <code>bg-gears--dark</code> class, which
+          turns its text white.
+        </p>
+        <pre><code>Gears.initAll('.bg-gears', {
+  color: '#e8f0ff',
+  background: '#1d4e89',
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Still until touched</h3>
+        <p>
+          No motors at all, and a long coast, so the board sits still until
+          someone spins a gear and then winds down slowly.
+        </p>
+        <pre><code>Gears.initAll('.bg-gears', {
+  powered: 0,
+  coast: 3,
+});</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Inside a link or carousel</h3>
+        <p>
+          A press on the element may belong to something else, like a card
+          link or a swipeable strip. Turn grabbing off and leave brushing on,
+          so the mouse still pushes gears as it passes.
+        </p>
+        <pre><code>Gears.initAll('.card.bg-gears', {
+  grab: false,
+});</code></pre>
+      </div>
+
+      <h2 id="decorations">Decorations</h2>
+      <p>
+        <code>decorate</code> sets what's cut out of each gear inside its
+        teeth. The built-in styles are in <code>Gears.decorations</code>:
+      </p>
+      <ul>
+        <li><code>'auto'</code> — picks by size: <code>'plain'</code> under 14 teeth, <code>'holes'</code> from 14 to 21, <code>'spokes'</code> from 22 up.</li>
+        <li><code>'spokes'</code> — five or six spokes between a rim and a hub. Falls back to holes on a gear too small for them.</li>
+        <li><code>'holes'</code> — a ring of five or six round holes around the hub.</li>
+        <li><code>'plain'</code> — just a hub circle.</li>
+      </ul>
+
+      <h3>Write your own</h3>
+      <p>
+        <code>decorate</code> can also be a function, called once per gear
+        when it's laid out. It's given the gear's <code>Path2D</code>, which
+        already holds the tooth outline, and adds its own subpaths to it.
+        Coordinates are the gear's own: the center is <code>0, 0</code> and
+        the shape turns with the gear. The path is only stroked, never
+        filled. The gear object has <code>teeth</code>,
+        <code>radius</code> (the pitch circle), <code>rootRadius</code>
+        (the bottom of the teeth: stay inside it), <code>tipRadius</code>,
+        <code>hubRadius</code> and <code>toothSize</code>. The axle is drawn
+        separately, since it's also the motor marker.
+      </p>
+      <pre><code>// A star in every gear big enough for one, and the built-in hub on the rest.
+function star(path, gear) {
+  if (gear.teeth &lt; 16) {
+    Gears.decorations.plain(path, gear);
+    return;
+  }
+  const outer = gear.rootRadius - gear.toothSize * 1.5;
+  const inner = outer * 0.45;
+  for (let i = 0; i &lt;= 10; i++) {
+    const r = i % 2 ? inner : outer;
+    const a = (i / 10) * Math.PI * 2;
+    const x = r * Math.cos(a);
+    const y = r * Math.sin(a);
+    if (i === 0) path.moveTo(x, y);
+    else path.lineTo(x, y);
+  }
+}
+
+Gears.initAll('.bg-gears', { decorate: star });</code></pre>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>toothSize</code></td><td><code>4</code></td><td>The gear module, in px. Every gear shares it so they can mesh, and a gear with N teeth has a pitch radius of N × this / 2, so it also scales the gears</td></tr>
+          <tr><td><code>maxTeeth</code></td><td><code>36</code></td><td>Most teeth a gear can have. The fewest is always 8, and sizes lean toward the small end</td></tr>
+          <tr><td><code>density</code></td><td><code>0.3</code></td><td>Share of the element the gears' pitch circles cover. Gears keep a gap of two tooth sizes from anything they don't mesh with, so past about 0.45 there's rarely room for more</td></tr>
+          <tr><td><code>speed</code></td><td><code>16</code></td><td>How fast a motor moves its train's teeth, in px/sec, ±25% per train. Each gear turns at this over its own radius</td></tr>
+          <tr><td><code>powered</code></td><td><code>0.5</code></td><td>Share of trains with a motor. Each train has a fixed roll against it, so changing it switches motors one train at a time rather than reshuffling them</td></tr>
+          <tr><td><code>coast</code></td><td><code>1.5</code></td><td>Seconds a flicked train takes to settle about two-thirds of the way back to its motor speed, or to a stop</td></tr>
+          <tr><td><code>grab</code></td><td><code>true</code></td><td>Whether pressing on a gear grabs it. A drag turns it under the cursor and letting go mid-turn flicks it. On touch, a touch on a gear turns it instead of scrolling the page. A click that ends a drag is cancelled, and a tap on a gear that doesn't drag still clicks through, so the element can sit inside a link. Presses on links, buttons and form fields inside the element are left alone</td></tr>
+          <tr><td><code>brush</code></td><td><code>true</code></td><td>Whether moving the mouse across a gear pushes it. It only ever speeds a gear up or turns it the other way, never slows it in the direction it's already going. Mouse only</td></tr>
+          <tr><td><code>decorate</code></td><td><code>'auto'</code></td><td>A built-in style name or a function. See <a href="#decorations">Decorations</a></td></tr>
+          <tr><td><code>color</code></td><td><code>'#000000'</code></td><td>Line color, any CSS color</td></tr>
+          <tr><td><code>background</code></td><td><code>'#ffffff'</code></td><td>Canvas background, any CSS background. A dark color adds the <code>bg-gears--dark</code> class (white text) to the element. A see-through color is judged as it looks over the host's background. <code>'transparent'</code> or <code>null</code> leaves the host's own background showing</td></tr>
+          <tr><td><code>lineWidth</code></td><td><code>1.25</code></td><td>Stroke width in px</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. <code>toothSize</code> and <code>maxTeeth</code> lay out a new board. <code>density</code> takes whole trains away, newest first, or adds new ones around the rest. <code>decorate</code> redraws every gear where it is. Anything else applies on the next frame without moving anything.</td></tr>
+          <tr><td><code>.randomize()</code></td><td>Lays out a fresh board with the same settings.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the animation loop, disconnects the observers, removes the pointer listeners and the canvas.</td></tr>
+          <tr><td><code>Gears.get(elOrSelector)</code> / <code>Gears.getAll(selector)</code></td><td>Static lookups for already-initialized instances, by element/selector.</td></tr>
+          <tr><td><code>Gears.decorations</code></td><td>The built-in decoration functions, for a custom one to build on.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Trains are laid out as trees, each gear meshing with exactly one
+        gear before it and kept clear of every other, so no loop of gears
+        can jam. A train is at least two gears. The teeth are simple
+        trapezoids, slimmer than real involute teeth, which is what lets
+        them mesh without their outlines crossing down to 8 teeth. The loop
+        pauses when the element is scrolled well out of view. Respects
+        <code>prefers-reduced-motion</code> by drawing one still frame with
+        no motors running; dragging a gear still turns its train, but it
+        stops when you let go, and brushing does nothing.
+      </p>
+    </div>
+  </div>

@@ -1,0 +1,84 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for the controls below, including the style and colors. Adjusting anything afterward just tweaks that preset.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Workshop</option>
+        <option value="watch">Pocket Watch</option>
+        <option value="industrial">Industrial</option>
+        <option value="blueprint">Blueprint</option>
+        <option value="idle">Idle</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Tooth size <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-toothSize">?<span class="hint" role="tooltip" id="hint-toothSize">How big each tooth is, in px. Every gear has the same size teeth so they can mesh, which means this also sets how big the gears are: a gear's radius is its tooth count times this, halved. Changing it lays out a new board.</span></span></span><span id="toothSizeVal" class="value"></span></label>
+      <input type="range" id="toothSizeRange" min="2" max="8" step="0.5" value="4" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Largest gear <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-maxTeeth">?<span class="hint" role="tooltip" id="hint-maxTeeth">The most teeth a gear can have. The smallest always has 8, and most land toward the small end. Gears with 22 or more teeth get spokes and 14 to 21 get holes. Changing it lays out a new board.</span></span></span><span id="maxTeethVal" class="value"></span></label>
+      <input type="range" id="maxTeethRange" min="12" max="60" step="1" value="36" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Density <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-density">?<span class="hint" role="tooltip" id="hint-density">How much of the box the gears cover. Gears keep a gap from everything they don't mesh with, so past about 45% there's rarely room for more. Lowering it removes trains, newest first, and raising it adds new ones around the rest.</span></span></span><span id="densityVal" class="value"></span></label>
+      <input type="range" id="densityRange" min="0.05" max="0.6" step="0.05" value="0.3" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Motor speed <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-speed">?<span class="hint" role="tooltip" id="hint-speed">How fast a motor moves its train's teeth, in px/sec, give or take 25% per train. Every gear in a train moves its teeth at the same speed, so a gear half the size turns twice as fast.</span></span></span><span id="speedVal" class="value"></span></label>
+      <input type="range" id="speedRange" min="0" max="80" step="2" value="16" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Motorized <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-powered">?<span class="hint" role="tooltip" id="hint-powered">The share of trains with a motor. The motor's gear has a filled axle. Trains without one stay still until you move them.</span></span></span><span id="poweredVal" class="value"></span></label>
+      <input type="range" id="poweredRange" min="0" max="1" step="0.1" value="0.5" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Coast <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-coast">?<span class="hint" role="tooltip" id="hint-coast">How long a flicked train keeps its speed before settling back to its motor's pace, or to a stop. It covers about two-thirds of the way back in this many seconds.</span></span></span><span id="coastVal" class="value"></span></label>
+      <input type="range" id="coastRange" min="0.2" max="5" step="0.1" value="1.5" />
+    </div>
+
+    <div class="control-row">
+      <label>Style
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-decorate">?<span class="hint" role="tooltip" id="hint-decorate">What's cut out of each gear. Mixed picks by size: plain hubs on small gears, holes on middling ones, spokes on big ones. The others use one style for every gear that has room for it.</span></span>
+      </label>
+      <select id="decorateSelect">
+        <option value="auto" selected>Mixed</option>
+        <option value="spokes">Spokes</option>
+        <option value="holes">Holes</option>
+        <option value="plain">Plain</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="grabToggle" type="button" class="toggle-button" aria-pressed="true">Drag to turn: On</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-grab">?<span class="hint" role="tooltip" id="hint-grab">When on, pressing on a gear grabs it: it follows the cursor round, its whole train turns with it, and letting go mid-turn sends it spinning. On a touch screen, a touch on a gear turns it rather than scrolling the page.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="brushToggle" type="button" class="toggle-button" aria-pressed="true">Brush to push: On</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-brush">?<span class="hint" role="tooltip" id="hint-brush">When on, moving the mouse across a gear without pressing pushes it round, harder the faster you go. It only speeds a gear up or turns it the other way, so passing over a spinning gear slowly won't stop it.</span></span>
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="colors-label"><span class="label-text">Colors <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-colors">?<span class="hint" role="tooltip" id="hint-colors">The gears' line color, then the background behind them.</span></span></span></div>
+      <div class="color-swatches">
+        <input type="color" id="colorInput" class="t-swatch" aria-label="Gear color" value="#000000" />
+        <input type="color" id="backgroundInput" class="t-swatch" aria-label="Background color" value="#ffffff" />
+      </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-inline">
+        <button id="randomizeButton" type="button">Randomize gears</button>
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-randomize">?<span class="hint" role="tooltip" id="hint-randomize">Lays out a fresh board with the same settings.</span></span>
+      </div>
+    </div>
