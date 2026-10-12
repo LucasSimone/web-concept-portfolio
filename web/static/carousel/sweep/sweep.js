@@ -334,6 +334,10 @@
 
       this.refresh();
       this._start();
+      // refresh() has just written every card's transform, so the strip
+      // is safe to show - see the .sweep:not(.is-ready) rule in
+      // shared/site.css, which hides it until now.
+      root.classList.add('is-ready');
     }
 
     // Re-reads which cards are visible (e.g. after a filter change) and

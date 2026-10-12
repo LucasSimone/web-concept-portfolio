@@ -710,6 +710,22 @@ body.controls-closed .controls-close-tab {
   pointer-events: none;
 }
 
+/* The four carousels (carousel/sweep, reel, deck, dial) inject their
+   positioning CSS and lay out their cards from script, and those scripts
+   load at the end of <body>. The browser is free to paint everything
+   above them while it waits, which showed the homepage's cards as plain
+   blocks stacked down the left edge, spilling over the headings below,
+   until the scripts ran. This sheet is in <head>, so it applies from the
+   first paint: each carousel keeps its box but stays invisible until its
+   constructor adds .is-ready after the first render. An .is-empty shelf is
+   never initialized, so it is left alone. */
+.sweep:not(.is-ready):not(.is-empty),
+.reel:not(.is-ready):not(.is-empty),
+.deck:not(.is-ready):not(.is-empty),
+.dial:not(.is-ready):not(.is-empty) {
+  visibility: hidden;
+}
+
 @media (max-width: 720px) {
   main {
     margin-right: 0 !important;

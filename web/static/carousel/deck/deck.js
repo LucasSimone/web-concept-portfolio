@@ -808,6 +808,10 @@
         || CORE_DEFAULTS.transition);
       this._buildChrome();
       this.refresh();
+      // refresh() has just drawn the first frame, so the carousel is
+      // safe to show - see the :not(.is-ready) rule in shared/site.css,
+      // which hides it until now.
+      root.classList.add('is-ready');
     }
 
     // Re-reads which frames are present (anything .deck-frame and not
