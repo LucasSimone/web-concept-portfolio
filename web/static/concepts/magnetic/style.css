@@ -1,0 +1,367 @@
+main {
+  margin-right: 300px;
+}
+
+.mg-intro {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10vh 10vw 6vh;
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.mg-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 40px;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.mg-section {
+  padding: 8vh 10vw 4vh;
+  border-top: 1px solid #000;
+}
+
+.mg-section--last {
+  padding-bottom: 16vh;
+}
+
+.mg-section h2 {
+  margin: 0;
+  font-size: clamp(26px, 3.5vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+.direction {
+  max-width: 46rem;
+  margin: 12px 0 36px;
+  font-size: 15px;
+  line-height: 1.55;
+  opacity: 0.7;
+}
+
+/* The `.magnetic-el` effect's own CSS (the translate and the depth rule)
+   ships inside ./magnetic.js and is injected automatically. Everything
+   below is this demo page's own staging. */
+.mg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 28px;
+}
+
+.mg-btn {
+  padding: 14px 24px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mg-btn--ghost {
+  background: #fff;
+  color: #000;
+}
+
+.mg-btn:focus-visible,
+.mg-icon:focus-visible,
+.mg-link:focus-visible,
+.mg-card:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+
+.mg-btn--hero {
+  padding: 22px 48px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* A depth child has to be able to take a transform. */
+.mg-btn--hero span {
+  display: inline-block;
+}
+
+.mg-icon {
+  width: 56px;
+  height: 56px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mg-link {
+  display: inline-block;
+  color: #000;
+  font-size: 15px;
+}
+
+/* --- Depth card --- */
+.mg-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(320px, 100%);
+  padding: 28px;
+  border: 1px solid #000;
+  background: #fff;
+}
+
+.mg-card__icon {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.mg-card__title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.mg-card__body {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+/* --- Custom styles: each one replaces the default transform with its own
+   use of the same three variables, exactly as in its caption. --- */
+.mg-styles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.mg-style {
+  margin: 0;
+  border: 1px solid #000;
+}
+
+.mg-style__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.mg-style figcaption {
+  border-top: 1px solid #000;
+}
+
+.mg-style pre {
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.mg-tilt {
+  transform: perspective(400px)
+    rotateY(calc(var(--magnetic-x) * 1deg))
+    rotateX(calc(var(--magnetic-y) * -1deg));
+}
+
+.mg-swell {
+  transform:
+    translate(calc(var(--magnetic-x) * 1px), calc(var(--magnetic-y) * 1px))
+    scale(calc(1 + var(--magnetic-amount) * 0.12));
+}
+
+.mg-shadow {
+  background: #fff;
+  color: #000;
+  transform: none;
+  box-shadow: calc(var(--magnetic-x) * -0.6px) calc(var(--magnetic-y) * -0.6px) 0 #000;
+}
+
+/* --- Area panel --- */
+.mg-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  border: 1px solid #000;
+  cursor: crosshair;
+}
+
+.mg-arrow {
+  display: inline-block;
+  font-size: 64px;
+  line-height: 1;
+}
+
+.mg-panel__label {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* --- Control panel, matching the rest of the lab --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

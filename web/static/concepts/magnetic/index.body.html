@@ -1,0 +1,112 @@
+
+  <main>
+    <section class="mg-intro">
+      <p class="eyebrow">Bring the cursor close</p>
+      <h1>Magnetic</h1>
+      <p class="intro">
+        The element leans toward the cursor as it comes near, as if pulled
+        by a magnet, and springs back when the cursor moves away. It starts
+        moving before the cursor reaches it, so nothing jumps as the cursor
+        crosses its edge.
+      </p>
+      <button type="button" class="magnetic-el mg-btn mg-btn--hero">
+        <span data-magnetic-depth="1.4">Come closer</span>
+      </button>
+    </section>
+
+    <section class="mg-section">
+      <p class="eyebrow">Anything</p>
+      <h2>Buttons, icons, links</h2>
+      <p class="direction">
+        Any element can be magnetic. Small targets like icons can take a
+        stronger pull, since there's less of them to move. Neighbours never
+        collide: only the one nearest the cursor pulls, and it stops at the
+        cursor rather than passing it. Run the cursor along the row.
+      </p>
+      <div class="mg-row">
+        <button type="button" class="magnetic-el mg-btn">Get started</button>
+        <button type="button" class="magnetic-el mg-btn mg-btn--ghost">Learn more</button>
+        <button type="button" class="magnetic-el mg-icon" data-magnetic-strength="0.5" aria-label="Favorite">★</button>
+        <button type="button" class="magnetic-el mg-icon" data-magnetic-strength="0.5" aria-label="Like">♥</button>
+        <button type="button" class="magnetic-el mg-icon" data-magnetic-strength="0.5" aria-label="Mail">✉</button>
+        <a class="magnetic-el mg-link" href="#depth">A plain text link</a>
+      </div>
+    </section>
+
+    <section class="mg-section" id="depth">
+      <p class="eyebrow">Depth</p>
+      <h2>Layers that move apart</h2>
+      <p class="direction">
+        Children marked with <code>data-magnetic-depth</code> move that
+        many times as far as the element itself, so a card's contents
+        seem to float above it.
+      </p>
+      <div class="mg-row">
+        <div class="magnetic-el mg-card" tabindex="0" data-magnetic-strength="0.18" data-magnetic-radius="80">
+          <span class="mg-card__icon" data-magnetic-depth="2.6" aria-hidden="true">◆</span>
+          <span class="mg-card__title" data-magnetic-depth="1.8">Depth</span>
+          <span class="mg-card__body" data-magnetic-depth="1.3">Icon 2.6, title 1.8, this line 1.3, card 1.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mg-section">
+      <p class="eyebrow">Your own style</p>
+      <h2>It's just three CSS variables</h2>
+      <p class="direction">
+        Every frame writes <code>--magnetic-x</code>,
+        <code>--magnetic-y</code> and <code>--magnetic-amount</code> onto
+        the element, as plain numbers. The default turns them into a
+        translate. Write your own <code>transform</code> to use them some
+        other way, in whatever unit fits.
+      </p>
+      <div class="mg-styles">
+        <figure class="mg-style">
+          <div class="mg-style__stage">
+            <button type="button" class="magnetic-el mg-btn mg-tilt">Tilt</button>
+          </div>
+          <figcaption><pre><code>.tilt {
+  transform: perspective(400px)
+    rotateY(calc(var(--magnetic-x) * 1deg))
+    rotateX(calc(var(--magnetic-y) * -1deg));
+}</code></pre></figcaption>
+        </figure>
+        <figure class="mg-style">
+          <div class="mg-style__stage">
+            <button type="button" class="magnetic-el mg-btn mg-swell">Swell</button>
+          </div>
+          <figcaption><pre><code>.swell {
+  transform:
+    translate(calc(var(--magnetic-x) * 1px), calc(var(--magnetic-y) * 1px))
+    scale(calc(1 + var(--magnetic-amount) * 0.12));
+}</code></pre></figcaption>
+        </figure>
+        <figure class="mg-style">
+          <div class="mg-style__stage">
+            <button type="button" class="magnetic-el mg-btn mg-shadow">Shadow</button>
+          </div>
+          <figcaption><pre><code>.shadow {
+  box-shadow: calc(var(--magnetic-x) * -0.6px)
+    calc(var(--magnetic-y) * -0.6px) 0 #000;
+}</code></pre></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="mg-section mg-section--last">
+      <p class="eyebrow">Area</p>
+      <h2>A bigger catch area</h2>
+      <p class="direction">
+        <code>data-magnetic-area</code> measures the pull against an
+        ancestor instead of the element. The arrow below reacts anywhere
+        in its panel, not just near itself.
+      </p>
+      <div class="mg-panel">
+        <span class="magnetic-el mg-arrow" data-magnetic-area=".mg-panel" data-magnetic-radius="0" data-magnetic-strength="0.25" aria-hidden="true">→</span>
+        <span class="mg-panel__label">Move anywhere in here</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="magnetic.js"></script>
+  <script src="demo.js"></script>

@@ -1,0 +1,66 @@
+
+  <main>
+    <section class="rp-intro">
+      <p class="eyebrow">Press and hold</p>
+      <h1>Ripple</h1>
+      <p class="intro">
+        Press an element and a ripple spreads out from the point you
+        pressed. Hold it and the ripple stays; let go and it fades. It's
+        drawn beneath the element's content, so the text on it stays
+        exactly as readable as it was.
+      </p>
+      <button type="button" class="ripple-el rp-btn rp-btn--hero">Press me</button>
+    </section>
+
+    <section class="rp-section">
+      <p class="eyebrow">Shapes</p>
+      <h2>Fill, ring, soft, rings</h2>
+      <p class="direction">
+        The four built-in shapes. Press anywhere in each pad. The Shape
+        control in the panel puts every element on the page on one of
+        them, and <code>Ripple.addShape()</code> adds your own.
+      </p>
+      <div class="rp-pads">
+        <div class="ripple-el rp-pad" data-ripple-shape="fill"><code>shape: 'fill'</code></div>
+        <div class="ripple-el rp-pad" data-ripple-shape="ring"><code>shape: 'ring'</code></div>
+        <div class="ripple-el rp-pad" data-ripple-shape="soft"><code>shape: 'soft'</code></div>
+        <div class="ripple-el rp-pad" data-ripple-shape="rings"><code>shape: 'rings'</code></div>
+      </div>
+    </section>
+
+    <section class="rp-section">
+      <p class="eyebrow">Past the edge</p>
+      <h2>Rings around icons</h2>
+      <p class="direction">
+        A ripple clips to the element by default. Small round buttons look
+        better with <code>contained: false</code>, a ring that spreads past
+        the edge, and <code>origin: 'center'</code>, so it's always
+        centered however the icon was pressed.
+      </p>
+      <div class="rp-row">
+        <button type="button" class="ripple-el rp-icon" data-ripple-shape="ring" data-ripple-contained="false" data-ripple-origin="center" data-ripple-size="38" aria-label="Favorite">★</button>
+        <button type="button" class="ripple-el rp-icon" data-ripple-shape="ring" data-ripple-contained="false" data-ripple-origin="center" data-ripple-size="38" aria-label="Like">♥</button>
+        <button type="button" class="ripple-el rp-icon" data-ripple-shape="ring" data-ripple-contained="false" data-ripple-origin="center" data-ripple-size="38" aria-label="Share">↗</button>
+        <button type="button" class="ripple-el rp-icon" data-ripple-shape="soft" data-ripple-contained="false" data-ripple-origin="center" data-ripple-size="36" aria-label="Add">+</button>
+      </div>
+    </section>
+
+    <section class="rp-section rp-section--last">
+      <p class="eyebrow">Color</p>
+      <h2>Its own color, or yours</h2>
+      <p class="direction">
+        A ripple takes the element's text color, so it reads on light and
+        dark buttons alike without being told. <code>color</code> sets it
+        outright.
+      </p>
+      <div class="rp-row">
+        <button type="button" class="ripple-el rp-btn">Light</button>
+        <button type="button" class="ripple-el rp-btn rp-btn--dark">Dark</button>
+        <button type="button" class="ripple-el rp-btn rp-btn--accent" data-ripple-color="#ffe14d" data-ripple-opacity="0.5">Yellow ripple</button>
+        <button type="button" class="ripple-el rp-btn" disabled>Disabled</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="ripple.js"></script>
+  <script src="demo.js"></script>

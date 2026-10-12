@@ -1,0 +1,53 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for every control below. Adjusting any control afterward just tweaks that preset. Every element on the page uses these settings.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="quick">Quick</option>
+        <option value="slow">Slow</option>
+        <option value="linger">Linger</option>
+        <option value="sonar">Sonar</option>
+        <option value="glow">Glow</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Shape <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-shape">?<span class="hint" role="tooltip" id="hint-shape">What a ripple looks like. "Each element's own" leaves every element on the shape its markup gives it, which is how the pads under Shapes each show a different one. Picking a shape puts every element on the page on it.</span></span></span></label>
+      <select id="shapeSelect">
+        <option value="own" selected>Each element's own</option>
+        <option value="fill">Fill</option>
+        <option value="ring">Ring</option>
+        <option value="soft">Soft</option>
+        <option value="rings">Rings</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label class="control-checkbox">
+        <input type="checkbox" id="ownColorCheckbox" checked />
+        Each element's own color
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-ownColor">?<span class="hint" role="tooltip" id="hint-ownColor">On, every ripple takes its element's text color, so it shows up on light and dark buttons alike, and the yellow button keeps the color its markup gives it. Off, every ripple on the page uses the color below.</span></span>
+      </label>
+    </div>
+
+    <div class="control-row">
+      <label for="colorInput">Color</label>
+      <input type="color" id="colorInput" class="t-swatch" value="#3a6ff7" aria-label="Ripple color" disabled />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-strength">?<span class="hint" role="tooltip" id="hint-strength">A multiplier on how opaque a ripple is. Each shape has its own opacity (a fill is fainter than a ring), and this scales whichever one each element is using, up to fully opaque.</span></span></span><span id="strengthVal" class="value"></span></label>
+      <input type="range" id="strengthRange" min="0.25" max="3" step="0.25" value="1" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Spread <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-duration">?<span class="hint" role="tooltip" id="hint-duration">How long a ripple takes to spread to its full size, in milliseconds. Let go early and it keeps spreading as it fades, after showing for at least a third of this.</span></span></span><span id="durationVal" class="value"></span></label>
+      <input type="range" id="durationRange" min="150" max="1500" step="50" value="550" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Fade <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-fade">?<span class="hint" role="tooltip" id="hint-fade">How long a ripple takes to fade out once you let go, in milliseconds.</span></span></span><span id="fadeDurationVal" class="value"></span></label>
+      <input type="range" id="fadeDurationRange" min="100" max="2000" step="50" value="450" />
+    </div>

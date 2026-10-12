@@ -491,6 +491,23 @@
    blank band, which is the intended fallback and needs no CSS of its own.
    Noted here so it doesn't read as an omission. */
 
+/* Magnetic (concepts/magnetic/magnetic.js). The card's title is drawn as
+   a mock button, since a button being tugged toward the cursor is what
+   the effect is for; a bare title drifting reads as a layout glitch.
+   The whole card is its catch area (see home.js), and the label inside
+   floats a little further than the button's border, to show the depth
+   layers too. A depth child has to be able to take a transform, hence
+   inline-block. */
+#magneticPreview h2 {
+  padding: 12px 24px;
+  border: 1px solid #000;
+  background: #fff;
+  font-size: 24px;
+}
+#magneticPreview h2 span {
+  display: inline-block;
+}
+
 /* Spotlight (concepts/spotlight/spotlight.js). The concept grid's
    Spotlight card deliberately runs no Liftoff instance (see home.js), but
    it still needs the .liftoff-card class - that's the structural wrapper

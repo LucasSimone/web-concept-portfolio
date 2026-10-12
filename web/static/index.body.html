@@ -242,6 +242,18 @@
         <div class="go">View →</div>
       </div>
     </a>
+    <!-- The title is a mock button (see style.css) that leans toward the
+         cursor anywhere over the card (see the Magnetic block in home.js),
+         so `data-liftoff="off"` for the same reason as the Spotlight card:
+         a card drifting one way under a button pulled another reads as two
+         effects at once. -->
+    <a class="variation-card sweep-card liftoff-host" href="/concepts/magnetic/index.html" data-type="hover">
+      <div class="liftoff-card" data-liftoff="off" id="magneticPreview">
+        <div class="type">Hover</div>
+        <div class="title-wrap"><h2><span data-magnetic-depth="1.25">Magnetic</span></h2></div>
+        <div class="go">View →</div>
+      </div>
+    </a>
     <!-- Clicking a card opens it, so the confetti here goes off on hover
          instead, out of the card's title (see confettiOn in home.js).
          `data-liftoff="off"` for the same reason as the Spotlight card:
@@ -251,6 +263,16 @@
       <div class="liftoff-card" data-liftoff="off" id="confettiPreview">
         <div class="type">Click</div>
         <div class="title-wrap"><h2>Confetti</h2></div>
+        <div class="go">View →</div>
+      </div>
+    </a>
+    <!-- Same arrangement as the Confetti card: a click opens the page, so
+         the hover holds a ripple instead, from where the pointer came in
+         until it leaves (see rippleOn in home.js). -->
+    <a class="variation-card sweep-card liftoff-host" href="/concepts/ripple/index.html" data-type="click">
+      <div class="liftoff-card" data-liftoff="off" id="ripplePreview">
+        <div class="type">Click</div>
+        <div class="title-wrap"><h2>Ripple</h2></div>
         <div class="go">View →</div>
       </div>
     </a>
@@ -447,6 +469,8 @@
   <script src="/concepts/liftoff/liftoff.js"></script>
   <script src="/concepts/spotlight/spotlight.js"></script>
   <script src="/concepts/confetti/confetti.js"></script>
+  <script src="/concepts/magnetic/magnetic.js"></script>
+  <script src="/concepts/ripple/ripple.js"></script>
   <!-- hover-delegate.js is bundled ahead of sweep.js by routes.go
        (bindHoverDelegate must exist before home.js runs, and this is the
        only script tag that loads it). -->

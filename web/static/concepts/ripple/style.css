@@ -1,0 +1,318 @@
+main {
+  margin-right: 300px;
+}
+
+.rp-intro {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10vh 10vw 6vh;
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.rp-intro h1 {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 84px);
+  letter-spacing: -0.03em;
+}
+
+.intro {
+  max-width: 46rem;
+  margin: 16px 0 32px;
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+
+.rp-section {
+  padding: 8vh 10vw 4vh;
+  border-top: 1px solid #000;
+}
+
+.rp-section--last {
+  padding-bottom: 16vh;
+}
+
+.rp-section h2 {
+  margin: 0;
+  font-size: clamp(26px, 3.5vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+.direction {
+  max-width: 46rem;
+  margin: 12px 0 28px;
+  font-size: 15px;
+  line-height: 1.55;
+  opacity: 0.7;
+}
+
+/* The `.ripple-el` effect's own CSS (the layer and the ripple) ships
+   inside ./ripple.js and is injected automatically. Everything below is
+   this demo page's own staging. */
+.rp-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+
+.rp-btn {
+  padding: 14px 24px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rp-btn:focus-visible,
+.rp-icon:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
+}
+
+.rp-btn--hero {
+  padding: 22px 56px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rp-btn--dark {
+  background: #000;
+  color: #fff;
+}
+
+.rp-btn--accent {
+  background: #1d3fbf;
+  border-color: #1d3fbf;
+  color: #fff;
+}
+
+.rp-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* --- Shape pads --- */
+.rp-pads {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.rp-pad {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  min-height: 200px;
+  padding: 14px 16px;
+  border: 1px solid #000;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rp-pad code {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* --- Icon buttons --- */
+.rp-icon {
+  width: 56px;
+  height: 56px;
+  border: 1px solid #000;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Control panel, matching the rest of the lab --- */
+.controls {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  width: 300px;
+  max-height: calc(100vh - 57px);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid #000;
+  padding: 20px;
+  font-size: 13px;
+  z-index: 15;
+}
+
+.controls h2 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 8px;
+}
+
+.control-row {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hint-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: help;
+}
+
+.hint-toggle:hover,
+.hint-toggle:focus-visible {
+  opacity: 1;
+}
+
+.hint-toggle .hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 220px;
+  max-width: calc(100vw - 40px);
+  padding: 10px 12px;
+  background: #000;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hint-toggle:hover .hint,
+.hint-toggle:focus-visible .hint {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Flipped by /shared/hint-position.js when the tooltip would otherwise
+   run past the bottom of a scrolling .controls panel and get clipped. */
+.hint-toggle.hint-flip .hint {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 8px;
+  transform: translateY(4px);
+}
+
+.hint-toggle.hint-flip:hover .hint,
+.hint-toggle.hint-flip:focus-visible .hint {
+  transform: translateY(0);
+}
+
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: #000;
+}
+
+.control-row select {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 13px;
+}
+
+.controls .value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.control-row .control-checkbox {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.t-swatch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+}
+
+.t-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.t-swatch::-webkit-color-swatch {
+  border: none;
+}
+
+.t-swatch::-moz-color-swatch {
+  border: none;
+}
+
+/* Greyed out while "Each element's own color" is on, since it has no
+   effect then. */
+.t-swatch:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  main {
+    margin-right: 0;
+  }
+}

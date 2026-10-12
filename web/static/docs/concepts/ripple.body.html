@@ -1,0 +1,242 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Concept · Click</p>
+      <h1>Ripple</h1>
+      <p>
+        Press an element and a ripple spreads out from the point you
+        pressed, reaching its farthest corner. Hold it and the ripple stays;
+        let go and it fades. It's drawn beneath the element's content but
+        above its background, so text on the element stays exactly as
+        legible as it was. It comes as a fill, a ring, a soft glow or
+        concentric rings, or a shape of your own, and takes the element's
+        text color unless you give it one.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/concepts/ripple/index.html">View Demo</a>
+        <a class="btn" href="/concepts/ripple/ripple.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#pressing">Pressing</a>
+        <a href="#from-code">Firing From Code</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#shapes">Shapes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="ripple.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag for the layer and
+        the ripples, so no companion CSS file is needed.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;button class="ripple-el"&gt;Save&lt;/button&gt;
+&lt;script src="ripple.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Every <code>.ripple-el</code> on the page is set up on load. Data
+        attributes change that per element:
+      </p>
+      <pre><code>&lt;div class="ripple-el" data-ripple-shape="ring"&gt;...&lt;/div&gt;
+&lt;button class="ripple-el" data-ripple-color="#ffe14d"&gt;Go&lt;/button&gt;
+&lt;button class="ripple-el icon"
+        data-ripple-contained="false"
+        data-ripple-origin="center"&gt;★&lt;/button&gt;</code></pre>
+      <p>
+        The attributes are <code>data-ripple-shape</code>,
+        <code>-color</code>, <code>-opacity</code>, <code>-duration</code>,
+        <code>-origin</code>, <code>-contained</code> and
+        <code>-size</code>. They win over options passed to
+        <code>initAll</code>. To set options for a group of elements in
+        code:
+      </p>
+      <pre><code>Ripple.initAll('.card', { shape: 'soft', duration: 800 });</code></pre>
+      <p>
+        Run that as a plain script straight after <code>ripple.js</code>,
+        before the page finishes loading: once auto-init has claimed an
+        element, <code>initAll</code> skips it. To change one that's
+        already set up, use <code>Ripple.get(el).update(options)</code>.
+      </p>
+
+      <h2 id="pressing">Pressing</h2>
+      <p>
+        A ripple starts on <code>pointerdown</code>, so it shows the moment
+        the element is pressed, not when the click lands. It spreads over
+        <code>duration</code> ms and holds at full size for as long as the
+        press does. Letting go, the pointer leaving the element, or the
+        press being cancelled (a touch turning into a scroll) fades it over
+        <code>fadeDuration</code> ms. A quick click lets the ripple show
+        for at least a third of <code>duration</code> first, and it keeps
+        spreading as it fades.
+      </p>
+      <p>
+        A click from the keyboard (Enter or Space on a button) has no
+        pointer position, so it ripples from the center and fades straight
+        away. Disabled elements, and elements with
+        <code>aria-disabled="true"</code>, don't ripple. Several fingers
+        on a touchscreen each get their own ripple.
+      </p>
+      <p>
+        By default a ripple is clipped to the element's outline, rounded
+        corners included, and grows until it reaches the corner farthest
+        from where it started. <code>contained: false</code> lets it
+        spread past the edge, and <code>size</code> sets its full radius
+        in px instead. Together with <code>origin: 'center'</code> they
+        make a ring around an icon button.
+      </p>
+
+      <h2 id="from-code">Firing From Code</h2>
+      <p>
+        The press wiring is a thin layer over one function you can call
+        yourself, on any element, set up or not. It takes the same options
+        as an element does.
+      </p>
+      <pre><code>// From a point, in window coordinates (clientX / clientY).
+const ripple = Ripple.at(el, event.clientX, event.clientY, { shape: 'ring' });
+
+// It stays until you let it go.
+ripple.release();
+
+// From the center, released at once: a whole tap.
+Ripple.at(el).release();</code></pre>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Ripple while hovered</h3>
+        <p>
+          Since a ripple holds until it's released, a hover can drive one:
+          start it where the pointer comes in, let it go when it leaves.
+        </p>
+        <pre><code>let ripple = null;
+card.addEventListener('pointerenter', (e) =&gt; {
+  ripple = Ripple.at(card, e.clientX, e.clientY, { duration: 700 });
+});
+card.addEventListener('pointerleave', () =&gt; ripple &amp;&amp; ripple.release());</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Confirm a save</h3>
+        <p>
+          Fire it when the work is done rather than on the click, so it
+          means the save went through.
+        </p>
+        <pre><code>await save();
+Ripple.at(button, null, null, { shape: 'rings', origin: 'center' }).release();</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A soft glow on dark cards</h3>
+        <pre><code>Ripple.initAll('.dark-card', { shape: 'soft', color: '#fff', opacity: 0.25 });</code></pre>
+      </div>
+
+      <h2 id="shapes">Shapes</h2>
+      <p>
+        <code>Ripple.SHAPES</code> lists the built-in names:
+      </p>
+      <ul>
+        <li><code>'fill'</code> (the default): a solid disc, at <code>0.22</code> opacity.</li>
+        <li><code>'ring'</code>: an outline, at <code>0.6</code>. Best with a short hold, or with <code>contained: false</code> around a small element.</li>
+        <li><code>'soft'</code>: a disc that fades out toward its edge, at <code>0.4</code>.</li>
+        <li><code>'rings'</code>: three concentric rings, at <code>0.45</code>.</li>
+      </ul>
+
+      <h3>Write your own</h3>
+      <p>
+        A shape is a function that styles one square element, the
+        ripple at its full size. It's called as
+        <code>draw(el, { size, color })</code>, once per ripple. The color
+        is already set as the element's CSS <code>color</code>, so paint
+        with <code>currentColor</code>, and the element is already a circle
+        (<code>border-radius: 50%</code>) unless you say otherwise. The
+        spread from nothing and the fade are done for you, the same for
+        every shape, by animating <code>transform</code> and
+        <code>opacity</code>, so leave those two alone.
+      </p>
+      <pre><code>// A ring that glows on both sides.
+Ripple.addShape('halo', (el) =&gt; {
+  el.style.border = '2px solid currentColor';
+  el.style.boxShadow = '0 0 16px currentColor, inset 0 0 16px currentColor';
+}, { opacity: 0.5 });</code></pre>
+      <p>
+        A shape added by name works everywhere a built-in does, data
+        attributes included (<code>data-ripple-shape="halo"</code>), and
+        can be added after the page is set up: shapes are looked up when a
+        ripple starts. <code>shape</code> also takes a function directly,
+        with an opacity of <code>0.3</code>. A function that throws is
+        swapped for a fill on that ripple, with the error in the console.
+      </p>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>shape</code></td><td><code>'fill'</code></td><td>A built-in or added shape name, or a drawing function. See <a href="#shapes">Shapes</a></td></tr>
+          <tr><td><code>color</code></td><td><code>null</code></td><td>Any CSS color. <code>null</code> takes the element's text color</td></tr>
+          <tr><td><code>opacity</code></td><td><code>null</code></td><td>Opacity at full strength, <code>0</code> to <code>1</code>. <code>null</code> takes the shape's own</td></tr>
+          <tr><td><code>duration</code></td><td><code>550</code></td><td>Milliseconds to spread to full size</td></tr>
+          <tr><td><code>fadeDuration</code></td><td><code>450</code></td><td>Milliseconds to fade out once released</td></tr>
+          <tr><td><code>origin</code></td><td><code>'pointer'</code></td><td><code>'pointer'</code> starts where the element was pressed; <code>'center'</code> always starts in the middle</td></tr>
+          <tr><td><code>contained</code></td><td><code>true</code></td><td>Clip ripples to the element's outline. <code>false</code> lets them spread past it</td></tr>
+          <tr><td><code>size</code></td><td><code>null</code></td><td>Full radius in px. <code>null</code> reaches the corner farthest from where the ripple started</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.press(x?, y?)</code></td><td>Starts a ripple at window point (<code>x</code>, <code>y</code>), or the center, with this element's options. Returns a handle; the ripple stays until <code>handle.release()</code>.</td></tr>
+          <tr><td><code>.fire(x?, y?)</code></td><td>A whole press and release, as if the element had been clicked.</td></tr>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in. They apply from the next ripple.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Releases any held ripples and removes the listeners. Ripples already showing finish fading.</td></tr>
+          <tr><td><code>Ripple.at(elOrSelector, x?, y?, options)</code></td><td>Starts a ripple on any element, set up or not. Returns a handle with <code>release()</code> and the ripple's <code>element</code>.</td></tr>
+          <tr><td><code>Ripple.addShape(name, draw, { opacity })</code></td><td>Adds a named shape. See <a href="#shapes">Shapes</a>.</td></tr>
+          <tr><td><code>Ripple.shapeOpacity(shape)</code></td><td>The opacity a shape (a name or a function) draws at when <code>opacity</code> is left <code>null</code>.</td></tr>
+          <tr><td><code>Ripple.initAll(selector, options)</code></td><td>Sets up every matching element not already set up. Defaults to <code>'.ripple-el'</code>.</td></tr>
+          <tr><td><code>Ripple.get(elOrSelector)</code> / <code>Ripple.getAll(selector)</code></td><td>Static lookups for already-initialized elements, by element/selector.</td></tr>
+          <tr><td><code>Ripple.SHAPES</code> / <code>Ripple.DEFAULTS</code></td><td>The shape names available, added ones included, and the default options.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        The first ripple on an element appends one
+        <code>&lt;span class="ripple-layer"&gt;</code> to it, and each
+        ripple is a <code>&lt;span class="ripple"&gt;</code> inside that,
+        animated with the Web Animations API and removed once it has
+        faded. There's no animation loop. The layer sits at
+        <code>z-index: -1</code> in a stacking context of the element's
+        own, which is what puts it over the element's background and
+        under its content. To make that context, an element whose
+        <code>position</code> is <code>static</code> gets
+        <code>position: relative</code>, and its <code>isolation</code> is
+        set to <code>isolate</code>, both inline. If your CSS matches an
+        element's <code>:last-child</code>, the layer is now its last
+        child.
+      </p>
+      <p>
+        Respects <code>prefers-reduced-motion</code> without switching off:
+        a ripple is feedback that a press landed, so under reduced motion
+        it fades in at full size instead of spreading, then fades out as
+        usual. The demo page edits <code>shape</code>, <code>color</code>,
+        <code>opacity</code> (as a multiplier on each element's own),
+        <code>duration</code> and <code>fadeDuration</code> on every
+        element. Its Shape and Color controls start on each element's own,
+        so the shape pads and the colored buttons show their own settings
+        until you pick something else.
+      </p>
+    </div>
+  </div>

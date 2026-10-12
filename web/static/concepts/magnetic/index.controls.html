@@ -1,0 +1,33 @@
+
+    <div class="control-row">
+      <label>Profile
+        <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-profile">?<span class="hint" role="tooltip" id="hint-profile">Quick presets for every control below, each one a different feel for the pull. Adjusting any control afterward just tweaks that preset. Every element on the page uses these settings, except where an element sets its own strength or reach with a data attribute.</span></span>
+      </label>
+      <select id="profileSelect">
+        <option value="default" selected>Default</option>
+        <option value="subtle">Subtle</option>
+        <option value="bouncy">Bouncy</option>
+        <option value="heavy">Heavy</option>
+        <option value="snappy">Snappy</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Strength <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-strength">?<span class="hint" role="tooltip" id="hint-strength">How far the element moves toward the cursor, as a share of the distance from its center to the cursor. At 0.35 a cursor 100px from the center pulls it 35px. 1 would put the element's center right under the cursor.</span></span></span><span id="strengthVal" class="value"></span></label>
+      <input type="range" id="strengthRange" min="0" max="1" step="0.05" value="0.35" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Reach <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-radius">?<span class="hint" role="tooltip" id="hint-radius">How far outside the element the pull starts, in px. The pull fades in across this band, from nothing at its outer edge to full strength at the element's own edge. At 0 the element only moves while the cursor is over it.</span></span></span><span id="radiusVal" class="value"></span></label>
+      <input type="range" id="radiusRange" min="0" max="200" step="5" value="60" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Stiffness <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-stiffness">?<span class="hint" role="tooltip" id="hint-stiffness">How hard the spring pulls the element toward where it should be. Higher is quicker and tighter. Lower is lazier, and the element trails behind the cursor.</span></span></span><span id="stiffnessVal" class="value"></span></label>
+      <input type="range" id="stiffnessRange" min="40" max="800" step="10" value="220" />
+    </div>
+
+    <div class="control-row">
+      <label><span class="label-text">Damping <span class="hint-toggle" tabindex="0" aria-label="More info" aria-describedby="hint-damping">?<span class="hint" role="tooltip" id="hint-damping">How much friction the spring has. Low lets the element overshoot and wobble before it settles, high settles it without any bounce. Whether a value bounces depends on stiffness too: a stiffer spring needs more damping to stop wobbling.</span></span></span><span id="dampingVal" class="value"></span></label>
+      <input type="range" id="dampingRange" min="2" max="40" step="1" value="16" />
+    </div>

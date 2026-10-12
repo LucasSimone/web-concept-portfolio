@@ -911,6 +911,17 @@ if (!prefersReducedMotion) {
   // above, on the one concept-grid card that carries .spotlight-el.
   Spotlight.initAll('#conceptGrid .spotlight-el', { autoBind: false });
 
+  // Magnetic: the card's title, drawn as a mock button, leans toward the
+  // cursor anywhere over the card. `area` measures the pull against the
+  // whole card rather than the button, and with no `radius` it stops at
+  // the card's edge, so a cursor on the next card along doesn't tug this
+  // one's button. Only the button moves, not the card: the card sits
+  // edge to edge with its neighbours in the sweep, so moving it would
+  // slide it under them. No hover
+  // delegate needed: magnetic.js re-measures every frame while the cursor
+  // is over the card, so the sweep sliding it along is tracked anyway.
+  Magnetic.initAll('#magneticPreview h2', { area: '.liftoff-card', radius: 0, strength: 0.25 });
+
   // Every card in these grids now carries exactly one of the two effects,
   // so both lookups have to tolerate a miss: `.get()` returns null for the
   // Spotlight card's Liftoff, and for every other card's Spotlight.
@@ -1004,10 +1015,36 @@ if (!prefersReducedMotion) {
     });
   }
 
+  // The Ripple card holds a ripple for as long as it's hovered, spreading
+  // from where the pointer came in, since a click on it opens the page. The
+  // hover delegate passes no position, so the last pointer position is
+  // kept here; a card entered by keyboard focus, with the pointer
+  // elsewhere, ripples from its center instead. Re-entries from the
+  // sweep's hover-follow need no cooldown like Confetti's: each one lets
+  // the last ripple go, and it's all clipped to the card.
+  const rippleCard = document.getElementById('ripplePreview');
+  let ripplePointer = null;
+  let rippleHeld = null;
+  window.addEventListener('pointermove', (event) => {
+    ripplePointer = { x: event.clientX, y: event.clientY };
+  }, { passive: true });
+  function rippleOn(card, method) {
+    if (card !== rippleCard) return;
+    if (rippleHeld) rippleHeld.release();
+    rippleHeld = null;
+    if (method !== 'enter') return;
+    const r = card.getBoundingClientRect();
+    const p = ripplePointer;
+    const inside = p && p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+    rippleHeld = Ripple.at(card, inside ? p.x : null, inside ? p.y : null, {
+      duration: 700, fadeDuration: 600, opacity: 0.12,
+    });
+  }
+
   // Every homepage hover/focus-reactive effect a card can carry, so adding
   // one only means adding it here instead of hunting down every hover/focus
   // call site below.
-  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn, mirrorOn, confettiOn];
+  const HOVER_EFFECTS = [liftoffOn, spotlightOn, flipDotsOn, mirrorOn, confettiOn, rippleOn];
   function hoverPopOn(card, method) {
     HOVER_EFFECTS.forEach((effectOn) => effectOn(card, method));
   }

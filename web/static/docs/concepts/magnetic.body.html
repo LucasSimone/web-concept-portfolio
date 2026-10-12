@@ -1,0 +1,255 @@
+  <div class="docs-layout">
+    <nav class="docs-sidebar" data-docs-sidebar></nav>
+
+    <div class="docs-content">
+      <p class="docs-eyebrow">Concept · Hover</p>
+      <h1>Magnetic</h1>
+      <p>
+        The element leans toward the cursor as it comes near, as if pulled
+        by a magnet, and springs back when the cursor moves away. The pull
+        fades in over a band around the element, so it starts moving before
+        the cursor arrives and never jumps as the cursor crosses its edge.
+        It rides a spring, so it eases in, overshoots a little and wobbles
+        back to rest. How the pull is drawn is up to your CSS: by default
+        it's a translate, but it can just as well be a tilt, a swell or a
+        shadow.
+      </p>
+
+      <div class="docs-actions">
+        <a class="btn" href="/concepts/magnetic/index.html">View Demo</a>
+        <a class="btn" href="/concepts/magnetic/magnetic.js" download>Download JS</a>
+      </div>
+
+      <nav class="docs-toc" aria-label="On this page">
+        <a href="#install">Install</a>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#the-pull">The Pull</a>
+        <a href="#depth">Depth</a>
+        <a href="#styling">Styling</a>
+        <a href="#recipes">Recipes</a>
+        <a href="#options">Options</a>
+        <a href="#methods">Methods</a>
+        <a href="#notes">Notes</a>
+      </nav>
+
+      <h2 id="install">Install</h2>
+      <pre><code>&lt;script src="magnetic.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Injects its own <code>&lt;style&gt;</code> tag with two rules (the
+        translate and the depth rule), so no companion CSS file is needed.
+      </p>
+
+      <h2 id="quick-start">Quick Start</h2>
+      <pre><code>&lt;button class="magnetic-el"&gt;Get started&lt;/button&gt;
+&lt;script src="magnetic.js"&gt;&lt;/script&gt;</code></pre>
+      <p>
+        Every <code>.magnetic-el</code> on the page is set up on load. Data
+        attributes change that per element:
+      </p>
+      <pre><code>&lt;button class="magnetic-el" data-magnetic-strength="0.5"&gt;★&lt;/button&gt;
+&lt;div class="magnetic-el" data-magnetic-radius="120"&gt;Wide reach&lt;/div&gt;</code></pre>
+      <p>
+        The attributes are <code>data-magnetic-strength</code>,
+        <code>-radius</code>, <code>-stiffness</code>, <code>-damping</code>
+        and <code>-area</code>. They win over options passed to
+        <code>initAll</code>. To set options for a group of elements in
+        code:
+      </p>
+      <pre><code>Magnetic.initAll('.nav-icon', { strength: 0.5, radius: 40 });</code></pre>
+      <p>
+        Run that as a plain script straight after
+        <code>magnetic.js</code>, before the page finishes loading: once
+        auto-init has claimed an element, <code>initAll</code> skips it.
+        To change one that's already set up, use
+        <code>Magnetic.get(el).update(options)</code>.
+      </p>
+
+      <h2 id="the-pull">The Pull</h2>
+      <p>
+        The element heads for <code>strength</code> times the cursor's
+        offset from its center. At the default <code>0.35</code>, a cursor
+        100px right of center pulls it 35px right. The pull is at full
+        strength anywhere over the element and fades to nothing across a
+        band <code>radius</code> px wide around it, so the further out the
+        cursor is, the weaker the pull.
+      </p>
+      <p>
+        The element doesn't jump to that point. A spring carries it there:
+        <code>stiffness</code> is how hard the spring pulls and
+        <code>damping</code> is its friction. Low damping overshoots and
+        wobbles before settling; high damping settles with no bounce. A
+        stiffer spring needs more damping to stop wobbling.
+      </p>
+      <p>
+        <code>area</code> measures the pull against another element instead
+        of the element itself: an element, or a selector matched with
+        <code>closest()</code> from the magnetic element. A small icon in a
+        large button can then react to the whole button.
+      </p>
+      <pre><code>&lt;a class="card"&gt;
+  &lt;span class="magnetic-el" data-magnetic-area=".card" data-magnetic-radius="0"&gt;→&lt;/span&gt;
+  Read more
+&lt;/a&gt;</code></pre>
+
+      <h3>Neighbours</h3>
+      <p>
+        Elements close together share the cursor without colliding, by two
+        rules. Only one element pulls at a time: of every element within
+        reach, the one the cursor is nearest. The rest head back to rest,
+        so two buttons side by side never both lean into the gap between
+        them, and moving across hands the pull from one to the other. And
+        an element reaches the cursor but never passes it: with the cursor
+        off to one side, its near edge stops where the cursor is, so it
+        can't cross into its neighbour's space. With the cursor over two
+        at once (one nested in the other), the smaller one pulls.
+      </p>
+
+      <h2 id="depth">Depth</h2>
+      <p>
+        A child with <code>data-magnetic-depth</code> moves that many times
+        as far as the element in total. <code>1</code> moves with it,
+        <code>2</code> twice as far, <code>0</code> stays where it is.
+        Giving layers different depths makes them seem to float above one
+        another.
+      </p>
+      <pre><code>&lt;div class="magnetic-el card"&gt;
+  &lt;span data-magnetic-depth="2.5"&gt;◆&lt;/span&gt;
+  &lt;h3 data-magnetic-depth="1.6"&gt;Title&lt;/h3&gt;
+  &lt;p&gt;Body copy moves with the card.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+      <p>
+        Inline elements ignore <code>transform</code>, so give a depth
+        child <code>display: inline-block</code> or <code>block</code>. A
+        child added after the element was set up needs an
+        <code>update()</code> call to pick up its depth.
+      </p>
+
+      <h2 id="styling">Styling</h2>
+      <p>
+        Every frame writes three custom properties onto the element. They
+        are plain numbers, with no unit, so CSS can multiply them into
+        whichever unit it needs: <code>* 1px</code> to move,
+        <code>* 1deg</code> to tilt.
+      </p>
+      <ul>
+        <li><code>--magnetic-x</code>, <code>--magnetic-y</code>: the current pull, in px.</li>
+        <li><code>--magnetic-amount</code>: <code>0</code> to <code>1</code>, how engaged the element is. <code>1</code> with the cursor over it (or its area), fading to <code>0</code> at the outer edge of <code>radius</code>.</li>
+      </ul>
+      <p>
+        The injected rule turns the first two into
+        <code>translate(calc(var(--magnetic-x) * 1px), calc(var(--magnetic-y) * 1px))</code>. It's
+        wrapped in <code>:where()</code>, so it has no specificity and any
+        <code>transform</code> of your own replaces it:
+      </p>
+      <pre><code>/* Tilt toward the cursor instead of moving. */
+.tilt {
+  transform: perspective(400px)
+    rotateY(calc(var(--magnetic-x) * 1deg))
+    rotateX(calc(var(--magnetic-y) * -1deg));
+}
+
+/* Move and swell. */
+.swell {
+  transform:
+    translate(calc(var(--magnetic-x) * 1px), calc(var(--magnetic-y) * 1px))
+    scale(calc(1 + var(--magnetic-amount) * 0.12));
+}
+
+/* Stay put, and cast a shadow away from the cursor. */
+.shadow {
+  transform: none;
+  box-shadow: calc(var(--magnetic-x) * -0.6px)
+    calc(var(--magnetic-y) * -0.6px) 0 #000;
+}</code></pre>
+      <p>
+        The variables are inherited, so children can use them too.
+      </p>
+
+      <h2 id="recipes">Recipes</h2>
+
+      <div class="recipe">
+        <h3>Icon buttons in a toolbar</h3>
+        <p>
+          Small targets can take a stronger pull and a shorter reach, so
+          neighbours don't all move at once.
+        </p>
+        <pre><code>Magnetic.initAll('.toolbar button', { strength: 0.5, radius: 24 });</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>A heavy, lazy pull</h3>
+        <pre><code>&lt;button class="magnetic-el"
+        data-magnetic-stiffness="60"
+        data-magnetic-damping="12"
+        data-magnetic-radius="140"&gt;Drag me along&lt;/button&gt;</code></pre>
+      </div>
+
+      <div class="recipe">
+        <h3>Only the label moves</h3>
+        <p>
+          Hold the element still and give the translate to a child
+          instead. The variables are inherited, so the child can read
+          them directly.
+        </p>
+        <pre><code>.send { transform: none; }
+.send span {
+  display: inline-block;
+  transform: translate(calc(var(--magnetic-x) * 1px), calc(var(--magnetic-y) * 1px));
+}</code></pre>
+      </div>
+
+      <h2 id="options">Options</h2>
+      <table class="opts-table">
+        <thead>
+          <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>strength</code></td><td><code>0.35</code></td><td>How far the element moves toward the cursor, as a share of the cursor's offset from its center. <code>1</code> would put its center under the cursor</td></tr>
+          <tr><td><code>radius</code></td><td><code>60</code></td><td>Width in px of the band around the element (or its <code>area</code>) where the pull fades in. <code>0</code> pulls only while the cursor is over it</td></tr>
+          <tr><td><code>stiffness</code></td><td><code>220</code></td><td>How hard the spring pulls toward its target. Higher is quicker and tighter</td></tr>
+          <tr><td><code>damping</code></td><td><code>16</code></td><td>The spring's friction. Lower overshoots and wobbles more</td></tr>
+          <tr><td><code>area</code></td><td><code>null</code></td><td>An element, or a selector matched with <code>closest()</code>, to measure the pull against instead of the element itself. See <a href="#the-pull">The Pull</a></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="methods">Methods</h2>
+      <table class="methods-table">
+        <thead>
+          <tr><th>Method</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>.update(options)</code></td><td>Merges new options in and re-reads depth children. The spring carries on from where it is.</td></tr>
+          <tr><td><code>.offset</code></td><td>The current pull, <code>{ x, y }</code> in px.</td></tr>
+          <tr><td><code>.amount</code></td><td>How engaged the element is, <code>0</code> to <code>1</code>, the same value as <code>--magnetic-amount</code>.</td></tr>
+          <tr><td><code>.destroy()</code></td><td>Stops the element reacting and removes its custom properties, so it snaps back to rest.</td></tr>
+          <tr><td><code>Magnetic.initAll(selector, options)</code></td><td>Sets up every matching element not already set up. Defaults to <code>'.magnetic-el'</code>.</td></tr>
+          <tr><td><code>Magnetic.get(elOrSelector)</code> / <code>Magnetic.getAll(selector)</code></td><td>Static lookups for already-initialized elements, by element/selector.</td></tr>
+          <tr><td><code>Magnetic.DEFAULTS</code></td><td>The default options.</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="notes">Notes</h2>
+      <p>
+        Every magnetic element on a page shares one pointer listener and one
+        animation loop. The loop runs only while an element is moving or
+        the cursor is within reach of one, and stops the rest of the time.
+        While the cursor is within reach it re-measures every frame, so an
+        element that moves under a still cursor (in a carousel, say) keeps
+        tracking it.
+      </p>
+      <p>
+        Only a hovering pointer (a mouse or a pen) pulls. A touch has no
+        hover between taps, so on a touchscreen elements stay at rest.
+        Keyboard focus doesn't move anything either.
+      </p>
+      <p>
+        Respects <code>prefers-reduced-motion</code>: under it auto-init
+        skips every element, so nothing moves. Calling
+        <code>initAll</code> yourself still sets elements up. The demo page
+        does, so the effect can be tried there. The demo page edits
+        <code>strength</code>, <code>radius</code>, <code>stiffness</code>
+        and <code>damping</code>, and leaves alone any of them an element
+        sets with its own data attribute.
+      </p>
+    </div>
+  </div>

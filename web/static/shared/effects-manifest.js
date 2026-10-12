@@ -204,12 +204,28 @@
       docsPath: '/docs/concepts/spotlight.html',
     },
     {
+      slug: 'magnetic',
+      name: 'Magnetic',
+      category: 'concepts',
+      demoPath: '/concepts/magnetic/index.html',
+      jsPath: '/concepts/magnetic/magnetic.js',
+      docsPath: '/docs/concepts/magnetic.html',
+    },
+    {
       slug: 'confetti',
       name: 'Confetti',
       category: 'concepts',
       demoPath: '/concepts/confetti/index.html',
       jsPath: '/concepts/confetti/confetti.js',
       docsPath: '/docs/concepts/confetti.html',
+    },
+    {
+      slug: 'ripple',
+      name: 'Ripple',
+      category: 'concepts',
+      demoPath: '/concepts/ripple/index.html',
+      jsPath: '/concepts/ripple/ripple.js',
+      docsPath: '/docs/concepts/ripple.html',
     },
     {
       slug: 'sweep',
