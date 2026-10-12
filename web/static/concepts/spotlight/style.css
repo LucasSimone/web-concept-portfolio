@@ -387,7 +387,7 @@ main {
   opacity: 0.7;
 }
 
-.control-checkbox {
+.control-row .control-checkbox {
   justify-content: flex-start;
   gap: 8px;
 }

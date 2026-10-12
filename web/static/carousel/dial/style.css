@@ -394,6 +394,15 @@ main {
   margin-bottom: 6px;
 }
 
+/* Checkbox rows sit the box, its text and the hint side by side, rather
+   than spread across the row like the label/value pair above. */
+.control-row .control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
 .label-text {
   display: inline-flex;
   align-items: center;
