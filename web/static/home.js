@@ -1116,6 +1116,7 @@ if (!prefersReducedMotion) {
     const OVERRIDES = {
       static: { scanlines: false },
       teardown: { keep: '.liftoff-card__shadow, .liftoff-card__glow--thrust' },
+      'power-off': { duration: 900, easing: 'ease-in-out' },
     };
     const overrides = OVERRIDES[card.dataset.tTransition];
     // Hovering commandeers the card's own cover()/reveal() calls rather
